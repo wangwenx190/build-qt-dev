@@ -22,18 +22,23 @@
 
 @echo off
 setlocal enabledelayedexpansion
-title Building Qt
+title Building Qt ...
 set __compiler=%1
 set __lib_type=%2
 set __build_type=%3
 set __arch=%4
+set __module=%5
 if /i "%__compiler%" == "/clang-cl" (
     set __compiler=clangcl
 ) else if /i "%__compiler%" == "/clangcl" (
     set __compiler=clangcl
-) else if /i "%__compiler%" == "/mingw" (
-    set __compiler=mingw
+) else if /i "%__compiler%" == "/clang" (
+    set __compiler=clangcl
 ) else if /i "%__compiler%" == "/mingw-w64" (
+    set __compiler=mingw
+) else if /i "%__compiler%" == "/mingw64" (
+    set __compiler=mingw
+) else if /i "%__compiler%" == "/mingw" (
     set __compiler=mingw
 ) else (
     set __compiler=msvc
@@ -56,6 +61,10 @@ if /i "%__build_type%" == "/debug" (
 )
 if /i "%__arch%" == "/x86" (
     set __arch=x86
+) else if /i "%__arch%" == "/x32" (
+    set __arch=x86
+) else if /i "%__arch%" == "/i386" (
+    set __arch=x86
 ) else if /i "%__arch%" == "/arm64" (
     set __arch=arm64
 ) else if /i "%__arch%" == "/arm" (
@@ -63,15 +72,26 @@ if /i "%__arch%" == "/x86" (
 ) else (
     set __arch=x64
 )
-set __repo_root_dir=%~dp0..\..
-set __repo_parent_dir=%__repo_root_dir%\..
-set __qt_source_dir=%__repo_root_dir%
-set __qt_build_dir=%__repo_parent_dir%\__qt_build_cache_dir__
-set __qt_install_dir=%__repo_parent_dir%\Qt
-set __contrib_bin_dir=%__qt_source_dir%\contrib\bin
+if /i "%__module%" == "" (
+    set __module=qtbase
+)
+set __is_building_qtbase=false
+if /i "%__module%" == "qtbase" set __is_building_qtbase=true
+set __git_clone_url=https://github.com/qt/%__module%.git
+set __git_clone_params=--recurse-submodules --depth 1 --shallow-submodules --branch dev --single-branch --no-tags
+set __git_pull_params=--depth=1 --no-tags
+set __repo_root_dir=%~dp0..
+set __repo_build_dir=%__repo_root_dir%\build
+set __repo_source_dir=%__repo_build_dir%\source
+set __repo_install_dir=%__repo_build_dir%\windows
+set __repo_cache_dir=%__repo_build_dir%\cache\windows
+set __module_source_dir=%__repo_source_dir%\%__module%
+set __module_install_dir=%__repo_install_dir%
+set __module_cache_dir=%__repo_cache_dir%\%__module%
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
-set __cmake_extra_params=-DCMAKE_PREFIX_PATH="%__contrib_bin_dir%"
+set __cmake_extra_params=
+if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=-DCMAKE_PREFIX_PATH="%__repo_install_dir%"
 set __install_cmdline=
 if /i "%__compiler%" == "clangcl" (
     :: Some make tools will not be able to find the compiler if we don't
@@ -123,14 +143,14 @@ if /i "%__should_enable_ltcg%" == "false" (
 if /i "%__ninja_multi_config%" == "false" (
     :: Use "--target <TARGET>" to choose target explicitly.
     :: Use "--config <CONFIG>" to choose configuration explicitly.
-    set __install_cmdline=cmake --install "%__qt_build_dir%"
+    set __install_cmdline=cmake --install "%__module_cache_dir%"
 ) else (
     :: CMake's own install command only supports single configuration.
     :: So here we use ninja's install command instead.
     set __install_cmdline=ninja install
 )
-set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__qt_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF "%__qt_source_dir%"
-set __cmake_build_params=--build "%__qt_build_dir%" --parallel
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF "%__module_source_dir%"
+set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 set __vs_install_dir=
 set __vs_dev_cmd=
@@ -177,9 +197,14 @@ if /i "%__compiler%" == "mingw" (
         goto fin
     )
 )
-:: Don't prepend our contrib path to the environment variable too early,
-:: we want our own tools have the topest priority.
-set PATH=%__contrib_bin_dir%;%PATH%
+where git
+if %errorlevel% equ 0 (
+    git --version
+) else (
+    color 74
+    echo git.exe is not in your PATH environment variable.
+    goto fin
+)
 where cmake
 if %errorlevel% equ 0 (
     cmake --version
@@ -197,13 +222,29 @@ if %errorlevel% equ 0 (
     echo ninja.exe is not in your PATH environment variable.
     goto fin
 )
+echo Building Qt module: %__module%
+echo Clone command-line: git clone %__git_clone_params% %__git_clone_url%
+echo Pull command-line: git pull %__git_pull_params% origin dev
 echo Configuration command-line: cmake %__cmake_config_params%
 echo Build command-line: cmake %__cmake_build_params%
 echo Installation command-line: %__install_cmdline%
-cd /d "%__repo_parent_dir%"
-if exist "%__qt_install_dir%" rd /s /q "%__qt_install_dir%"
-if exist "%__qt_build_dir%" rd /s /q "%__qt_build_dir%"
-md "%__qt_build_dir%" && cd "%__qt_build_dir%"
+cd /d "%__repo_root_dir%"
+if not exist "%__repo_build_dir%" md "%__repo_build_dir%"
+cd "%__repo_build_dir%"
+if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
+cd "%__repo_source_dir%"
+if exist "%__module_source_dir%" (
+    cd "%__module_source_dir%"
+    git pull %__git_pull_params% origin dev
+) else (
+    git clone %__git_clone_params% %__git_clone_url%
+)
+cd "%__repo_build_dir%"
+if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
+cd "%__repo_cache_dir%"
+if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
+md "%__module_cache_dir%"
+cd "%__module_cache_dir%"
 cmake %__cmake_config_params%
 if %errorlevel% neq 0 (
     color 74
@@ -219,22 +260,11 @@ if %errorlevel% neq 0 (
     color 74
     goto fin
 )
-cd /d "%__repo_parent_dir%"
-rd /s /q "%__qt_build_dir%"
-where 7z
-if %errorlevel% equ 0 (
-    if exist "%__repo_parent_dir%\Qt.7z" del /f "%__repo_parent_dir%\Qt.7z"
-    7z a Qt.7z Qt\ -mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=1g:fb=273
-    if %errorlevel% neq 0 (
-        color 74
-        goto fin
-    )
-)
 color 27
 goto fin
 
 :fin
-cd /d "%__repo_parent_dir%"
+cd /d "%__repo_root_dir%"
 endlocal
 pause
 exit /b

@@ -20,4 +20,4 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@call "%~dp0common.bat" /MinGW-w64 /Shared /Release /x86
+@call "%~dp0common.bat" /MinGW-w64 /Shared /Release /x86 %*

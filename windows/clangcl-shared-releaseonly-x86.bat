@@ -20,4 +20,4 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@call "%~dp0common.bat" /Clang-CL /Shared /Release /x86
+@call "%~dp0common.bat" /Clang-CL /Shared /Release /x86 %*
