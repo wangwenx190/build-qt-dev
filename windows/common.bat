@@ -1,0 +1,240 @@
+:: MIT License
+::
+:: Copyright (C) 2022 by wangwenx190 (Yuhang Zhao)
+::
+:: Permission is hereby granted, free of charge, to any person obtaining a copy
+:: of this software and associated documentation files (the "Software"), to deal
+:: in the Software without restriction, including without limitation the rights
+:: to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+:: copies of the Software, and to permit persons to whom the Software is
+:: furnished to do so, subject to the following conditions:
+::
+:: The above copyright notice and this permission notice shall be included in
+:: all copies or substantial portions of the Software.
+::
+:: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+:: IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+:: FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+:: AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+:: LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+:: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+:: SOFTWARE.
+
+@echo off
+setlocal enabledelayedexpansion
+title Building Qt
+set __compiler=%1
+set __lib_type=%2
+set __build_type=%3
+set __arch=%4
+if /i "%__compiler%" == "/clang-cl" (
+    set __compiler=clangcl
+) else if /i "%__compiler%" == "/clangcl" (
+    set __compiler=clangcl
+) else if /i "%__compiler%" == "/mingw" (
+    set __compiler=mingw
+) else if /i "%__compiler%" == "/mingw-w64" (
+    set __compiler=mingw
+) else (
+    set __compiler=msvc
+)
+if /i "%__lib_type%" == "/static" (
+    set __lib_type=static
+) else (
+    set __lib_type=shared
+)
+if /i "%__build_type%" == "/debug" (
+    set __build_type=debug
+) else if /i "%__build_type%" == "/release" (
+    set __build_type=release
+) else if /i "%__build_type%" == "/minsizerel" (
+    set __build_type=minsizerel
+) else if /i "%__build_type%" == "/relwithdebinfo" (
+    set __build_type=relwithdebinfo
+) else (
+    set __build_type=debugandrelease
+)
+if /i "%__arch%" == "/x86" (
+    set __arch=x86
+) else if /i "%__arch%" == "/arm64" (
+    set __arch=arm64
+) else if /i "%__arch%" == "/arm" (
+    set __arch=arm64
+) else (
+    set __arch=x64
+)
+set __repo_root_dir=%~dp0..\..
+set __repo_parent_dir=%__repo_root_dir%\..
+set __qt_source_dir=%__repo_root_dir%
+set __qt_build_dir=%__repo_parent_dir%\__qt_build_cache_dir__
+set __qt_install_dir=%__repo_parent_dir%\Qt
+set __contrib_bin_dir=%__qt_source_dir%\contrib\bin
+set __should_enable_ltcg=true
+set __ninja_multi_config=false
+set __cmake_extra_params=-DCMAKE_PREFIX_PATH="%__contrib_bin_dir%"
+set __install_cmdline=
+if /i "%__compiler%" == "clangcl" (
+    :: Some make tools will not be able to find the compiler if we don't
+    :: add the ".exe" extension name to the file name.
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=clang-cl.exe -DCMAKE_CXX_COMPILER=clang-cl.exe
+) else if /i "%__compiler%" == "mingw" (
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=gcc.exe -DCMAKE_CXX_COMPILER=g++.exe
+) else (
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
+)
+if /i "%__lib_type%" == "static" (
+    set __should_enable_ltcg=false
+    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF
+) else (
+    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
+)
+if /i "%__build_type%" == "debug" (
+    set __should_enable_ltcg=false
+    set __ninja_multi_config=false
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Debug -DFEATURE_separate_debug_info=ON -GNinja
+) else if /i "%__build_type%" == "minsizerel" (
+    set __ninja_multi_config=false
+    :: We still set the configuration type to "Release", Qt's own scripts will
+    :: modify the compiler flags to match the MinSizeRel mode.
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Release -DFEATURE_optimize_size=ON -GNinja
+) else if /i "%__build_type%" == "release" (
+    set __ninja_multi_config=false
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Release -GNinja
+) else if /i "%__build_type%" == "relwithdebinfo" (
+    set __ninja_multi_config=false
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFEATURE_separate_debug_info=ON -GNinja
+) else (
+    set __ninja_multi_config=true
+    :: The first one among the configuration types will be the main configuration,
+    :: so we put "Release" in the front to get optimized host tools.
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_CONFIGURATION_TYPES=Release;Debug -DFEATURE_separate_debug_info=ON -G"Ninja Multi-Config"
+)
+if /i "%__should_enable_ltcg%" == "false" (
+    :: Disable LTCG for debug and static builds
+    :: - We don't need such optimization for debug builds apparently.
+    :: - Enabling LTCG for static builds will make the generated binary files way too large
+    ::   and it will also break the binary compatibility between different compilers and
+    ::   and compiler versions.
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+) else (
+    :: For shared release builds it's totally OK to enable LTCG.
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON
+)
+if /i "%__ninja_multi_config%" == "false" (
+    :: Use "--target <TARGET>" to choose target explicitly.
+    :: Use "--config <CONFIG>" to choose configuration explicitly.
+    set __install_cmdline=cmake --install "%__qt_build_dir%"
+) else (
+    :: CMake's own install command only supports single configuration.
+    :: So here we use ninja's install command instead.
+    set __install_cmdline=ninja install
+)
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__qt_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF "%__qt_source_dir%"
+set __cmake_build_params=--build "%__qt_build_dir%" --parallel
+set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
+set __vs_install_dir=
+set __vs_dev_cmd=
+if /i "%__compiler%" == "mingw" (
+    where g++
+    if %errorlevel% equ 0 (
+        g++ --version
+    ) else (
+        color 74
+        echo g++.exe is not in your PATH environment variable.
+        goto fin
+    )
+) else (
+    if exist "%__vswhere_path%" (
+        for /f "delims=" %%a in ('"%__vswhere_path%" -property installationPath -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64') do set __vs_install_dir=%%a
+    ) else (
+        color 74
+        echo Cannot locate vswhere.exe, please install Visual Studio Installer first.
+        goto fin
+    )
+    set __vs_dev_cmd=!__vs_install_dir!\VC\Auxiliary\Build\vcvarsall.bat
+    if exist "!__vs_dev_cmd!" (
+        call "!__vs_dev_cmd!" %__arch%
+        where cl
+        if %errorlevel% equ 0 (
+            if /i "%__compiler%" == "clangcl" (
+                where clang-cl
+                if %errorlevel% equ 0 (
+                    clang-cl --version
+                ) else (
+                    color 74
+                    echo clang-cl.exe is not in your PATH environment variable.
+                    goto fin
+                )
+            )
+        ) else (
+            color 74
+            echo cl.exe is not in your PATH environment variable.
+            goto fin
+        )
+    ) else (
+        color 74
+        echo Failed to retrieve Microsoft Visual Studio's installation path.
+        goto fin
+    )
+)
+:: Don't prepend our contrib path to the environment variable too early,
+:: we want our own tools have the topest priority.
+set PATH=%__contrib_bin_dir%;%PATH%
+where cmake
+if %errorlevel% equ 0 (
+    cmake --version
+) else (
+    color 74
+    echo cmake.exe is not in your PATH environment variable.
+    goto fin
+)
+where ninja
+if %errorlevel% equ 0 (
+    echo Ninja version:
+    ninja --version
+) else (
+    color 74
+    echo ninja.exe is not in your PATH environment variable.
+    goto fin
+)
+echo Configuration command-line: cmake %__cmake_config_params%
+echo Build command-line: cmake %__cmake_build_params%
+echo Installation command-line: %__install_cmdline%
+cd /d "%__repo_parent_dir%"
+if exist "%__qt_install_dir%" rd /s /q "%__qt_install_dir%"
+if exist "%__qt_build_dir%" rd /s /q "%__qt_build_dir%"
+md "%__qt_build_dir%" && cd "%__qt_build_dir%"
+cmake %__cmake_config_params%
+if %errorlevel% neq 0 (
+    color 74
+    goto fin
+)
+cmake %__cmake_build_params%
+if %errorlevel% neq 0 (
+    color 74
+    goto fin
+)
+%__install_cmdline%
+if %errorlevel% neq 0 (
+    color 74
+    goto fin
+)
+cd /d "%__repo_parent_dir%"
+rd /s /q "%__qt_build_dir%"
+where 7z
+if %errorlevel% equ 0 (
+    if exist "%__repo_parent_dir%\Qt.7z" del /f "%__repo_parent_dir%\Qt.7z"
+    7z a Qt.7z Qt\ -mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=1g:fb=273
+    if %errorlevel% neq 0 (
+        color 74
+        goto fin
+    )
+)
+color 27
+goto fin
+
+:fin
+cd /d "%__repo_parent_dir%"
+endlocal
+pause
+exit /b
