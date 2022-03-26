@@ -143,11 +143,13 @@ if /i "%__should_enable_ltcg%" == "false" (
 if /i "%__ninja_multi_config%" == "false" (
     :: Use "--target <TARGET>" to choose target explicitly.
     :: Use "--config <CONFIG>" to choose configuration explicitly.
-    set __install_cmdline=cmake --install "%__module_cache_dir%"
+    set __install_cmdline=cmake --install "%__module_cache_dir%" --strip
 ) else (
     :: CMake's own install command only supports single configuration.
     :: So here we use ninja's install command instead.
-    set __install_cmdline=ninja install
+    :: https://gitlab.kitware.com/cmake/cmake/-/issues/20713
+    :: https://gitlab.kitware.com/cmake/cmake/-/issues/21475
+    set __install_cmdline=ninja install/strip
 )
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF "%__module_source_dir%"
 set __cmake_build_params=--build "%__module_cache_dir%" --parallel
@@ -159,17 +161,15 @@ if /i "%__compiler%" == "mingw" (
     if %errorlevel% equ 0 (
         g++ --version
     ) else (
-        color 74
         echo g++.exe is not in your PATH environment variable.
-        goto fin
+        goto err
     )
 ) else (
     if exist "%__vswhere_path%" (
         for /f "delims=" %%a in ('"%__vswhere_path%" -property installationPath -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64') do set __vs_install_dir=%%a
     ) else (
-        color 74
         echo Cannot locate vswhere.exe, please install Visual Studio Installer first.
-        goto fin
+        goto err
     )
     set __vs_dev_cmd=!__vs_install_dir!\VC\Auxiliary\Build\vcvarsall.bat
     if exist "!__vs_dev_cmd!" (
@@ -181,46 +181,40 @@ if /i "%__compiler%" == "mingw" (
                 if %errorlevel% equ 0 (
                     clang-cl --version
                 ) else (
-                    color 74
                     echo clang-cl.exe is not in your PATH environment variable.
-                    goto fin
+                    goto err
                 )
             )
         ) else (
-            color 74
             echo cl.exe is not in your PATH environment variable.
-            goto fin
+            goto err
         )
     ) else (
-        color 74
         echo Failed to retrieve Microsoft Visual Studio's installation path.
-        goto fin
+        goto err
     )
 )
 where git
 if %errorlevel% equ 0 (
     git --version
 ) else (
-    color 74
     echo git.exe is not in your PATH environment variable.
-    goto fin
+    goto err
 )
 where cmake
 if %errorlevel% equ 0 (
     cmake --version
 ) else (
-    color 74
     echo cmake.exe is not in your PATH environment variable.
-    goto fin
+    goto err
 )
 where ninja
 if %errorlevel% equ 0 (
     echo Ninja version:
     ninja --version
 ) else (
-    color 74
     echo ninja.exe is not in your PATH environment variable.
-    goto fin
+    goto err
 )
 echo Building Qt module: %__module%
 echo Clone command-line: git clone %__git_clone_params% %__git_clone_url%
@@ -246,24 +240,17 @@ if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
 md "%__module_cache_dir%"
 cd "%__module_cache_dir%"
 cmake %__cmake_config_params%
-if %errorlevel% neq 0 (
-    color 74
-    goto fin
-)
+if %errorlevel% neq 0 goto err
 cmake %__cmake_build_params%
-if %errorlevel% neq 0 (
-    color 74
-    goto fin
-)
+if %errorlevel% neq 0 goto err
 %__install_cmdline%
-if %errorlevel% neq 0 (
-    color 74
-    goto fin
-)
-color 27
-goto fin
+if %errorlevel% neq 0 goto err
+cd /d "%__repo_root_dir%"
+endlocal
+exit /b
 
-:fin
+:err
+color 74
 cd /d "%__repo_root_dir%"
 endlocal
 pause
