@@ -99,10 +99,19 @@ set __repo_cache_dir=%__repo_build_dir%\cache\windows
 set __module_source_dir=%__repo_source_dir%\%__module%
 set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
+set __vcpkg_dir=%__repo_root_dir%\vcpkg
+set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
+set __vcpkg_triplet=%__arch%
+if /i "%__compiler%" == "mingw" (
+    set __vcpkg_triplet=%__vcpkg_triplet%-mingw
+) else (
+    set __vcpkg_triplet=%__vcpkg_triplet%-windows
+)
+set __vcpkg_triplet=%__vcpkg_triplet%-static-md
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
-set __cmake_extra_params=
-if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=-DCMAKE_PREFIX_PATH="%__repo_install_dir%"
+set __cmake_extra_params=-DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
+if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__repo_install_dir%"
 set __install_cmdline=
 if /i "%__compiler%" == "clangcl" (
     :: Some make tools will not be able to find the compiler if we don't
@@ -119,7 +128,7 @@ if /i "%__compiler%" == "clangcl" (
 )
 if /i "%__lib_type%" == "static" (
     set __should_enable_ltcg=false
-    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF
+    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=OFF
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
 )
@@ -166,7 +175,7 @@ if /i "%__ninja_multi_config%" == "false" (
     :: https://gitlab.kitware.com/cmake/cmake/-/issues/21475
     set __install_cmdline=ninja install/strip
 )
-set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_schannel=ON "%__module_source_dir%"
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked "%__module_source_dir%"
 set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 :: It's recommended to use the vswhere tool to find the Visual Studio installation path,
 :: it will be installed automatically while installing Visual Studio, but you can also
@@ -248,6 +257,7 @@ cd "%__repo_source_dir%"
 if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
 git %__git_clone_params%
 if %errorlevel% neq 0 goto err
+pause
 cd "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
 cd "%__repo_cache_dir%"

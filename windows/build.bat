@@ -29,19 +29,20 @@ set __7z_dir=%ProgramFiles%\7-Zip
 set __clangcl_dir=C:\Develop\Environments\LLVM-14.0.0-win64\bin
 set __mingw_dir=C:\Develop\Environments\llvm-mingw-20220323-ucrt-x86_64\bin
 set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qtremoteobjects,qtmultimedia,qttools
-set __compiler=clangcl
+set __compiler=clang-cl
 set __arch=x64
 set __build_type=releaseonly
 set __lib_type=shared
-set __bat_file_name=%__compiler%-%__lib_type%-%__build_type%-%__arch%.bat
-set __bat_file_path=%~dp0%__bat_file_name%
+set __build_script_file=%~dp0build.bat
+set __build_script_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
 set __artifact_dir_name=%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __archive_file_name=%__artifact_dir_name%.7z
 set __archive_file_path=%__repo_install_dir%\%__archive_file_name%
+call "%~dp0vcpkg.bat"
 for %%i in (%__qt_modules%) do (
-    call "%__bat_file_path%" %%i
+    call "%__build_script_file%" %__build_script_params% %%i
     if %errorlevel% neq 0 goto fin
 )
 where 7z

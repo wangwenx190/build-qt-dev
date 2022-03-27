@@ -20,4 +20,25 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@call "%~dp0common.bat" /MSVC /Static /Release /x86 %*
+@echo off
+setlocal
+set __repo_root_dir=%~dp0..
+set __vcpkg_dir=%__repo_root_dir%\vcpkg
+set __vcpkg_triplets=x64-windows-static-md,x86-windows-static-md
+set __qt_deps=zstd,openssl,icu
+cd /d "%__repo_root_dir%"
+if exist "%__vcpkg_dir%" (
+    cd "%__vcpkg_dir%"
+    git pull
+) else (
+    git clone https://github.com/microsoft/vcpkg.git
+    cd "%__vcpkg_dir%"
+)
+call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
+cd /d "%__vcpkg_dir%"
+for %%i in (%__vcpkg_triplets%) do vcpkg install %__qt_deps% --triplet=%%i
+vcpkg update
+vcpkg upgrade
+cd /d "%__repo_root_dir%"
+endlocal
+exit /b
