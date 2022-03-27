@@ -85,12 +85,9 @@ if /i "%__module%" == "qtbase" set __is_building_qtbase=true
 set __git_clone_url=https://code.qt.io/qt/%__module%.git
 :: You can change the branch here, such as 6.3.0, 5.15.3 and etc...
 set __git_clone_branch=dev
-:: Use shallow clone to reduce the download size and time, because we don't need
-:: all the git commit history after all, we only need the source code itself.
-set __git_clone_params=clone --recurse-submodules --depth 1 --shallow-submodules --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
-:: We also have to set the depth while pulling, otherwise git will pull the full
-:: git commit history again and that's obviously not what we would want to see.
-set __git_pull_params=pull --recurse-submodules --depth=1 --no-tags origin %__git_clone_branch%
+set __git_clone_params=clone --recurse-submodules --branch %__git_clone_branch% %__git_clone_url%
+set __git_checkout_params=checkout %__git_clone_branch%
+set __git_pull_params=pull --recurse-submodules origin %__git_clone_branch%
 set __repo_root_dir=%~dp0..
 set __repo_build_dir=%__repo_root_dir%\build
 set __repo_source_dir=%__repo_build_dir%\source
@@ -175,7 +172,8 @@ if /i "%__ninja_multi_config%" == "false" (
     :: https://gitlab.kitware.com/cmake/cmake/-/issues/21475
     set __install_cmdline=ninja install/strip
 )
-set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked "%__module_source_dir%"
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
 set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 :: It's recommended to use the vswhere tool to find the Visual Studio installation path,
 :: it will be installed automatically while installing Visual Studio, but you can also
@@ -245,6 +243,7 @@ if %errorlevel% equ 0 (
 )
 echo Building Qt module: %__module%
 echo Clone command-line: git %__git_clone_params%
+echo Checkout command-line: git %__git_checkout_params%
 echo Pull command-line: git %__git_pull_params%
 echo Configure command-line: cmake %__cmake_config_params%
 echo Build command-line: cmake %__cmake_build_params%
@@ -254,10 +253,21 @@ if not exist "%__repo_build_dir%" md "%__repo_build_dir%"
 cd "%__repo_build_dir%"
 if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd "%__repo_source_dir%"
-if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
-git %__git_clone_params%
-if %errorlevel% neq 0 goto err
-pause
+if exist "%__module_source_dir%" (
+    :: TODO: remove this workaround
+    if /i "%__is_building_qtbase%" == "false" (
+        cd "%__module_source_dir%"
+        git %__git_checkout_params%
+        if %errorlevel% neq 0 goto err
+        git %__git_pull_params%
+        if %errorlevel% neq 0 goto err
+    )
+) else (
+    git %__git_clone_params%
+    if %errorlevel% neq 0 goto err
+    :: TODO: remove
+    if /i "%__is_building_qtbase%" == "true" pause
+)
 cd "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
 cd "%__repo_cache_dir%"

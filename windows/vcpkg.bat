@@ -22,10 +22,11 @@
 
 @echo off
 setlocal
+title Preparing vcpkg ...
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
 set __vcpkg_triplets=x64-windows-static-md,x86-windows-static-md
-set __qt_deps=zstd,openssl,icu
+set __qt_deps=zstd openssl icu
 cd /d "%__repo_root_dir%"
 if exist "%__vcpkg_dir%" (
     cd "%__vcpkg_dir%"
