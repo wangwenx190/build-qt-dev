@@ -22,7 +22,6 @@
 
 @echo off
 setlocal enabledelayedexpansion
-title Building Qt ...
 set __compiler=%1
 set __lib_type=%2
 set __build_type=%3
@@ -39,6 +38,10 @@ if /i "%__compiler%" == "/clang-cl" (
 ) else if /i "%__compiler%" == "/mingw64" (
     set __compiler=mingw
 ) else if /i "%__compiler%" == "/mingw" (
+    set __compiler=mingw
+) else if /i "%__compiler%" == "/gcc" (
+    set __compiler=mingw
+) else if /i "%__compiler%" == "/g++" (
     set __compiler=mingw
 ) else (
     set __compiler=msvc
@@ -75,18 +78,26 @@ if /i "%__arch%" == "/x86" (
 if /i "%__module%" == "" (
     set __module=qtbase
 )
+title Building %__module% ...
 set __is_building_qtbase=false
 if /i "%__module%" == "qtbase" set __is_building_qtbase=true
-set __git_clone_url=https://github.com/qt/%__module%.git
-set __git_clone_params=--recurse-submodules --depth 1 --shallow-submodules --branch dev --single-branch --no-tags
-set __git_pull_params=--depth=1 --no-tags
+:: Or use the GitHub mirror: https://github.com/qt/%__module%.git
+set __git_clone_url=https://code.qt.io/qt/%__module%.git
+:: You can change the branch here, such as 6.3.0, 5.15.3 and etc...
+set __git_clone_branch=dev
+:: Use shallow clone to reduce the download size and time, because we don't need
+:: all the git commit history after all, we only need the source code itself.
+set __git_clone_params=clone --recurse-submodules --depth 1 --shallow-submodules --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
+:: We also have to set the depth while pulling, otherwise git will pull the full
+:: git commit history again and that's obviously not what we would want to see.
+set __git_pull_params=pull --recurse-submodules --depth=1 --no-tags origin %__git_clone_branch%
 set __repo_root_dir=%~dp0..
 set __repo_build_dir=%__repo_root_dir%\build
 set __repo_source_dir=%__repo_build_dir%\source
 set __repo_install_dir=%__repo_build_dir%\windows
 set __repo_cache_dir=%__repo_build_dir%\cache\windows
 set __module_source_dir=%__repo_source_dir%\%__module%
-set __module_install_dir=%__repo_install_dir%
+set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
@@ -96,8 +107,12 @@ set __install_cmdline=
 if /i "%__compiler%" == "clangcl" (
     :: Some make tools will not be able to find the compiler if we don't
     :: add the ".exe" extension name to the file name.
+    :: No need to set the linker explicitly because CMake will find and
+    :: use the proper linker for us, for example, the linker will be set
+    :: to "ld.lld.exe" if we are using llvm-mingw.
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=clang-cl.exe -DCMAKE_CXX_COMPILER=clang-cl.exe
 ) else if /i "%__compiler%" == "mingw" (
+    :: Don't worry about llvm-mingw, it also has the gcc/g++ wrapper.
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=gcc.exe -DCMAKE_CXX_COMPILER=g++.exe
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
@@ -151,8 +166,11 @@ if /i "%__ninja_multi_config%" == "false" (
     :: https://gitlab.kitware.com/cmake/cmake/-/issues/21475
     set __install_cmdline=ninja install/strip
 )
-set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF "%__module_source_dir%"
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_schannel=ON "%__module_source_dir%"
 set __cmake_build_params=--build "%__module_cache_dir%" --parallel
+:: It's recommended to use the vswhere tool to find the Visual Studio installation path,
+:: it will be installed automatically while installing Visual Studio, but you can also
+:: download it manually from GitHub: https://github.com/microsoft/vswhere/releases/latest
 set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 set __vs_install_dir=
 set __vs_dev_cmd=
@@ -217,9 +235,9 @@ if %errorlevel% equ 0 (
     goto err
 )
 echo Building Qt module: %__module%
-echo Clone command-line: git clone %__git_clone_params% %__git_clone_url%
-echo Pull command-line: git pull %__git_pull_params% origin dev
-echo Configuration command-line: cmake %__cmake_config_params%
+echo Clone command-line: git %__git_clone_params%
+echo Pull command-line: git %__git_pull_params%
+echo Configure command-line: cmake %__cmake_config_params%
 echo Build command-line: cmake %__cmake_build_params%
 echo Installation command-line: %__install_cmdline%
 cd /d "%__repo_root_dir%"
@@ -227,12 +245,9 @@ if not exist "%__repo_build_dir%" md "%__repo_build_dir%"
 cd "%__repo_build_dir%"
 if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd "%__repo_source_dir%"
-if exist "%__module_source_dir%" (
-    cd "%__module_source_dir%"
-    git pull %__git_pull_params% origin dev
-) else (
-    git clone %__git_clone_params% %__git_clone_url%
-)
+if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
+git %__git_clone_params%
+if %errorlevel% neq 0 goto err
 cd "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
 cd "%__repo_cache_dir%"
@@ -247,11 +262,11 @@ if %errorlevel% neq 0 goto err
 if %errorlevel% neq 0 goto err
 cd /d "%__repo_root_dir%"
 endlocal
-exit /b
+exit /b 0
 
 :err
 color 74
 cd /d "%__repo_root_dir%"
 endlocal
 pause
-exit /b
+exit /b 1
