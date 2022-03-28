@@ -21,33 +21,13 @@
 :: SOFTWARE.
 
 @echo off
-setlocal
-:: Modify this line to suit your own personal needs.
-:: Be careful about the dependencies of each repository.
-:: qtbase should always be the first one to build.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qtremoteobjects,qtmultimedia,qttools
-:: Supported values: clang-cl, mingw and msvc
-set __compiler=clang-cl
-:: Supported values: x64, x86 and arm64
-set __arch=x64
-:: Supported values: shared and static
-set __lib_type=shared
-:: Supported values: debug, minsizerel, release, relwithdebinfo and debugandrelease
-set __build_type=release
-set __build_script_path=%~dp0build.bat
-set __build_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%
-set __repo_root_dir=%~dp0..
-call "%~dp0vcpkg.bat"
-for %%i in (%__qt_modules%) do (
-    call "%__build_script_path%" %__build_params% %%i
-    :: Something wrong has happened, error out early because the following
-    :: repositories won't be able to build due to lack of dependencies.
-    if %errorlevel% neq 0 goto fin
-)
-goto fin
-
-:fin
-cd /d "%__repo_root_dir%"
-endlocal
-pause
+:: This file will setup all the paths needed by our scripts.
+:: Don't forget to change them to your own real paths!
+set __mingw_dir=%ProgramFiles%\MinGW\bin
+set __clangcl_dir=%ProgramFiles%\LLVM\bin
+set __git_dir=%ProgramFiles%\Git\bin
+set __cmake_dir=%ProgramFiles%\CMake\bin
+set __ninja_dir=%ProgramFiles%\Ninja
+set __7zip_dir=%ProgramFiles%\7-Zip
+set PATH=%__mingw_dir%;%__clangcl_dir%;%__git_dir%;%__cmake_dir%;%__ninja_dir%;%__7zip_dir%;%PATH%
 exit /b

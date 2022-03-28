@@ -84,10 +84,24 @@ if /i "%__module%" == "qtbase" set __is_building_qtbase=true
 :: Or use the GitHub mirror: https://github.com/qt/%__module%.git
 set __git_clone_url=https://code.qt.io/qt/%__module%.git
 :: You can change the branch here, such as 6.3.0, 5.15.3 and etc...
+:: However, please make sure you are using a branch name, not a tag name.
 set __git_clone_branch=dev
-set __git_clone_params=clone --recurse-submodules --branch %__git_clone_branch% %__git_clone_url%
-set __git_checkout_params=checkout %__git_clone_branch%
-set __git_pull_params=pull --recurse-submodules origin %__git_clone_branch%
+:: Use shallow clone to reduce the download size and time, because we don't need
+:: all the git commit history after all, we only need the source code itself.
+:: But we don't download the source package directly because the line endings may
+:: be incorrect (such as packages packed by GitHub, which will lead to compilation
+:: failures) and most importantly, we can still update the local source code through
+:: the git tool conveniently.
+set __git_clone_params=clone --recurse-submodules --depth 1 --shallow-submodules --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
+:: We still need to limit the depth to 1 while fetching, otherwise git will
+:: fetch all the commit history again and that's obviously not what we would
+:: want to see.
+set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand
+:: To be able to update a shallow clone, we need to reset once after fetching from remote.
+:: For more details, please refer to: https://stackoverflow.com/questions/41075972/how-to-update-a-git-shallow-clone
+set __git_reset_params=reset --hard origin/%__git_clone_branch%
+:: Cleanup untracked files, not necessary but recommended.
+set __git_clean_params=clean -fdx
 set __repo_root_dir=%~dp0..
 set __repo_build_dir=%__repo_root_dir%\build
 set __repo_source_dir=%__repo_build_dir%\source
@@ -181,6 +195,8 @@ set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 set __vs_install_dir=
 set __vs_dev_cmd=
+:: Add the compiler and tool's directory to the PATH environment variable.
+call "%~dp0path.bat"
 if /i "%__compiler%" == "mingw" (
     where g++
     if %errorlevel% equ 0 (
@@ -243,29 +259,32 @@ if %errorlevel% equ 0 (
 )
 echo Building Qt module: %__module%
 echo Clone command-line: git %__git_clone_params%
-echo Checkout command-line: git %__git_checkout_params%
-echo Pull command-line: git %__git_pull_params%
+echo Fetch command-line: git %__git_fetch_params%
+echo Reset command-line: git %__git_reset_params%
+echo Clean command-line: git %__git_clean_params%
 echo Configure command-line: cmake %__cmake_config_params%
 echo Build command-line: cmake %__cmake_build_params%
-echo Installation command-line: %__install_cmdline%
+echo Install command-line: %__install_cmdline%
 cd /d "%__repo_root_dir%"
 if not exist "%__repo_build_dir%" md "%__repo_build_dir%"
 cd "%__repo_build_dir%"
 if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd "%__repo_source_dir%"
 if exist "%__module_source_dir%" (
-    :: TODO: remove this workaround
+    :: TODO: remove qtbase workaround
     if /i "%__is_building_qtbase%" == "false" (
         cd "%__module_source_dir%"
-        git %__git_checkout_params%
+        git %__git_fetch_params%
         if %errorlevel% neq 0 goto err
-        git %__git_pull_params%
+        git %__git_reset_params%
+        if %errorlevel% neq 0 goto err
+        git %__git_clean_params%
         if %errorlevel% neq 0 goto err
     )
 ) else (
     git %__git_clone_params%
     if %errorlevel% neq 0 goto err
-    :: TODO: remove
+    :: TODO: remove qtbase workaround
     if /i "%__is_building_qtbase%" == "true" pause
 )
 cd "%__repo_build_dir%"

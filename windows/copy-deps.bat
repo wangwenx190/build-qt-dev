@@ -22,34 +22,24 @@
 
 @echo off
 setlocal
-title Preparing vcpkg ...
 set __repo_root_dir=%~dp0..
-set __vcpkg_dir=%__repo_root_dir%\vcpkg
-set __vcpkg_triplets_static=x64-windows-static-md,x86-windows-static-md
-set __vcpkg_triplets_shared=x64-windows,x86-windows
-:: zstd & icu: needed by QtCore; openssl: needed by QtNetwork.
-:: Build these libraries as static libraries so that we don't have to
-:: distribute a lot of separate dlls along side with Qt.
-:: Feel free to change them if you are worried about license issues.
-set __qt_deps_static=zstd openssl icu
-:: Needed by QtDeclarative at runtime, so we can only build shared libraries.
-set __qt_deps_shared=angle mesa
-cd /d "%__repo_root_dir%"
-if exist "%__vcpkg_dir%" (
-    cd "%__vcpkg_dir%"
-    git pull
-) else (
-    git clone https://github.com/microsoft/vcpkg.git
-    cd "%__vcpkg_dir%"
-)
-:: Always try to get the latest vcpkg tool.
-call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
-cd /d "%__vcpkg_dir%"
-for %%i in (%__vcpkg_triplets_static%) do vcpkg install %__qt_deps_static% --triplet=%%i
-for %%i in (%__vcpkg_triplets_shared%) do vcpkg install %__qt_deps_shared% --triplet=%%i
-:: Always try to update the libraries to the latest version.
-vcpkg update
-vcpkg upgrade --no-dry-run
-cd /d "%__repo_root_dir%"
+set __vcpkg_install_dir=%__repo_root_dir%\vcpkg\installed\%__vcpkg_triplet%\bin
+set __target_install_dir=
+set __winsdk_redist_dir=%ProgramFiles(x86)%\Windows Kits\10\Redist
+set __d3dcompiler_dir=%__winsdk_redist_dir%\D3D\%__arch%
+:: FIXME: how to detect the latest Windows SDK version?
+set __ucrt_dir=%__winsdk_redist_dir%\10.0.22000.0\ucrt\DLLs\%__arch%
+:: Copy ANGLE libraries:
+copy /y "%__vcpkg_install_dir%\libEGL.dll" "%__target_install_dir%\libEGL.dll"
+copy /y "%__vcpkg_install_dir%\libGLESv2.dll" "%__target_install_dir%\libGLESv2.dll"
+:: Copy Mesa3D LLVM pipe libraries:
+copy /y "%__vcpkg_install_dir%\osmesa.dll" "%__target_install_dir%\opengl32sw.dll"
+copy /y "%__vcpkg_install_dir%\libgallium_wgl.dll" "%__target_install_dir%\libgallium_wgl.dll"
+copy /y "%__vcpkg_install_dir%\libglapi.dll" "%__target_install_dir%\libglapi.dll"
+:: TODO: copy Vulkan runtime library.
+:: Copy Direct3D shader compiler library:
+copy /y "%__d3dcompiler_dir%\d3dcompiler_47.dll" "%__target_install_dir%\d3dcompiler_47.dll"
+:: Copy Universal C Runtime libraries:
+copy /y "%__ucrt_dir%\*.dll" "%__target_install_dir%"
 endlocal
 exit /b

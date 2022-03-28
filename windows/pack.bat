@@ -22,34 +22,24 @@
 
 @echo off
 setlocal
-title Preparing vcpkg ...
+:: Add 7-Zip's directory to the PATH environment variable.
+call "%~dp0path.bat"
 set __repo_root_dir=%~dp0..
-set __vcpkg_dir=%__repo_root_dir%\vcpkg
-set __vcpkg_triplets_static=x64-windows-static-md,x86-windows-static-md
-set __vcpkg_triplets_shared=x64-windows,x86-windows
-:: zstd & icu: needed by QtCore; openssl: needed by QtNetwork.
-:: Build these libraries as static libraries so that we don't have to
-:: distribute a lot of separate dlls along side with Qt.
-:: Feel free to change them if you are worried about license issues.
-set __qt_deps_static=zstd openssl icu
-:: Needed by QtDeclarative at runtime, so we can only build shared libraries.
-set __qt_deps_shared=angle mesa
-cd /d "%__repo_root_dir%"
-if exist "%__vcpkg_dir%" (
-    cd "%__vcpkg_dir%"
-    git pull
-) else (
-    git clone https://github.com/microsoft/vcpkg.git
-    cd "%__vcpkg_dir%"
-)
-:: Always try to get the latest vcpkg tool.
-call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
-cd /d "%__vcpkg_dir%"
-for %%i in (%__vcpkg_triplets_static%) do vcpkg install %__qt_deps_static% --triplet=%%i
-for %%i in (%__vcpkg_triplets_shared%) do vcpkg install %__qt_deps_shared% --triplet=%%i
-:: Always try to update the libraries to the latest version.
-vcpkg update
-vcpkg upgrade --no-dry-run
+set __repo_install_dir=%__repo_root_dir%\build\windows
+set __artifact_dir_name=%__compiler%_%__arch%_%__lib_type%_%__build_type%
+set __archive_file_name=%__artifact_dir_name%.7z
+set __archive_file_path=%__repo_install_dir%\%__archive_file_name%
+:: This parameter combination means the ultra compression in most situtaions.
+set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=1g:fb=273
+where 7z
+if %errorlevel% neq 0 goto fin
+title Packaging Qt ...
+cd /d "%__repo_install_dir%"
+if exist "%__archive_file_path%" del /f "%__archive_file_path%"
+7z a %__archive_file_name% %__artifact_dir_name%\ %__7zip_compress_params%
+goto fin
+
+:fin
 cd /d "%__repo_root_dir%"
 endlocal
 exit /b
