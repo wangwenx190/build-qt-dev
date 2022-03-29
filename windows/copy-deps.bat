@@ -22,20 +22,22 @@
 
 @echo off
 setlocal
-set __repo_root_dir=%~dp0..
-set __vcpkg_install_dir=%__repo_root_dir%\vcpkg\installed\%__vcpkg_triplet%\bin
 set __target_install_dir=
+:: FIXME: detect the latest installed version
+set __msedge_dir=%ProgramFiles(x86)%\Microsoft\Edge\Application\99.0.1150.55
+set __chrome_dir=%ProgramFiles%\Google\Chrome\Application\99.0.1150.55
+set __firefox_dir=%ProgramFiles%\Mozilla Firefox
 set __winsdk_redist_dir=%ProgramFiles(x86)%\Windows Kits\10\Redist
 set __d3dcompiler_dir=%__winsdk_redist_dir%\D3D\%__arch%
 :: FIXME: how to detect the latest Windows SDK version?
 set __ucrt_dir=%__winsdk_redist_dir%\10.0.22000.0\ucrt\DLLs\%__arch%
 :: Copy ANGLE libraries:
-copy /y "%__vcpkg_install_dir%\libEGL.dll" "%__target_install_dir%\libEGL.dll"
-copy /y "%__vcpkg_install_dir%\libGLESv2.dll" "%__target_install_dir%\libGLESv2.dll"
+copy /y "%__msedge_dir%\libEGL.dll" "%__target_install_dir%\libEGL.dll"
+copy /y "%__msedge_dir%\libGLESv2.dll" "%__target_install_dir%\libGLESv2.dll"
 :: Copy Mesa3D LLVM pipe libraries:
-copy /y "%__vcpkg_install_dir%\osmesa.dll" "%__target_install_dir%\opengl32sw.dll"
-copy /y "%__vcpkg_install_dir%\libgallium_wgl.dll" "%__target_install_dir%\libgallium_wgl.dll"
-copy /y "%__vcpkg_install_dir%\libglapi.dll" "%__target_install_dir%\libglapi.dll"
+copy /y "%__contrib_dir%\osmesa.dll" "%__target_install_dir%\opengl32sw.dll"
+copy /y "%__contrib_dir%\libgallium_wgl.dll" "%__target_install_dir%\libgallium_wgl.dll"
+copy /y "%__contrib_dir%\libglapi.dll" "%__target_install_dir%\libglapi.dll"
 :: TODO: copy Vulkan runtime library.
 :: Copy Direct3D shader compiler library:
 copy /y "%__d3dcompiler_dir%\d3dcompiler_47.dll" "%__target_install_dir%\d3dcompiler_47.dll"

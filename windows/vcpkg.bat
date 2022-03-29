@@ -25,15 +25,12 @@ setlocal
 title Preparing vcpkg ...
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
-set __vcpkg_triplets_static=x64-windows-static-md,x86-windows-static-md
-set __vcpkg_triplets_shared=x64-windows,x86-windows
+set __vcpkg_triplets=x64-windows-static-md,x86-windows-static-md
 :: zstd & icu: needed by QtCore; openssl: needed by QtNetwork.
 :: Build these libraries as static libraries so that we don't have to
 :: distribute a lot of separate dlls along side with Qt.
 :: Feel free to change them if you are worried about license issues.
-set __qt_deps_static=zstd openssl icu
-:: Needed by QtDeclarative at runtime, so we can only build shared libraries.
-set __qt_deps_shared=angle mesa
+set __qt_deps=zstd openssl icu
 cd /d "%__repo_root_dir%"
 if exist "%__vcpkg_dir%" (
     cd "%__vcpkg_dir%"
@@ -45,8 +42,7 @@ if exist "%__vcpkg_dir%" (
 :: Always try to get the latest vcpkg tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"
-for %%i in (%__vcpkg_triplets_static%) do vcpkg install %__qt_deps_static% --triplet=%%i
-for %%i in (%__vcpkg_triplets_shared%) do vcpkg install %__qt_deps_shared% --triplet=%%i
+for %%i in (%__vcpkg_triplets%) do vcpkg install %__qt_deps% --triplet=%%i
 :: Always try to update the libraries to the latest version.
 vcpkg update
 vcpkg upgrade --no-dry-run

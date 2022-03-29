@@ -290,8 +290,7 @@ if exist "%__module_source_dir%" (
 cd "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
 cd "%__repo_cache_dir%"
-if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
-md "%__module_cache_dir%"
+if not exist "%__module_cache_dir%" md "%__module_cache_dir%"
 cd "%__module_cache_dir%"
 cmake %__cmake_config_params%
 if %errorlevel% neq 0 goto err
