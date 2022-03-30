@@ -18,6 +18,7 @@
 - The latest Windows SDK: <https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/>
 - The latest Clang-CL: <https://github.com/llvm/llvm-project/releases/latest/>
 - The latest MinGW-w64: <https://github.com/mstorsjo/llvm-mingw/releases/latest/>
+- The latest XMLStarlet tool: <https://sourceforge.net/projects/xmlstar/files/latest/download/>
 - Mesa3D LLVM pipe: <https://github.com/pal1000/mesa-dist-win/releases/latest/>
 - ANGLE: There's no official package, need to copy from [Microsoft Edge](https://www.microsoft.com/en-us/edge/), [Google Chrome](https://www.google.com/chrome/) or [Mozilla Firefox](https://www.mozilla.org/en-US/firefox/new/). Or build by yourself from <https://github.com/google/angle>.
 
