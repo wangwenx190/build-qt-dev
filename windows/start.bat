@@ -26,7 +26,7 @@ setlocal
 :: Be careful about the dependencies of each repository.
 :: qtbase should always be the first one to build.
 :: qtwebsockets,qtwebchannel,qtwebengine,qtwebview
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qtremoteobjects,qtmultimedia,qtscxml,qtlottie,qttool
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qtremoteobjects,qtmultimedia,qtscxml,qtlottie,qttools
 :: Supported values: clang-cl, mingw and msvc
 set __compiler=clang-cl
 :: Supported values: x64, x86 and arm64
