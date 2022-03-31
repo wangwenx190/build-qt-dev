@@ -31,12 +31,24 @@ set __vcpkg_triplets=x64-windows-static-md,x86-windows-static-md
 :: distribute a lot of separate dlls along side with Qt.
 :: Feel free to change them if you are worried about license issues.
 set __qt_deps=zstd openssl icu
+set __git_clone_url=https://github.com/microsoft/vcpkg.git
+:: Separate the branch name here in case it changes to "main" or
+:: some other name in the future.
+set __git_clone_branch=master
+:: Use shallow clone to reduce the download size and time.
+:: We don't need the commit history after all.
+set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
+set __git_fetch_params=fetch --depth=1 --no-tags
+set __git_reset_params=reset --hard origin/%__git_clone_branch%
 cd /d "%__repo_root_dir%"
 if exist "%__vcpkg_dir%" (
     cd "%__vcpkg_dir%"
-    git pull
+    git %__git_fetch_params%
+    git %__git_reset_params%
+    :: Don't execute "git clean" here, otherwise all our build
+    :: artifacts will be deleted permanently!
 ) else (
-    git clone https://github.com/microsoft/vcpkg.git
+    git %__git_clone_params%
     cd "%__vcpkg_dir%"
 )
 :: Always try to get the latest vcpkg tool.
@@ -45,6 +57,8 @@ cd /d "%__vcpkg_dir%"
 for %%i in (%__vcpkg_triplets%) do vcpkg install %__qt_deps% --triplet=%%i
 :: Always try to update the libraries to the latest version.
 vcpkg update
+:: Without the "--no-dry-run" parameter, vcpkg won't upgrade
+:: the installed libraries in reality.
 vcpkg upgrade --no-dry-run
 cd /d "%__repo_root_dir%"
 endlocal

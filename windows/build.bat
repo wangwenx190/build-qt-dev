@@ -271,21 +271,16 @@ cd "%__repo_build_dir%"
 if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd "%__repo_source_dir%"
 if exist "%__module_source_dir%" (
-    :: TODO: remove qtbase workaround
-    if /i "%__is_building_qtbase%" == "false" (
-        cd "%__module_source_dir%"
-        git %__git_fetch_params%
-        if %errorlevel% neq 0 goto err
-        git %__git_reset_params%
-        if %errorlevel% neq 0 goto err
-        git %__git_clean_params%
-        if %errorlevel% neq 0 goto err
-    )
+    cd "%__module_source_dir%"
+    git %__git_fetch_params%
+    if %errorlevel% neq 0 goto err
+    git %__git_reset_params%
+    if %errorlevel% neq 0 goto err
+    git %__git_clean_params%
+    if %errorlevel% neq 0 goto err
 ) else (
     git %__git_clone_params%
     if %errorlevel% neq 0 goto err
-    :: TODO: remove qtbase workaround
-    if /i "%__is_building_qtbase%" == "true" pause
 )
 cd "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
