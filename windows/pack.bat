@@ -28,6 +28,7 @@ set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
 :: This parameter combination means the ultra compression in most situtaions.
 set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=1g:fb=273
+if not exist "%__repo_install_dir%" goto fin
 where 7z
 if %errorlevel% neq 0 goto fin
 title Packaging Qt ...
