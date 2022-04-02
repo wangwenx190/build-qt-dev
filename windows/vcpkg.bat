@@ -26,11 +26,14 @@ title Preparing vcpkg ...
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
 set __vcpkg_triplets=x64-windows-static-md,x86-windows-static-md
-:: zstd & icu: needed by QtCore; openssl: needed by QtNetwork.
+:: ZSTD: needed by QtCore & QtNetwork
+:: ICU: needed by QtCore & QtCore5Compat & QtWebEngine
+:: OpenSSL: needed by QtNetwork (the OpenSSL backend)
+:: FFmpeg: needed by QtMultimedia (the FFmpeg backend)
 :: Build these libraries as static libraries so that we don't have to
 :: distribute a lot of separate dlls along side with Qt.
 :: Feel free to change them if you are worried about license issues.
-set __qt_deps=zstd openssl icu
+set __qt_deps=zstd openssl icu ffmpeg
 set __git_clone_url=https://github.com/microsoft/vcpkg.git
 :: Separate the branch name here in case it changes to "main" or
 :: some other name in the future.

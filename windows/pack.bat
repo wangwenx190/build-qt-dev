@@ -26,20 +26,28 @@ setlocal
 call "%~dp0path.bat"
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
-set __artifact_dir_name=%__compiler%_%__arch%_%__lib_type%_%__build_type%
-set __archive_file_name=%__artifact_dir_name%.7z
-set __archive_file_path=%__repo_install_dir%\%__archive_file_name%
 :: This parameter combination means the ultra compression in most situtaions.
 set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=1g:fb=273
 where 7z
 if %errorlevel% neq 0 goto fin
 title Packaging Qt ...
 cd /d "%__repo_install_dir%"
-if exist "%__archive_file_path%" del /f "%__archive_file_path%"
-7z a %__archive_file_name% %__artifact_dir_name%\ %__7zip_compress_params%
+for /f %%i in ('dir /b') do (
+    :: Remove the previous archive first, to avoid weird issues.
+    if exist "%__repo_install_dir%\%%i.7z" del /f "%__repo_install_dir%\%%i.7z"
+    :: The filename should have an explicit extension name, to let 7-Zip know
+    :: what file type we want. And we should not use the absolute path to add
+    :: files, otherwise the archive will record the absolute path at the same
+    :: time. And the trailing slash is also important, without it, the archive
+    :: won't put all the files into one parent folder.
+    7z a %%i.7z %%i\ %__7zip_compress_params%
+    :: Should we continue compressing other folders if we encounter errors?
+    if %errorlevel% neq 0 goto fin
+)
 goto fin
 
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
+pause
 exit /b
