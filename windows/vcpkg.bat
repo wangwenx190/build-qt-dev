@@ -25,7 +25,7 @@ setlocal
 title Preparing vcpkg ...
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
-set __vcpkg_triplets=x64-windows-static-md,x86-windows-static-md
+set __vcpkg_triplets=x64-windows-static
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore & QtCore5Compat & QtWebEngine
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
