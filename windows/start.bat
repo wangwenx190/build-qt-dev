@@ -25,9 +25,9 @@ setlocal
 :: Modify this line to suit your own personal needs.
 :: Be careful about the dependencies of each repository.
 :: qtbase should always be the first one to build.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qtmultimedia
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qttools
 :: Supported values: clang-cl, mingw and msvc
-set __compiler=clang-cl
+set __compiler=msvc
 :: Supported values: x64, x86 and arm64
 set __arch=x64
 :: Supported values: shared and static
