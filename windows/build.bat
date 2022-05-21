@@ -186,7 +186,7 @@ if /i "%__ninja_multi_config%" == "false" (
     :: https://gitlab.kitware.com/cmake/cmake/-/issues/21475
     set __install_cmdline=ninja install/strip
 )
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DINPUT_intelcet=yes -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
 set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 :: It's recommended to use the vswhere tool to find the Visual Studio installation path,
