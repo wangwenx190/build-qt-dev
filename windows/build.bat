@@ -139,7 +139,7 @@ if /i "%__compiler%" == "clangcl" (
 )
 if /i "%__lib_type%" == "static" (
     set __should_enable_ltcg=false
-    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=OFF
+    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=ON
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
 )
