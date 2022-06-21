@@ -28,14 +28,16 @@ set __vcpkg_dir=%__repo_root_dir%\vcpkg
 set __vcpkg_triplets=x64-windows-static
 :: ZSTD: needed by QtCore & QtNetwork
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
+:: ICU: needed by QtCore
 :: Build these libraries as static libraries so that we don't have to
 :: distribute a lot of separate dlls along side with Qt.
 :: Feel free to change them if you are worried about license issues.
-set __qt_deps=zstd openssl
-set __git_clone_url=https://github.com/microsoft/vcpkg.git
-:: Separate the branch name here in case it changes to "main" or
-:: some other name in the future.
-set __git_clone_branch=master
+set __qt_deps=zstd openssl icu
+:: Use my own fork which has some modifications of the compiler parameters.
+set __git_clone_url=https://github.com/wangwenx190/vcpkg.git
+:: Separate the branch name here in case it changes to something else
+:: in the future.
+set __git_clone_branch=main
 :: Use shallow clone to reduce the download size and time.
 :: We don't need the commit history after all.
 set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
