@@ -138,7 +138,7 @@ if /i "%__compiler%" == "clangcl" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
 )
 if /i "%__lib_type%" == "static" (
-    set __should_enable_ltcg=false
+    ::set __should_enable_ltcg=false :: Commented out temporarily.
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=ON
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
@@ -177,17 +177,36 @@ if /i "%__should_enable_ltcg%" == "false" (
 )
 if /i "%__ninja_multi_config%" == "false" (
     :: Use "--target <TARGET>" to choose target explicitly.
+    :: Normally you should use "all" as the default target.
     :: Use "--config <CONFIG>" to choose configuration explicitly.
+    :: Don't forget to strip the debug symbols, otherwise the file size will
+    :: be kind of large. For binaries that don't need stripping, CMake will skip
+    :: the strip operation automatically.
     set __install_cmdline=cmake --install "%__module_cache_dir%" --strip
 ) else (
     :: CMake's own install command only supports single configuration.
     :: So here we use ninja's install command instead.
     :: https://gitlab.kitware.com/cmake/cmake/-/issues/20713
     :: https://gitlab.kitware.com/cmake/cmake/-/issues/21475
+    :: Use "install/strip" instead of plain "install" to enable debug symbol stripping.
+    :: Ninja will also automatically skip binaries that don't need stripping.
     set __install_cmdline=ninja install/strip
 )
+:: The "Relocatable" feature will be disabled for static builds automatically, so here
+:: we explicitly enable it unconditionally.
+:: The official Qt packages always use the bundled ZLIB library, so we mirrored the behavior here.
+:: "INPUT_openssl" controls how Qt links against the OpenSSL libraries. By default Qt will
+:: try to load OpenSSL libraries dynamically at runtime, if they can't be found or loaded,
+:: Qt will then try to use the fallback implementation. Since we always build the OpenSSL libraries
+:: in VCPKG, we can let Qt link against them directly. QtNetwork will have some limitations if
+:: the OpenSSL libraries are not available.
 if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_openssl=linked
+:: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
+:: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
+:: Use "--target <TARGET>" to choose target explicitly.
+:: Normally you should use "all" as the default target.
+:: Use "--config <CONFIG>" to choose configuration explicitly.
 set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 :: It's recommended to use the vswhere tool to find the Visual Studio installation path,
 :: it will be installed automatically while installing Visual Studio, but you can also
