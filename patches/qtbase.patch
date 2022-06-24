@@ -1,23 +1,24 @@
-From 088dbd3d554c0a8b133e8dac6898834b62925990 Mon Sep 17 00:00:00 2001
+From 3f14b99c7e85d7fe72f2b04abf5818eceff930c9 Mon Sep 17 00:00:00 2001
 From: Yuhang Zhao <2546789017@qq.com>
 Date: Fri, 17 Jun 2022 20:33:03 +0800
 Subject: [PATCH] wangwenx190: Custom tweaks
 
 Change list:
 1. Add support for mitigating Spectre security vulnerabilities.
-2. Win32: Remove WS_POPUP for most cases.
-3. MSVC: Use more aggressive optimizations.
+2. Add support for mitigating Intel Jump Conditional Code (JCC) issues.
+3. Win32: Remove WS_POPUP for most cases.
+4. MSVC: Use more aggressive optimizations.
 
 Signed-off-by: Yuhang Zhao <2546789017@qq.com>
 ---
- cmake/QtCompilerFlags.cmake                   |  6 ++--
- cmake/QtCompilerOptimization.cmake            | 14 ++++----
- cmake/QtInternalTargets.cmake                 | 32 ++++++++++++++++---
+ cmake/QtCompilerFlags.cmake                   |  6 +--
+ cmake/QtCompilerOptimization.cmake            | 14 +++---
+ cmake/QtInternalTargets.cmake                 | 48 +++++++++++++++++--
  config_help.txt                               |  1 +
- configure.cmake                               |  5 +++
+ configure.cmake                               |  5 ++
  qt_cmdline.cmake                              |  1 +
  .../platforms/windows/qwindowswindow.cpp      |  1 -
- 7 files changed, 44 insertions(+), 16 deletions(-)
+ 7 files changed, 60 insertions(+), 16 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index a34aaca20b..d8f488b2c9 100644
@@ -78,7 +79,7 @@ index ea07330945..b64a7a1dac 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index e707a2a91c..db41090d11 100644
+index e707a2a91c..805e09fdc9 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -263,14 +263,16 @@ if (MSVC)
@@ -100,7 +101,7 @@ index e707a2a91c..db41090d11 100644
          $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
      )
  endif()
-@@ -289,11 +291,33 @@ if(QT_FEATURE_intelcet)
+@@ -289,11 +291,49 @@ if(QT_FEATURE_intelcet)
              -guard:ehcont
          )
          target_link_options(PlatformCommonInternal INTERFACE
@@ -111,6 +112,22 @@ index e707a2a91c..db41090d11 100644
          target_compile_options(PlatformCommonInternal INTERFACE
 -            -fcf-protection
 +            -fcf-protection=full
++        )
++    endif()
++endif()
++
++# Mitigate for Intel Jump Conditional Code (JCC)
++if((TEST_architecture_arch STREQUAL "i386")
++    OR (TEST_architecture_arch STREQUAL "x86_64"))
++    if(MSVC AND NOT CLANG)
++        if(MSVC_VERSION GREATER_EQUAL 1925)
++            target_compile_options(PlatformCommonInternal INTERFACE
++                $<$<NOT:$<CONFIG:Debug>>:-QIntel-jcc-erratum>
++            )
++        endif()
++    else()
++        target_compile_options(PlatformCommonInternal INTERFACE
++            $<$<NOT:$<CONFIG:Debug>>:-Wa,-mno-branches-within-32B-boundaries>
 +        )
 +    endif()
 +endif()
