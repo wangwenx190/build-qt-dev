@@ -24,13 +24,13 @@
 setlocal
 set __target_install_dir=
 :: FIXME: detect the latest installed version
-set __msedge_dir=%ProgramFiles(x86)%\Microsoft\Edge\Application\99.0.1150.55
-set __chrome_dir=%ProgramFiles%\Google\Chrome\Application\99.0.1150.55
+set __msedge_dir=%ProgramFiles(x86)%\Microsoft\Edge\Application\103.0.1264.37
+set __chrome_dir=%ProgramFiles%\Google\Chrome\Application\103.0.1264.37
 set __firefox_dir=%ProgramFiles%\Mozilla Firefox
 set __winsdk_redist_dir=%ProgramFiles(x86)%\Windows Kits\10\Redist
 set __d3dcompiler_dir=%__winsdk_redist_dir%\D3D\%__arch%
 :: FIXME: how to detect the latest Windows SDK version?
-set __ucrt_dir=%__winsdk_redist_dir%\10.0.22000.0\ucrt\DLLs\%__arch%
+set __ucrt_dir=%__winsdk_redist_dir%\10.0.22621.0\ucrt\DLLs\%__arch%
 :: Copy ANGLE libraries:
 copy /y "%__msedge_dir%\libEGL.dll" "%__target_install_dir%\libEGL.dll"
 copy /y "%__msedge_dir%\libGLESv2.dll" "%__target_install_dir%\libGLESv2.dll"

@@ -1,0 +1,200 @@
+From 088dbd3d554c0a8b133e8dac6898834b62925990 Mon Sep 17 00:00:00 2001
+From: Yuhang Zhao <2546789017@qq.com>
+Date: Fri, 17 Jun 2022 20:33:03 +0800
+Subject: [PATCH] wangwenx190: Custom tweaks
+
+Change list:
+1. Add support for mitigating Spectre security vulnerabilities.
+2. Win32: Remove WS_POPUP for most cases.
+3. MSVC: Use more aggressive optimizations.
+
+Signed-off-by: Yuhang Zhao <2546789017@qq.com>
+---
+ cmake/QtCompilerFlags.cmake                   |  6 ++--
+ cmake/QtCompilerOptimization.cmake            | 14 ++++----
+ cmake/QtInternalTargets.cmake                 | 32 ++++++++++++++++---
+ config_help.txt                               |  1 +
+ configure.cmake                               |  5 +++
+ qt_cmdline.cmake                              |  1 +
+ .../platforms/windows/qwindowswindow.cpp      |  1 -
+ 7 files changed, 44 insertions(+), 16 deletions(-)
+
+diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
+index a34aaca20b..d8f488b2c9 100644
+--- a/cmake/QtCompilerFlags.cmake
++++ b/cmake/QtCompilerFlags.cmake
+@@ -5,18 +5,16 @@
+ # property checked below, and is equivalent to qmake's CONFIG += warn_off.
+ 
+ set(_qt_compiler_warning_flags_on "")
+-set(_qt_compiler_warning_flags_off "")
++set(_qt_compiler_warning_flags_off "-w")
+ 
+ if (MSVC)
+-    list(APPEND _qt_compiler_warning_flags_on /W3)
+-    list(APPEND _qt_compiler_warning_flags_off -W0)
++    list(APPEND _qt_compiler_warning_flags_on -W4)
+ else()
+     if(CMAKE_CXX_COMPILER_ID STREQUAL "GHS") # There is no -Wextra flag for GHS compiler.
+         list(APPEND _qt_compiler_warning_flags_on -Wall)
+     else()
+         list(APPEND _qt_compiler_warning_flags_on -Wall -Wextra)
+     endif()
+-    list(APPEND _qt_compiler_warning_flags_off -w)
+ endif()
+ 
+ set(_qt_compiler_warning_flags_condition
+diff --git a/cmake/QtCompilerOptimization.cmake b/cmake/QtCompilerOptimization.cmake
+index ea07330945..b64a7a1dac 100644
+--- a/cmake/QtCompilerOptimization.cmake
++++ b/cmake/QtCompilerOptimization.cmake
+@@ -90,14 +90,14 @@ endif()
+ 
+ # Windows MSVC
+ if(MSVC)
+-    set(QT_CFLAGS_OPTIMIZE "-O2")
+-    set(QT_CFLAGS_OPTIMIZE_DEBUG "-Od")
+-    set(QT_CFLAGS_OPTIMIZE_SIZE "-O1")
+-    set(QT_CFLAGS_OPTIMIZE_VALID_VALUES "/O2" "/O1" "/Od" "/Ob0" "/Ob1" "/Ob2" "/O0" "-O0")
++    set(QT_CFLAGS_OPTIMIZE "-O2 -Ob3 -Oi -Oy")
++    set(QT_CFLAGS_OPTIMIZE_DEBUG "-Od -Ob0")
++    set(QT_CFLAGS_OPTIMIZE_SIZE "-O1 -Ob2")
++    set(QT_CFLAGS_OPTIMIZE_VALID_VALUES "/O2" "/O1" "/Od" "/Ob0" "/Ob1" "/Ob2" "/Ob3" "/O0" "-O0")
+ 
+     if(CLANG)
+-        set(QT_CFLAGS_OPTIMIZE_FULL "/clang:-O3")
+-        set(QT_CFLAGS_OPTIMIZE_SIZE "/clang:-Oz")
++        set(QT_CFLAGS_OPTIMIZE_FULL "/clang:-O3 -Ob2 -Oi -Oy")
++        set(QT_CFLAGS_OPTIMIZE_SIZE "/clang:-Oz -Ob1")
+     endif()
+ endif()
+ 
+@@ -125,6 +125,6 @@ if(WASM)
+     set(QT_CFLAGS_OPTIMIZE_SIZE "-Os")
+     set(QT_CFLAGS_OPTIMIZE_DEBUG "-g2")
+ 
+-    set(QT_CFLAGS_SSE2 -O2 -msimd128 -msse -msse2)
++    set(QT_CFLAGS_SSE2 "-O2 -msimd128 -msse -msse2")
+ 
+ endif()
+diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
+index e707a2a91c..db41090d11 100644
+--- a/cmake/QtInternalTargets.cmake
++++ b/cmake/QtInternalTargets.cmake
+@@ -263,14 +263,16 @@ if (MSVC)
+     target_compile_options(PlatformCommonInternal INTERFACE
+         -Zc:wchar_t
+         -bigobj
++        -await:strict
+     )
+ 
+     target_compile_options(PlatformCommonInternal INTERFACE
+-        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -Gw>
++        $<$<CONFIG:Debug>:-JMC>
++        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -GT -Gw -Gy>
+     )
+ 
+     target_link_options(PlatformCommonInternal INTERFACE
+-        -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE
++        -DYNAMICBASE -HIGHENTROPYVA -NXCOMPAT -LARGEADDRESSAWARE
+         $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
+     )
+ endif()
+@@ -289,11 +291,33 @@ if(QT_FEATURE_intelcet)
+             -guard:ehcont
+         )
+         target_link_options(PlatformCommonInternal INTERFACE
+-            -guard:ehcont -CETCOMPAT
++            -guard:ehcont -CETCOMPAT -force:guardehcont
+         )
+     else()
+         target_compile_options(PlatformCommonInternal INTERFACE
+-            -fcf-protection
++            -fcf-protection=full
++        )
++    endif()
++endif()
++
++if(QT_FEATURE_spectre)
++    if(CLANG)
++        target_compile_options(PlatformCommonInternal INTERFACE
++            -mretpoline
++        )
++        target_link_options(PlatformCommonInternal INTERFACE
++            -z retpolineplt -z now
++        )
++    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
++        target_compile_options(PlatformCommonInternal INTERFACE
++            -mindirect-branch=thunk
++            -mfunction-return=thunk
++            -mindirect-branch-register
++            -mindirect-branch-cs-prefix
++        )
++    elseif(MSVC)
++        target_compile_options(PlatformCommonInternal INTERFACE
++            -Qspectre-load
+         )
+     endif()
+ endif()
+diff --git a/config_help.txt b/config_help.txt
+index aabf2aab4a..82781dcafa 100644
+--- a/config_help.txt
++++ b/config_help.txt
+@@ -138,6 +138,7 @@ Build options:
+   -pch ................. Use precompiled headers [auto]
+   -ltcg ................ Use Link Time Code Generation [no]
+   -intelcet ............ Use Intel Control-flow Enforcement Technology [no]
++  -spectre ............. Mitigate Spectre security vulnerabilities [no]
+   -linker [bfd,gold,lld,mold]
+                          Force use of the GNU ld, GNU gold, LLVM/LLD or mold
+                          linker instead of default one (GCC and clang only)
+diff --git a/configure.cmake b/configure.cmake
+index c75f07fd40..b4256009b9 100644
+--- a/configure.cmake
++++ b/configure.cmake
+@@ -1061,6 +1061,10 @@ qt_feature("intelcet" PRIVATE
+     LABEL "Using Intel CET"
+     CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
+ )
++qt_feature("spectre" PRIVATE
++    LABEL "Mitigate Spectre security vulnerabilities"
++    CONDITION ( INPUT_spectre STREQUAL yes )
++)
+ qt_configure_add_summary_build_type_and_config()
+ qt_configure_add_summary_section(NAME "Build options")
+ qt_configure_add_summary_build_mode(Mode)
+@@ -1111,6 +1115,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
+ qt_configure_add_summary_entry(ARGS "precompile_header")
+ qt_configure_add_summary_entry(ARGS "ltcg")
+ qt_configure_add_summary_entry(ARGS "intelcet")
++qt_configure_add_summary_entry(ARGS "spectre")
+ qt_configure_add_summary_section(NAME "Target compiler supports")
+ qt_configure_add_summary_entry(
+     TYPE "featureList"
+diff --git a/qt_cmdline.cmake b/qt_cmdline.cmake
+index c0c875fa78..7a257a4df9 100644
+--- a/qt_cmdline.cmake
++++ b/qt_cmdline.cmake
+@@ -68,6 +68,7 @@ qt_commandline_option(libudev TYPE boolean)
+ qt_commandline_option(linker TYPE optionalString VALUES bfd gold lld mold)
+ qt_commandline_option(ltcg TYPE boolean)
+ qt_commandline_option(intelcet TYPE boolean)
++qt_commandline_option(spectre TYPE boolean)
+ # special case begin
+ qt_commandline_option(make TYPE addString VALUES examples libs tests tools
+                       benchmarks manual-tests minimal-static-tests)
+diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
+index 93519dc730..4bcde6064b 100644
+--- a/src/plugins/platforms/windows/qwindowswindow.cpp
++++ b/src/plugins/platforms/windows/qwindowswindow.cpp
+@@ -802,7 +802,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+     if (topLevel) {
+         if ((type == Qt::Window || dialog || tool)) {
+             if (!(flags & Qt::FramelessWindowHint)) {
+-                style |= WS_POPUP;
+                 if (flags & Qt::MSWindowsFixedSizeDialogHint) {
+                     style |= WS_DLGFRAME;
+                 } else {
+-- 
+2.36.1.windows.1
+

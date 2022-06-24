@@ -25,35 +25,29 @@ setlocal
 title Preparing vcpkg ...
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
-set __vcpkg_triplets=x64-windows-static
-:: ZSTD: needed by QtCore & QtNetwork
-:: OpenSSL: needed by QtNetwork (the OpenSSL backend)
-:: ICU: needed by QtCore
 :: Build these libraries as static libraries so that we don't have to
 :: distribute a lot of separate dlls along side with Qt.
 :: Feel free to change them if you are worried about license issues.
-set __qt_deps=zstd openssl icu
-:: Use my own fork which has some modifications of the compiler parameters.
-set __git_clone_url=https://github.com/wangwenx190/vcpkg.git
+set __vcpkg_triplets=x64-windows-static
+:: ZSTD: needed by QtCore & QtNetwork
+:: ICU: needed by QtCore
+:: OpenSSL: needed by QtNetwork (the OpenSSL backend)
+set __qt_deps=zstd icu openssl
+set __git_clone_url=https://github.com/microsoft/vcpkg.git
 :: Separate the branch name here in case it changes to something else
 :: in the future.
-set __git_clone_branch=main
+set __git_clone_branch=master
 :: Use shallow clone to reduce the download size and time.
 :: We don't need the commit history after all.
 set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
 set __git_fetch_params=fetch --depth=1 --no-tags
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 cd /d "%__repo_root_dir%"
-if exist "%__vcpkg_dir%" (
-    cd "%__vcpkg_dir%"
-    git %__git_fetch_params%
-    git %__git_reset_params%
-    :: Don't execute "git clean" here, otherwise all our build
-    :: artifacts will be deleted permanently!
-) else (
-    git %__git_clone_params%
-    cd "%__vcpkg_dir%"
-)
+if exist "%__vcpkg_dir%" rd /s /q "%__vcpkg_dir%"
+git %__git_clone_params%
+cd "%__vcpkg_dir%"
+:: Apply our custom modification to VCPKG.
+git am --3way "%__repo_root_dir%\patches\vcpkg.patch"
 :: Always try to get the latest vcpkg tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"

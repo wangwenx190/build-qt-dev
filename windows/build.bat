@@ -81,8 +81,8 @@ if /i "%__module%" == "" (
 title Building %__module% ...
 set __is_building_qtbase=false
 if /i "%__module%" == "qtbase" set __is_building_qtbase=true
-:: Or use the GitHub mirror: https://github.com/qt/%__module%.git
-set __git_clone_url=https://code.qt.io/qt/%__module%.git
+:: Or use the official read-only repo: https://code.qt.io/qt/%__module%.git
+set __git_clone_url=https://github.com/qt/%__module%.git
 :: You can change the branch here, such as 6.3.0, 5.15.3 and etc...
 :: However, please make sure you are using a branch name, not a tag name.
 set __git_clone_branch=dev
@@ -195,12 +195,18 @@ if /i "%__ninja_multi_config%" == "false" (
 :: The "Relocatable" feature will be disabled for static builds automatically, so here
 :: we explicitly enable it unconditionally.
 :: The official Qt packages always use the bundled ZLIB library, so we mirrored the behavior here.
+:: And we also enable the ICU feature here, without it Qt's codec handling will be quite
+:: limited, and QtWebEngine can make use of it as well.
 :: "INPUT_openssl" controls how Qt links against the OpenSSL libraries. By default Qt will
 :: try to load OpenSSL libraries dynamically at runtime, if they can't be found or loaded,
 :: Qt will then try to use the fallback implementation. Since we always build the OpenSSL libraries
 :: in VCPKG, we can let Qt link against them directly. QtNetwork will have some limitations if
 :: the OpenSSL libraries are not available.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_openssl=linked
+:: We also enable the use of the Intel Control-flow Enforcement Technology (CET) and mitigate for
+:: the Spectre security vulnerabilities to make our applications and libraries extra safe.
+:: All the above CMake switches are only available for the QtBase module, passing them to other
+:: modules will have no effect and will also cause some CMake warnings.
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DFEATURE_intelcet=ON -DFEATURE_spectre=ON
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
@@ -289,22 +295,20 @@ if not exist "%__repo_build_dir%" md "%__repo_build_dir%"
 cd "%__repo_build_dir%"
 if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd "%__repo_source_dir%"
-if exist "%__module_source_dir%" (
-    cd "%__module_source_dir%"
-    git %__git_fetch_params%
-    if %errorlevel% neq 0 goto err
-    git %__git_reset_params%
-    if %errorlevel% neq 0 goto err
-    git %__git_clean_params%
-    if %errorlevel% neq 0 goto err
-) else (
-    git %__git_clone_params%
+if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
+git %__git_clone_params%
+if %errorlevel% neq 0 goto err
+:: Apply our custom modification to QtBase.
+if /i "%__is_building_qtbase%" == "true" (
+    cd /d "%__module_source_dir%"
+    git am --3way "%__repo_root_dir%\patches\qtbase.patch"
     if %errorlevel% neq 0 goto err
 )
 cd "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
 cd "%__repo_cache_dir%"
-if not exist "%__module_cache_dir%" md "%__module_cache_dir%"
+if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
+md "%__module_cache_dir%"
 cd "%__module_cache_dir%"
 cmake %__cmake_config_params%
 if %errorlevel% neq 0 goto err
