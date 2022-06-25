@@ -31,8 +31,7 @@ set __vcpkg_dir=%__repo_root_dir%\vcpkg
 set __vcpkg_triplets=x64-windows-static
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore
-:: OpenSSL: needed by QtNetwork (the OpenSSL backend)
-set __qt_deps=zstd icu openssl
+set __qt_deps=zstd icu
 set __git_clone_url=https://github.com/microsoft/vcpkg.git
 :: Separate the branch name here in case it changes to something else
 :: in the future.

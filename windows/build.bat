@@ -199,16 +199,11 @@ if /i "%__ninja_multi_config%" == "false" (
 :: The official Qt packages always use the bundled ZLIB library, so we mirrored the behavior here.
 :: And we also enable the ICU feature here, without it Qt's codec handling will be quite
 :: limited, and QtWebEngine can make use of it as well.
-:: "INPUT_openssl" controls how Qt links against the OpenSSL libraries. By default Qt will
-:: try to load OpenSSL libraries dynamically at runtime, if they can't be found or loaded,
-:: Qt will then try to use the fallback implementation. Since we always build the OpenSSL libraries
-:: in VCPKG, we can let Qt link against them directly. QtNetwork will have some limitations if
-:: the OpenSSL libraries are not available.
 :: We also enable the use of the Intel Control-flow Enforcement Technology (CET) and mitigate for
 :: the Spectre security vulnerabilities to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes -DQT_USE_VCLTL=ON
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_intelcet=yes -DINPUT_spectre=yes -DQT_USE_VCLTL=ON
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
