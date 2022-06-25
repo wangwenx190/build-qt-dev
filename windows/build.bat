@@ -303,7 +303,7 @@ if %errorlevel% neq 0 goto err
 :: Apply our custom modification to QtBase.
 if /i "%__is_building_qtbase%" == "true" (
     cd /d "%__module_source_dir%"
-    git am "%__repo_root_dir%\patches\qtbase.diff"
+    git apply "%__repo_root_dir%\patches\qtbase.diff"
     if %errorlevel% neq 0 goto err
 )
 cd "%__repo_build_dir%"
