@@ -1,4 +1,4 @@
-From 3f14b99c7e85d7fe72f2b04abf5818eceff930c9 Mon Sep 17 00:00:00 2001
+From 100ed133325968dd2509e381b7ffa76e5664bd22 Mon Sep 17 00:00:00 2001
 From: Yuhang Zhao <2546789017@qq.com>
 Date: Fri, 17 Jun 2022 20:33:03 +0800
 Subject: [PATCH] wangwenx190: Custom tweaks
@@ -8,17 +8,22 @@ Change list:
 2. Add support for mitigating Intel Jump Conditional Code (JCC) issues.
 3. Win32: Remove WS_POPUP for most cases.
 4. MSVC: Use more aggressive optimizations.
+5. MSVC: Add support for VC-LTL.
+6. TODO: MSVC: Add support for YY-Thunks.
 
 Signed-off-by: Yuhang Zhao <2546789017@qq.com>
 ---
- cmake/QtCompilerFlags.cmake                   |  6 +--
- cmake/QtCompilerOptimization.cmake            | 14 +++---
- cmake/QtInternalTargets.cmake                 | 48 +++++++++++++++++--
+ cmake/QtCompilerFlags.cmake                   |  6 +-
+ cmake/QtCompilerOptimization.cmake            | 14 +--
+ cmake/QtInternalTargets.cmake                 | 48 +++++++++-
+ cmake/QtSetup.cmake                           | 15 ++++
+ cmake/VC-LTL.cmake                            | 88 +++++++++++++++++++
  config_help.txt                               |  1 +
  configure.cmake                               |  5 ++
  qt_cmdline.cmake                              |  1 +
  .../platforms/windows/qwindowswindow.cpp      |  1 -
- 7 files changed, 60 insertions(+), 16 deletions(-)
+ 9 files changed, 163 insertions(+), 16 deletions(-)
+ create mode 100644 cmake/VC-LTL.cmake
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index a34aaca20b..d8f488b2c9 100644
@@ -153,6 +158,123 @@ index e707a2a91c..805e09fdc9 100644
          )
      endif()
  endif()
+diff --git a/cmake/QtSetup.cmake b/cmake/QtSetup.cmake
+index 60b0bd0209..47cb894928 100644
+--- a/cmake/QtSetup.cmake
++++ b/cmake/QtSetup.cmake
+@@ -330,3 +330,18 @@ to ${FEATURE_${feature}}")
+ Some features will be re-evaluated automatically.")
+     endif()
+ endif()
++
++# Shared to msvcrt.dll or ucrtbase.dll and optimize the C/C++ application file size.
++# https://github.com/Chuyu-Team/VC-LTL5
++option(QT_USE_VCLTL "Enable the use of VC-LTL.")
++if(QT_USE_VCLTL)
++    if(MSVC)
++        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
++        if(DEFINED QT_VCLTL_DIR)
++            set(VC_LTL_Root ${QT_VCLTL_DIR} CACHE STRING "" FORCE)
++        endif()
++        set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
++        set(CleanImport "true" CACHE STRING "" FORCE)
++        include(VC-LTL)
++    endif()
++endif()
+diff --git a/cmake/VC-LTL.cmake b/cmake/VC-LTL.cmake
+new file mode 100644
+index 0000000000..887b56f718
+--- /dev/null
++++ b/cmake/VC-LTL.cmake
+@@ -0,0 +1,88 @@
++﻿cmake_minimum_required(VERSION 3.5.2)
++
++#
++#  VC-LTL自动化加载配置，建议你将此文件单独复制到你的工程再使用，该文件能自动识别当前环境是否存在VC-LTL，并且自动应用。
++#
++#  使用方法：
++#    1. 在“CMakeLists.txt” 添加 “include("VC-LTL helper for cmake.cmake")”。
++#
++#  VC-LTL默认搜索顺序
++#    1. “VC-LTL helper for cmake.cmake”所在根目录，即 ${CMAKE_CURRENT_LIST_DIR}
++#    2. 当前CMake根目录，即 ${CMAKE_CURRENT_SOURCE_DIR}/VC-LTL
++#    3. 当前项目根目录，即 ${PROJECT_SOURCE_DIR}/VC-LTL
++#    4. 当前CMake父目录，即 ${CMAKE_CURRENT_SOURCE_DIR}/../VC-LTL
++#    5. 当前项目根目录，即 ${PROJECT_SOURCE_DIR}/../VC-LTL
++#    6. 注册表HKEY_CURRENT_USER\Code\VC-LTL@Root
++#
++#  把VC-LTL放在其中一个位置即可，VC-LTL就能被自动引用。
++#
++#  如果你对默认搜索顺序不满，你可以修改此文件。你也可以直接指定${VC_LTL_Root}宏更加任性的去加载VC-LTL。
++#
++
++
++
++
++#####################################################################VC-LTL设置#####################################################################
++
++#控制TargetPlatform版本，目前可用版本为5.1.2600.0     6.0.6000.0（默认）    6.2.9200.0     10.0.10240.0    10.0.19041.0
++#set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
++
++#启用干净的导入表，消除 ucrt apiset(如：api-ms-win-crt-time-l1-1-0.dll)，满足强迫症患者。
++#set(CleanImport "true" CACHE STRING "" FORCE)
++
++####################################################################################################################################################
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/_msvcrt.h)
++		set(VC_LTL_Root ${CMAKE_CURRENT_LIST_DIR})
++	endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/VC-LTL/_msvcrt.h)
++		set(VC_LTL_Root ${CMAKE_CURRENT_SOURCE_DIR}/VC-LTL)
++	endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${PROJECT_SOURCE_DIR}/VC-LTL/_msvcrt.h)
++        set(VC_LTL_Root ${PROJECT_SOURCE_DIR}/VC-LTL)
++    endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../VC-LTL/_msvcrt.h)
++        set(VC_LTL_Root ${CMAKE_CURRENT_SOURCE_DIR}/../VC-LTL)
++    endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${PROJECT_SOURCE_DIR}/../VC-LTL/_msvcrt.h)
++        set(VC_LTL_Root ${PROJECT_SOURCE_DIR}/../VC-LTL)
++    endif()
++endif()
++
++if(NOT VC_LTL_Root)
++    EXECUTE_PROCESS(COMMAND reg query "HKEY_CURRENT_USER\\Code\\VC-LTL" -v "Root"
++                    OUTPUT_VARIABLE FOUND_FILE
++                    ERROR_VARIABLE ERROR_INFO
++                   )
++
++    string(REGEX MATCH "[a-zA-Z]:\\\\.+\\\\"
++           FOUND_LTL
++           ${FOUND_FILE})
++    if (NOT ${FOUND_LTL} STREQUAL "")
++        set(VC_LTL_Root ${FOUND_LTL})
++    endif()
++
++    if(NOT DEFINED VC_LTL_Root)
++        string(REGEX MATCH "\\\\\\\\.+\\\\" FOUND_LTL ${FOUND_FILE})
++        if (NOT ${FOUND_LTL} STREQUAL "")
++            set(VC_LTL_Root ${FOUND_LTL})
++        endif()
++    endif()
++endif()
++
++if(VC_LTL_Root)
++    include("${VC_LTL_Root}\\config\\config.cmake")
++endif()
 diff --git a/config_help.txt b/config_help.txt
 index aabf2aab4a..82781dcafa 100644
 --- a/config_help.txt

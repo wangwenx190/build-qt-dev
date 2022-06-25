@@ -138,7 +138,7 @@ if /i "%__compiler%" == "clangcl" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
 )
 if /i "%__lib_type%" == "static" (
-    ::set __should_enable_ltcg=false :: Commented out temporarily.
+    set __should_enable_ltcg=false
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=ON
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON

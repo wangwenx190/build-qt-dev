@@ -1,4 +1,4 @@
-From bdf33dc5b142fb1161dcaa226650afc11f44ea9a Mon Sep 17 00:00:00 2001
+From 7a69f886273f10592e2a9297317833f3549dd2e5 Mon Sep 17 00:00:00 2001
 From: Yuhang Zhao <2546789017@qq.com>
 Date: Sun, 19 Jun 2022 13:06:56 +0800
 Subject: [PATCH] wangwenx190: Tweak compiler parameters
