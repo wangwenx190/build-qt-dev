@@ -140,7 +140,7 @@ if /i "%__compiler%" == "clangcl" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
 )
 if /i "%__lib_type%" == "static" (
-    set __should_enable_ltcg=false
+    ::set __should_enable_ltcg=false :: Commented out temporarily.
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=ON
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
@@ -203,7 +203,7 @@ if /i "%__ninja_multi_config%" == "false" (
 :: the Spectre security vulnerabilities to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_intelcet=yes -DINPUT_spectre=yes -DQT_USE_VCLTL=ON
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"

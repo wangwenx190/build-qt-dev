@@ -1,34 +1,11 @@
- scripts/toolchains/windows.cmake | 33 +++++++++++++++++----------------
- 1 file changed, 17 insertions(+), 16 deletions(-)
+ scripts/toolchains/windows.cmake | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/scripts/toolchains/windows.cmake b/scripts/toolchains/windows.cmake
-index 7c8a54989..b6535cc96 100644
+index 7c8a54989..6b25a6ec9 100644
 --- a/scripts/toolchains/windows.cmake
 +++ b/scripts/toolchains/windows.cmake
-@@ -1,6 +1,6 @@
- if(NOT _VCPKG_WINDOWS_TOOLCHAIN)
- set(_VCPKG_WINDOWS_TOOLCHAIN 1)
--set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<STREQUAL:${VCPKG_CRT_LINKAGE},dynamic>:DLL>" CACHE STRING "")
-+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
- 
- set(CMAKE_SYSTEM_NAME Windows CACHE STRING "")
- 
-@@ -37,13 +37,7 @@ endif()
- get_property( _CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE )
- if(NOT _CMAKE_IN_TRY_COMPILE)
- 
--    if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
--        set(VCPKG_CRT_LINK_FLAG_PREFIX "/MD")
--    elseif(VCPKG_CRT_LINKAGE STREQUAL "static")
--        set(VCPKG_CRT_LINK_FLAG_PREFIX "/MT")
--    else()
--        message(FATAL_ERROR "Invalid setting for VCPKG_CRT_LINKAGE: \"${VCPKG_CRT_LINKAGE}\". It must be \"static\" or \"dynamic\"")
--    endif()
-+    set(VCPKG_CRT_LINK_FLAG_PREFIX "/MT" CACHE STRING "" FORCE)
- 
-     set(CHARSET_FLAG "/utf-8")
-     if (NOT VCPKG_SET_CHARSET_FLAG OR VCPKG_PLATFORM_TOOLSET MATCHES "v120")
-@@ -51,23 +45,30 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
+@@ -51,20 +51,20 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
          set(CHARSET_FLAG)
      endif()
  
@@ -52,18 +29,8 @@ index 7c8a54989..b6535cc96 100644
      string(APPEND CMAKE_STATIC_LINKER_FLAGS_RELEASE_INIT " /nologo ")
 -    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/nologo /DEBUG /INCREMENTAL:NO /OPT:REF /OPT:ICF ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_RELEASE}" CACHE STRING "")
 -    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/nologo /DEBUG /INCREMENTAL:NO /OPT:REF /OPT:ICF ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_RELEASE}" CACHE STRING "")
-+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/nologo /CETCOMPAT /DYNAMICBASE /HIGHENTROPYVA /LARGEADDRESSAWARE /LTCG /NXCOMPAT /INCREMENTAL:NO /OPT:REF /OPT:ICF /GUARD:CF /guard:ehcont /force:guardehcont ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_RELEASE}" CACHE STRING "")
-+    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/nologo /CETCOMPAT /DYNAMICBASE /HIGHENTROPYVA /LARGEADDRESSAWARE /LTCG /NXCOMPAT /TSAWARE /INCREMENTAL:NO /OPT:REF /OPT:ICF /GUARD:CF /guard:ehcont /force:guardehcont ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_RELEASE}" CACHE STRING "")
++    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "/nologo /CETCOMPAT /DYNAMICBASE /HIGHENTROPYVA /LARGEADDRESSAWARE /LTCG /NXCOMPAT /INCREMENTAL:NO /OPT:REF /OPT:ICF /GUARD:CF /guard:ehcont ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_RELEASE}" CACHE STRING "")
++    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/nologo /CETCOMPAT /DYNAMICBASE /HIGHENTROPYVA /LARGEADDRESSAWARE /LTCG /NXCOMPAT /TSAWARE /INCREMENTAL:NO /OPT:REF /OPT:ICF /GUARD:CF /guard:ehcont ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_RELEASE}" CACHE STRING "")
  
      string(APPEND CMAKE_STATIC_LINKER_FLAGS_DEBUG_INIT " /nologo ")
      string(APPEND CMAKE_SHARED_LINKER_FLAGS_DEBUG_INIT " /nologo ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_DEBUG} ")
-     string(APPEND CMAKE_EXE_LINKER_FLAGS_DEBUG_INIT " /nologo ${VCPKG_LINKER_FLAGS} ${VCPKG_LINKER_FLAGS_DEBUG} ")
-+
-+    # Shared to msvcrt.dll or ucrtbase.dll and optimize the C/C++ application file size.
-+    # https://github.com/Chuyu-Team/VC-LTL5
-+    set(VC_LTL_Root "${CMAKE_CURRENT_LIST_DIR}/../../../contrib/win/VC-LTL" CACHE STRING "" FORCE)
-+    set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
-+    set(CleanImport "true" CACHE STRING "" FORCE)
-+    include("${VC_LTL_Root}/VC-LTL.cmake")
- endif()
- endif()

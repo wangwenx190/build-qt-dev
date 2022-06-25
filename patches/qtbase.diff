@@ -1,12 +1,11 @@
- cmake/QtCompilerFlags.cmake                      |  6 +--
- cmake/QtCompilerOptimization.cmake               | 14 +++----
- cmake/QtInternalTargets.cmake                    | 48 ++++++++++++++++++++++--
- cmake/QtSetup.cmake                              | 13 +++++++
+ cmake/QtCompilerFlags.cmake                      |  6 ++--
+ cmake/QtCompilerOptimization.cmake               | 14 ++++----
+ cmake/QtInternalTargets.cmake                    | 46 ++++++++++++++++++++++--
  config_help.txt                                  |  1 +
  configure.cmake                                  |  5 +++
  qt_cmdline.cmake                                 |  1 +
  src/plugins/platforms/windows/qwindowswindow.cpp |  1 -
- 8 files changed, 73 insertions(+), 16 deletions(-)
+ 7 files changed, 59 insertions(+), 15 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index a34aaca20b..d8f488b2c9 100644
@@ -67,7 +66,7 @@ index ea07330945..b64a7a1dac 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index e707a2a91c..805e09fdc9 100644
+index e707a2a91c..2572d33694 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -263,14 +263,16 @@ if (MSVC)
@@ -89,12 +88,7 @@ index e707a2a91c..805e09fdc9 100644
          $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
      )
  endif()
-@@ -289,11 +291,49 @@ if(QT_FEATURE_intelcet)
-             -guard:ehcont
-         )
-         target_link_options(PlatformCommonInternal INTERFACE
--            -guard:ehcont -CETCOMPAT
-+            -guard:ehcont -CETCOMPAT -force:guardehcont
+@@ -293,7 +295,45 @@ if(QT_FEATURE_intelcet)
          )
      else()
          target_compile_options(PlatformCommonInternal INTERFACE
@@ -141,27 +135,6 @@ index e707a2a91c..805e09fdc9 100644
          )
      endif()
  endif()
-diff --git a/cmake/QtSetup.cmake b/cmake/QtSetup.cmake
-index 60b0bd0209..d126a4b8a9 100644
---- a/cmake/QtSetup.cmake
-+++ b/cmake/QtSetup.cmake
-@@ -330,3 +330,16 @@ to ${FEATURE_${feature}}")
- Some features will be re-evaluated automatically.")
-     endif()
- endif()
-+
-+# Shared to msvcrt.dll or ucrtbase.dll and optimize the C/C++ application file size.
-+# https://github.com/Chuyu-Team/VC-LTL5
-+option(QT_USE_VCLTL "Enable the use of VC-LTL.")
-+if(QT_USE_VCLTL)
-+    if(MSVC)
-+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
-+        set(VC_LTL_Root "${CMAKE_CURRENT_LIST_DIR}/../../../../contrib/win/VC-LTL" CACHE STRING "" FORCE)
-+        set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
-+        set(CleanImport "true" CACHE STRING "" FORCE)
-+        include("${VC_LTL_Root}/VC-LTL.cmake")
-+    endif()
-+endif()
 diff --git a/config_help.txt b/config_help.txt
 index aabf2aab4a..82781dcafa 100644
 --- a/config_help.txt
