@@ -112,7 +112,6 @@ set __repo_cache_dir=%__repo_build_dir%\cache\windows
 set __module_source_dir=%__repo_source_dir%\%__module%
 set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
-set __vcltl_dir=%__repo_contrib_dir%\VC-LTL
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
 set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
 set __vcpkg_triplet=%__arch%
@@ -209,7 +208,7 @@ if /i "%__ninja_multi_config%" == "false" (
 :: the Spectre security vulnerabilities to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes -DQT_USE_VCLTL=ON -DQT_VCLTL_DIR="%__vcltl_dir%"
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes -DQT_USE_VCLTL=ON
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
@@ -304,7 +303,7 @@ if %errorlevel% neq 0 goto err
 :: Apply our custom modification to QtBase.
 if /i "%__is_building_qtbase%" == "true" (
     cd /d "%__module_source_dir%"
-    git am --3way "%__repo_root_dir%\patches\qtbase.patch"
+    git am "%__repo_root_dir%\patches\qtbase.diff"
     if %errorlevel% neq 0 goto err
 )
 cd "%__repo_build_dir%"
