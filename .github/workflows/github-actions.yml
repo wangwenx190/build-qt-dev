@@ -1,0 +1,14 @@
+name: Build Qt SDK
+
+on: []
+
+jobs:
+  Windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v3
+
+    - name: Build
+      run: call "${{env.GITHUB_WORKSPACE}}\windows\start.bat"
