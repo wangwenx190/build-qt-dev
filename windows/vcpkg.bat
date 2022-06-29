@@ -22,16 +22,13 @@
 
 @echo off
 setlocal
-title Preparing vcpkg ...
+title Preparing VCPKG ...
+call "%~dp0github-actions-check.bat"
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
-:: Build these libraries as static libraries so that we don't have to
-:: distribute a lot of separate dlls along side with Qt.
-:: Feel free to change them if you are worried about license issues.
-set __vcpkg_triplets=x64-windows-static
-:: ZSTD: needed by QtCore & QtNetwork
-:: ICU: needed by QtCore
-set __qt_deps=zstd icu
+:: For GitHub Actions, it will always be "C:\vcpkg", normally.
+if /i "%__github_actions%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
+call "%~dp0vcpkg-config.bat"
 set __git_clone_url=https://github.com/microsoft/vcpkg.git
 :: Separate the branch name here in case it changes to something else
 :: in the future.
@@ -41,19 +38,31 @@ set __git_clone_branch=master
 set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
 set __git_fetch_params=fetch --depth=1 --no-tags
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
-cd /d "%__repo_root_dir%"
-if exist "%__vcpkg_dir%" rd /s /q "%__vcpkg_dir%"
-git %__git_clone_params%
-cd "%__vcpkg_dir%"
+if /i "%__github_actions%" == "true" (
+    cd /d "%__vcpkg_dir%"
+    :: Remove any leftover files and/or folders.
+    git clean -fdx
+    :: Cleanup the work tree.
+    git stash
+    :: Remove any previously stored changes.
+    git stash clear
+    :: Fetch and merge the latest upstream code.
+    git pull
+) else (
+    cd /d "%__repo_root_dir%"
+    if exist "%__vcpkg_dir%" rd /s /q "%__vcpkg_dir%"
+    git %__git_clone_params%
+)
+cd /d "%__vcpkg_dir%"
 :: Apply our custom modification to VCPKG.
 git apply "%__repo_root_dir%\patches\vcpkg.diff"
-:: Always try to get the latest vcpkg tool.
+:: Always try to get the latest VCPKG tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"
 for %%i in (%__vcpkg_triplets%) do vcpkg install %__qt_deps% --triplet=%%i
 :: Always try to update the libraries to the latest version.
 vcpkg update
-:: Without the "--no-dry-run" parameter, vcpkg won't upgrade
+:: Without the "--no-dry-run" parameter, VCPKG won't upgrade
 :: the installed libraries in reality.
 vcpkg upgrade --no-dry-run
 cd /d "%__repo_root_dir%"

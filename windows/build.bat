@@ -102,6 +102,7 @@ set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 :: Cleanup untracked files, not necessary but recommended.
 set __git_clean_params=clean -fdx
+call "%~dp0github-actions-check.bat"
 set __repo_root_dir=%~dp0..
 set __repo_contrib_dir=%__repo_root_dir%\contrib\win
 set __contrib_bin_dir=%__repo_contrib_dir%\bin
@@ -113,6 +114,8 @@ set __module_source_dir=%__repo_source_dir%\%__module%
 set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
+:: For GitHub Actions, it will always be "C:\vcpkg", normally.
+if /i "%__github_actions%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
 set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
 set __vcpkg_triplet=%__arch%
 if /i "%__compiler%" == "mingw" (
@@ -124,7 +127,7 @@ set __vcpkg_triplet=%__vcpkg_triplet%-static
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
 set __cmake_extra_params=-DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
-if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__repo_install_dir%"
+if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%__repo_install_dir%"
 set __install_cmdline=
 if /i "%__compiler%" == "clangcl" (
     :: Some make tools will not be able to find the compiler if we don't
@@ -140,7 +143,7 @@ if /i "%__compiler%" == "clangcl" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
 )
 if /i "%__lib_type%" == "static" (
-    ::set __should_enable_ltcg=false :: Commented out temporarily.
+    set __should_enable_ltcg=false
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=ON
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
@@ -217,8 +220,7 @@ set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 set __vs_install_dir=
 set __vs_dev_cmd=
-:: Add the compiler and tool's directory to the PATH environment variable.
-call "%~dp0path.bat"
+set PATH=%__contrib_bin_dir%;%PATH%
 if /i "%__compiler%" == "mingw" (
     where g++
     if %errorlevel% equ 0 (
@@ -289,9 +291,9 @@ echo Build command-line: cmake %__cmake_build_params%
 echo Install command-line: %__install_cmdline%
 cd /d "%__repo_root_dir%"
 if not exist "%__repo_build_dir%" md "%__repo_build_dir%"
-cd "%__repo_build_dir%"
+cd /d "%__repo_build_dir%"
 if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
-cd "%__repo_source_dir%"
+cd /d "%__repo_source_dir%"
 if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
 git %__git_clone_params%
 if %errorlevel% neq 0 goto err
@@ -301,12 +303,12 @@ if /i "%__is_building_qtbase%" == "true" (
     git apply "%__repo_root_dir%\patches\qtbase.diff"
     if %errorlevel% neq 0 goto err
 )
-cd "%__repo_build_dir%"
+cd /d "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
-cd "%__repo_cache_dir%"
+cd /d "%__repo_cache_dir%"
 if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
 md "%__module_cache_dir%"
-cd "%__module_cache_dir%"
+cd /d "%__module_cache_dir%"
 cmake %__cmake_config_params%
 if %errorlevel% neq 0 goto err
 cmake %__cmake_build_params%
@@ -321,5 +323,5 @@ exit /b 0
 color 74
 cd /d "%__repo_root_dir%"
 endlocal
-pause
+if /i "%__github_actions%" == "false" pause
 exit /b 1

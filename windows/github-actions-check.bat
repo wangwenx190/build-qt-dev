@@ -21,23 +21,6 @@
 :: SOFTWARE.
 
 @echo off
-setlocal
-call "%~dp0build-config.bat"
-set __build_script_path=%~dp0build.bat
-set __build_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%
-set __repo_root_dir=%~dp0..
-call "%~dp0vcpkg.bat"
-for %%i in (%__qt_modules%) do (
-    call "%__build_script_path%" %__build_params% %%i
-    :: Something wrong has happened, error out early because the following
-    :: repositories won't be able to build due to lack of dependencies.
-    if %errorlevel% neq 0 goto fin
-)
-call "%~dp0pack.bat"
-goto fin
-
-:fin
-cd /d "%__repo_root_dir%"
-endlocal
-if /i "%__github_actions%" == "false" pause
+set __github_actions=false
+if exist "%~dp0..\GITHUB_ACTIONS.LCK" set __github_actions=true
 exit /b

@@ -22,10 +22,11 @@
 
 @echo off
 setlocal
-:: Add 7-Zip's directory to the PATH environment variable.
-call "%~dp0path.bat"
+call "%~dp0github-actions-check.bat"
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
+:: Add 7-Zip executable's folder path to the PATH env var.
+set PATH=%__repo_root_dir%\contrib\win\bin;%PATH%
 :: This parameter combination means the ultra compression in most situtaions.
 set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=1g:fb=273
 if not exist "%__repo_install_dir%" goto fin
@@ -50,5 +51,5 @@ goto fin
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
-pause
+if /i "%__github_actions%" == "false" pause
 exit /b

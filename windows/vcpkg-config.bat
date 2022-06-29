@@ -21,13 +21,11 @@
 :: SOFTWARE.
 
 @echo off
-:: This file will setup all the paths needed by our scripts.
-:: Don't forget to change them to your own real paths!
-set __mingw_dir=%ProgramFiles%\MinGW\bin
-set __clangcl_dir=%ProgramFiles%\LLVM\bin
-set __git_dir=%ProgramFiles%\Git\bin
-set __cmake_dir=%ProgramFiles%\CMake\bin
-set __ninja_dir=%ProgramFiles%\Ninja
-set __7zip_dir=%ProgramFiles%\7-Zip
-set PATH=%__mingw_dir%;%__clangcl_dir%;%__git_dir%;%__cmake_dir%;%__ninja_dir%;%__7zip_dir%;%PATH%
+:: Build these libraries as static libraries so that we don't have to
+:: distribute a lot of separate dlls along side with Qt.
+:: Feel free to change them if you are worried about license issues.
+set __vcpkg_triplets=x64-windows-static
+:: ZSTD: needed by QtCore & QtNetwork
+:: ICU: needed by QtCore
+set __qt_deps=zstd icu
 exit /b
