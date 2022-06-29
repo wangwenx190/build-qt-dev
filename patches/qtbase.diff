@@ -33,10 +33,10 @@ index a34aaca20b..d8f488b2c9 100644
  
  set(_qt_compiler_warning_flags_condition
 diff --git a/cmake/QtCompilerOptimization.cmake b/cmake/QtCompilerOptimization.cmake
-index ea07330945..b64a7a1dac 100644
+index 4233aece76..3cef343e22 100644
 --- a/cmake/QtCompilerOptimization.cmake
 +++ b/cmake/QtCompilerOptimization.cmake
-@@ -90,14 +90,14 @@ endif()
+@@ -89,14 +89,14 @@ endif()
  
  # Windows MSVC
  if(MSVC)
@@ -57,7 +57,7 @@ index ea07330945..b64a7a1dac 100644
      endif()
  endif()
  
-@@ -125,6 +125,6 @@ if(WASM)
+@@ -124,6 +124,6 @@ if(WASM)
      set(QT_CFLAGS_OPTIMIZE_SIZE "-Os")
      set(QT_CFLAGS_OPTIMIZE_DEBUG "-g2")
  
@@ -66,10 +66,10 @@ index ea07330945..b64a7a1dac 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index e707a2a91c..2572d33694 100644
+index bf7ef3cf36..024a3a81e6 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -263,14 +263,16 @@ if (MSVC)
+@@ -254,14 +254,16 @@ if (MSVC)
      target_compile_options(PlatformCommonInternal INTERFACE
          -Zc:wchar_t
          -bigobj
@@ -88,7 +88,7 @@ index e707a2a91c..2572d33694 100644
          $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
      )
  endif()
-@@ -293,7 +295,45 @@ if(QT_FEATURE_intelcet)
+@@ -284,7 +286,45 @@ if(QT_FEATURE_intelcet)
          )
      else()
          target_compile_options(PlatformCommonInternal INTERFACE
@@ -136,10 +136,10 @@ index e707a2a91c..2572d33694 100644
      endif()
  endif()
 diff --git a/config_help.txt b/config_help.txt
-index aabf2aab4a..82781dcafa 100644
+index bd229c43a4..0452b1e9ec 100644
 --- a/config_help.txt
 +++ b/config_help.txt
-@@ -138,6 +138,7 @@ Build options:
+@@ -134,6 +134,7 @@ Build options:
    -pch ................. Use precompiled headers [auto]
    -ltcg ................ Use Link Time Code Generation [no]
    -intelcet ............ Use Intel Control-flow Enforcement Technology [no]
@@ -148,10 +148,10 @@ index aabf2aab4a..82781dcafa 100644
                           Force use of the GNU ld, GNU gold, LLVM/LLD or mold
                           linker instead of default one (GCC and clang only)
 diff --git a/configure.cmake b/configure.cmake
-index c75f07fd40..b4256009b9 100644
+index 32b4abb228..ec1bcdefad 100644
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -1061,6 +1061,10 @@ qt_feature("intelcet" PRIVATE
+@@ -987,6 +987,10 @@ qt_feature("intelcet" PRIVATE
      LABEL "Using Intel CET"
      CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
  )
@@ -162,7 +162,7 @@ index c75f07fd40..b4256009b9 100644
  qt_configure_add_summary_build_type_and_config()
  qt_configure_add_summary_section(NAME "Build options")
  qt_configure_add_summary_build_mode(Mode)
-@@ -1111,6 +1115,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
+@@ -1037,6 +1041,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
  qt_configure_add_summary_entry(ARGS "precompile_header")
  qt_configure_add_summary_entry(ARGS "ltcg")
  qt_configure_add_summary_entry(ARGS "intelcet")
