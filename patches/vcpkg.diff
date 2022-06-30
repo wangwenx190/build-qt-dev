@@ -2,7 +2,7 @@
  1 file changed, 24 insertions(+), 9 deletions(-)
 
 diff --git a/scripts/toolchains/windows.cmake b/scripts/toolchains/windows.cmake
-index 7c8a54989..ec8917694 100644
+index 7c8a54989..303aed70a 100644
 --- a/scripts/toolchains/windows.cmake
 +++ b/scripts/toolchains/windows.cmake
 @@ -51,20 +51,35 @@ if(NOT _CMAKE_IN_TRY_COMPILE)
@@ -19,7 +19,7 @@ index 7c8a54989..ec8917694 100644
      unset(CHARSET_FLAG)
 +    set(GL_FLAG)
 +    set(LTCG_FLAG)
-+    if(${VCPKG_LIBRARY_LINKAGE} STREQUAL "dynamic")
++    if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
 +        set(GL_FLAG /GL)
 +        set(LTCG_FLAG /LTCG)
 +    endif()
@@ -35,7 +35,7 @@ index 7c8a54989..ec8917694 100644
 -    set(CMAKE_C_FLAGS_RELEASE "${VCPKG_CRT_LINK_FLAG_PREFIX} /O2 /Oi /Gy /DNDEBUG /Z7 ${VCPKG_C_FLAGS_RELEASE}" CACHE STRING "")
 +    unset(GL_FLAG)
 +    set(HEVA_FLAG)
-+    if(${VCPKG_TARGET_ARCHITECTURE} STREQUAL "x64")
++    if(VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
 +        set(HEVA_FLAG /HIGHENTROPYVA)
 +    endif()
  
