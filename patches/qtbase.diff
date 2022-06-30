@@ -1,14 +1,14 @@
- cmake/QtCompilerFlags.cmake                      |  6 ++--
+ cmake/QtCompilerFlags.cmake                      |  4 +--
  cmake/QtCompilerOptimization.cmake               | 14 ++++----
  cmake/QtInternalTargets.cmake                    | 46 ++++++++++++++++++++++--
  config_help.txt                                  |  1 +
  configure.cmake                                  |  5 +++
  qt_cmdline.cmake                                 |  1 +
  src/plugins/platforms/windows/qwindowswindow.cpp |  1 -
- 7 files changed, 59 insertions(+), 15 deletions(-)
+ 7 files changed, 58 insertions(+), 14 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
-index a34aaca20b..d8f488b2c9 100644
+index a34aaca20b..011302f1f9 100644
 --- a/cmake/QtCompilerFlags.cmake
 +++ b/cmake/QtCompilerFlags.cmake
 @@ -5,18 +5,16 @@
@@ -19,9 +19,8 @@ index a34aaca20b..d8f488b2c9 100644
 +set(_qt_compiler_warning_flags_off "-w")
  
  if (MSVC)
--    list(APPEND _qt_compiler_warning_flags_on /W3)
+     list(APPEND _qt_compiler_warning_flags_on /W3)
 -    list(APPEND _qt_compiler_warning_flags_off -W0)
-+    list(APPEND _qt_compiler_warning_flags_on -W4)
  else()
      if(CMAKE_CXX_COMPILER_ID STREQUAL "GHS") # There is no -Wextra flag for GHS compiler.
          list(APPEND _qt_compiler_warning_flags_on -Wall)

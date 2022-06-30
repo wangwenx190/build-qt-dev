@@ -20,24 +20,6 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@echo off
-setlocal
-call "%~dp0build-config.bat"
-set __build_script_path=%~dp0build.bat
-set __build_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%
-set __repo_root_dir=%~dp0..
-call "%~dp0vcpkg.bat"
-for %%i in (%__qt_modules%) do (
-    call "%__build_script_path%" %__build_params% %%i
-    :: Something wrong has happened, error out early because the following
-    :: repositories won't be able to build due to lack of dependencies.
-    if %errorlevel% neq 0 goto fin
-)
-call "%~dp0pack.bat"
-goto fin
-
-:fin
-cd /d "%__repo_root_dir%"
-endlocal
-if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b
+@call "%~dp0vcpkg.bat"
+@call "%~dp0build.bat"
+@call "%~dp0pack.bat"

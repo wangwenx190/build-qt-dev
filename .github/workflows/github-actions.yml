@@ -10,11 +10,19 @@ jobs:
     - name: Check out the repository code
       uses: actions/checkout@v3
 
+    - name: Prepare VCPKG
+      run: call windows-vcpkg.bat
+      shell: cmd
+
     - name: Build the Qt Toolkit
       run: call windows-build.bat
       shell: cmd
 
-    - name: Archive production artifacts
+    - name: Pack the installed binaries
+      run: call windows-pack.bat
+      shell: cmd
+
+    - name: Upload the packed artifacts
       uses: actions/upload-artifact@v3
       with:
         name: Qt SDK

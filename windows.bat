@@ -20,4 +20,4 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@call "%~dp0windows\build.bat"
+@call "%~dp0windows\all-in-one.bat"
