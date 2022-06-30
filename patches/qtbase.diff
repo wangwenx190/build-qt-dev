@@ -183,7 +183,7 @@ index c0c875fa78..7a257a4df9 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 93519dc730..4bcde6064b 100644
+index 76060f45ee..c8843c5a4e 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -802,7 +802,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag

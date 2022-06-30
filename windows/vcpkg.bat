@@ -23,11 +23,10 @@
 @echo off
 setlocal
 title Preparing VCPKG ...
-call "%~dp0github-actions-check.bat"
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
 :: For GitHub Actions, it will always be "C:\vcpkg", normally.
-if /i "%__github_actions%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
+if /i "%GITHUB_ACTIONS%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
 call "%~dp0vcpkg-config.bat"
 set __git_clone_url=https://github.com/microsoft/vcpkg.git
 :: Separate the branch name here in case it changes to something else
@@ -38,7 +37,7 @@ set __git_clone_branch=master
 set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
 set __git_fetch_params=fetch --depth=1 --no-tags
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
-if /i "%__github_actions%" == "true" (
+if /i "%GITHUB_ACTIONS%" == "true" (
     cd /d "%__vcpkg_dir%"
     :: Remove any leftover files and/or folders.
     git clean -fdx

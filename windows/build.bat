@@ -102,7 +102,6 @@ set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 :: Cleanup untracked files, not necessary but recommended.
 set __git_clean_params=clean -fdx
-call "%~dp0github-actions-check.bat"
 set __repo_root_dir=%~dp0..
 set __repo_contrib_dir=%__repo_root_dir%\contrib\win
 set __contrib_bin_dir=%__repo_contrib_dir%\bin
@@ -115,7 +114,7 @@ set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
 :: For GitHub Actions, it will always be "C:\vcpkg", normally.
-if /i "%__github_actions%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
+if /i "%GITHUB_ACTIONS%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
 set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
 set __vcpkg_triplet=%__arch%
 if /i "%__compiler%" == "mingw" (
@@ -323,5 +322,5 @@ exit /b 0
 color 74
 cd /d "%__repo_root_dir%"
 endlocal
-if /i "%__github_actions%" == "false" pause
+if /i not "%GITHUB_ACTIONS%" == "true" pause
 exit /b 1

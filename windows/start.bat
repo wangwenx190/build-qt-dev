@@ -39,5 +39,5 @@ goto fin
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
-if /i "%__github_actions%" == "false" pause
+if /i not "%GITHUB_ACTIONS%" == "true" pause
 exit /b

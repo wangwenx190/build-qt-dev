@@ -22,7 +22,6 @@
 
 @echo off
 setlocal
-call "%~dp0github-actions-check.bat"
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
 :: Add 7-Zip executable's folder path to the PATH env var.
@@ -51,5 +50,5 @@ goto fin
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
-if /i "%__github_actions%" == "false" pause
+if /i not "%GITHUB_ACTIONS%" == "true" pause
 exit /b

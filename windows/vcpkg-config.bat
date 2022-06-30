@@ -27,5 +27,7 @@
 set __vcpkg_triplets=x64-windows-static
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore
+:: TODO: OpenSSL: needed by QtNetwork (the OpenSSL backend). Why not enabled: It uses own ASM files to generate OBJ files directly which doesn't support IntelCET.
+:: TODO: FFmpeg: needed by QtMultimedia (the FFmpeg backend). Why not enabled: Same as OpenSSL.
 set __qt_deps=zstd icu
 exit /b
