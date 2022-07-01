@@ -24,7 +24,7 @@
 :: Modify this line to suit your own personal needs.
 :: Be careful about the dependencies of each repository.
 :: qtbase should always be the first one to build.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qttools
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qtdeclarative,qt5compat,qttools,qtmultimedia,qtwebengine
 :: Supported values: clang-cl, mingw and msvc
 set __compiler=msvc
 :: Supported values: x64, x86 and arm64

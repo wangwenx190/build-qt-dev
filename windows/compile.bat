@@ -80,7 +80,9 @@ if /i "%__module%" == "" (
 )
 title Building %__module% ...
 set __is_building_qtbase=false
+set __is_building_qtwebengine=false
 if /i "%__module%" == "qtbase" set __is_building_qtbase=true
+if /i "%__module%" == "qtwebengine" set __is_building_qtwebengine=true
 :: Or use the official read-only repo: https://code.qt.io/qt/%__module%.git
 set __git_clone_url=https://github.com/qt/%__module%.git
 :: You can change the branch here, such as 6.3.0, 5.15.3 and etc...
@@ -214,6 +216,14 @@ if /i "%__ninja_multi_config%" == "false" (
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
 if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_spectre=yes
+:: For the QtWebEngine module, we only build the QtPDF component. Building QtWebEngine itself
+:: is too time consuming and GitHub Actions's machine is not powerful enough to build it either.
+:: QtPDF will be built by default, no need to enable it explicitly. The CMake parameter to control
+:: it is "-DFEATURE_qtpdf_build=ON/OFF".
+:: If you are building QtWebEngine itself, remember to pass "-DFEATURE_webengine_proprietary_codecs=ON"
+:: otherwise you will not be able to play most media formats in your browser. It's disabled by default
+:: and won't be enabled unless you enable it manually and explicitly.
+if /i "%__is_building_qtwebengine%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_qtwebengine_build=OFF
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
 set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
