@@ -64,6 +64,8 @@ vcpkg update
 :: Without the "--no-dry-run" parameter, VCPKG won't upgrade
 :: the installed libraries in reality.
 vcpkg upgrade --no-dry-run
+:: Cleanup. GitHub Actions's machine doesn't have too much disk space.
+rd /s /q "%__vcpkg_dir%\buildtrees"
 goto fin
 
 :fin

@@ -336,6 +336,9 @@ if %errorlevel% neq 0 goto err
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.dll" "%__module_install_dir%\bin"
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.lib" "%__module_install_dir%\lib"
 cd /d "%__repo_root_dir%"
+:: Cleanup. GitHub Actions's machine complains about no enough disk space.
+rd /s /q "%__module_source_dir%"
+rd /s /q "%__module_cache_dir%"
 endlocal
 exit /b 0
 
