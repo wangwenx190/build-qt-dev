@@ -64,6 +64,10 @@ vcpkg update
 :: Without the "--no-dry-run" parameter, VCPKG won't upgrade
 :: the installed libraries in reality.
 vcpkg upgrade --no-dry-run
+goto fin
+
+:fin
 cd /d "%__repo_root_dir%"
 endlocal
+if /i not "%GITHUB_ACTIONS%" == "true" pause
 exit /b
