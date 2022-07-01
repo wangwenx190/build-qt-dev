@@ -44,6 +44,8 @@ for /f %%i in ('dir /b') do (
     7z a %%i.7z %%i\ %__7zip_compress_params%
     :: Should we continue compressing other folders if we encounter errors?
     if %errorlevel% neq 0 goto fin
+    :: Cleanup. Give us some more free disk space.
+    rd /s /q "%__repo_install_dir%\%%i"
 )
 goto fin
 
