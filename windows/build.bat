@@ -22,6 +22,9 @@
 
 @echo off
 setlocal
+:: Needed by QtWebEngine module. Some files have really long filename.
+:: Modifying the registry needs the administrator privilege.
+regedit /s "%~dp0enable-long-path.reg"
 call "%~dp0build-config.bat"
 set __build_script_path=%~dp0compile.bat
 set __build_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%

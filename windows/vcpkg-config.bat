@@ -28,6 +28,6 @@ set __vcpkg_triplets=x64-windows-static
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
-:: TODO: FFmpeg: needed by QtMultimedia (the FFmpeg backend). Wait for Qt 6.5. Currently QtMM's default backend on Windows is still WMF.
-set __qt_deps=zstd icu openssl
+:: FFmpeg: needed by QtMultimedia (the FFmpeg backend)
+set __qt_deps=zstd icu openssl ffmpeg
 exit /b

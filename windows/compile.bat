@@ -127,7 +127,12 @@ if /i "%__compiler%" == "mingw" (
 set __vcpkg_triplet=%__vcpkg_triplet%-static
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
-set __cmake_extra_params=-DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
+:: Increase CMake's message verbosity, it can help us debug configuration errors.
+:: But suppress the developer warnings from CMake, it's not useful to us.
+:: We must set "VCPKG_TARGET_TRIPLET" otherwise VCPKG will always use the default triplet "x64-windows".
+:: Enable VCPKG by setting the "CMAKE_TOOLCHAIN_FILE" variable. We use VCPKG to provide the 3rd party dependencies.
+set __cmake_extra_params=--log-level=STATUS -Wno-dev -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
+:: Set the "CMAKE_PREFIX_PATH" variable so that modules other than QtBase can still find the host Qt SDK we just built.
 if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%__repo_install_dir%"
 set __install_cmdline=
 if /i "%__compiler%" == "clangcl" (
@@ -145,7 +150,10 @@ if /i "%__compiler%" == "clangcl" (
 )
 if /i "%__lib_type%" == "static" (
     set __should_enable_ltcg=false
-    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF -DFEATURE_static_runtime=ON
+    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF
+    :: "FEATURE_static_runtime" is a QtBase only option.
+    :: Other modules will inherit the corresponding parameters from QtBase.
+    if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_static_runtime=ON
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
 )
@@ -230,7 +238,8 @@ set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__modu
 :: Use "--target <TARGET>" to choose target explicitly.
 :: Normally you should use "all" as the default target.
 :: Use "--config <CONFIG>" to choose configuration explicitly.
-set __cmake_build_params=--build "%__module_cache_dir%" --parallel
+:: Use "-Wno-dev" to suppress the developer warnings from CMake.
+set __cmake_build_params=--build "%__module_cache_dir%" --parallel -Wno-dev
 :: It's recommended to use the vswhere tool to find the Visual Studio installation path,
 :: it will be installed automatically while installing Visual Studio, but you can also
 :: download it manually from GitHub: https://github.com/microsoft/vswhere/releases/latest
