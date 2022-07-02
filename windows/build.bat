@@ -21,8 +21,6 @@
 :: SOFTWARE.
 
 @echo off
-:: Must be outside of the scope of "setlocal" and "endlocal".
-set __error_code_build=-1
 setlocal
 :: Needed by QtWebEngine module. Some files have really long filename.
 :: Modifying the registry requires the administrator privilege.
@@ -37,13 +35,18 @@ for %%i in (%__qt_modules%) do (
     call "%__build_script_path%" %__build_params% %%i
     :: Something wrong has happened, error out early because the following
     :: repositories won't be able to build due to lack of dependencies.
-    if %errorlevel% neq 0 goto fin
+    if %errorlevel% neq 0 goto fail
 )
-set __error_code_build=0
-goto fin
+goto success
 
-:fin
+:success
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b %__error_code_build%
+exit /b 0
+
+:fail
+cd /d "%__repo_root_dir%"
+endlocal
+if /i not "%GITHUB_ACTIONS%" == "true" pause
+exit /b -1

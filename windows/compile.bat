@@ -21,8 +21,6 @@
 :: SOFTWARE.
 
 @echo off
-:: Must be outside of the scope of "setlocal" and "endlocal".
-set __error_code_compile=-1
 setlocal enabledelayedexpansion
 set __compiler=%1
 set __lib_type=%2
@@ -152,10 +150,11 @@ if /i "%__compiler%" == "clangcl" (
 )
 if /i "%__lib_type%" == "static" (
     set __should_enable_ltcg=false
-    set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=OFF
+    set __static_lib_flags=-DBUILD_SHARED_LIBS=OFF
     :: "FEATURE_static_runtime" is a QtBase only option.
     :: Other modules will inherit the corresponding parameters from QtBase.
-    if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_static_runtime=ON
+    if /i "%__is_building_qtbase%" == "true" set __static_lib_flags=!__static_lib_flags! -DFEATURE_static_runtime=ON
+    set __cmake_extra_params=%__cmake_extra_params% !__static_lib_flags!
 ) else (
     set __cmake_extra_params=%__cmake_extra_params% -DBUILD_SHARED_LIBS=ON
 )
@@ -255,14 +254,14 @@ if /i "%__compiler%" == "mingw" (
         g++ --version
     ) else (
         echo g++.exe is not in your PATH environment variable.
-        goto fin
+        goto fail
     )
 ) else (
     if exist "%__vswhere_path%" (
         for /f "delims=" %%a in ('"%__vswhere_path%" -property installationPath -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64') do set __vs_install_dir=%%a
     ) else (
         echo Cannot locate vswhere.exe, please install Visual Studio Installer first.
-        goto fin
+        goto fail
     )
     set __vs_dev_cmd=!__vs_install_dir!\VC\Auxiliary\Build\vcvarsall.bat
     if exist "!__vs_dev_cmd!" (
@@ -275,16 +274,16 @@ if /i "%__compiler%" == "mingw" (
                     clang-cl --version
                 ) else (
                     echo clang-cl.exe is not in your PATH environment variable.
-                    goto fin
+                    goto fail
                 )
             )
         ) else (
             echo cl.exe is not in your PATH environment variable.
-            goto fin
+            goto fail
         )
     ) else (
         echo Failed to retrieve Microsoft Visual Studio's installation path.
-        goto fin
+        goto fail
     )
 )
 where git
@@ -292,14 +291,14 @@ if %errorlevel% equ 0 (
     git --version
 ) else (
     echo git.exe is not in your PATH environment variable.
-    goto fin
+    goto fail
 )
 where cmake
 if %errorlevel% equ 0 (
     cmake --version
 ) else (
     echo cmake.exe is not in your PATH environment variable.
-    goto fin
+    goto fail
 )
 where ninja
 if %errorlevel% equ 0 (
@@ -307,7 +306,7 @@ if %errorlevel% equ 0 (
     ninja --version
 ) else (
     echo ninja.exe is not in your PATH environment variable.
-    goto fin
+    goto fail
 )
 echo Building Qt module: %__module%
 echo Clone command-line: git %__git_clone_params%
@@ -324,12 +323,12 @@ if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd /d "%__repo_source_dir%"
 if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
 git %__git_clone_params%
-if %errorlevel% neq 0 goto fin
+if %errorlevel% neq 0 goto fail
 :: Apply our custom modification to QtBase.
 if /i "%__is_building_qtbase%" == "true" (
     cd /d "%__module_source_dir%"
     git apply "%__repo_root_dir%\patches\qtbase.diff"
-    if %errorlevel% neq 0 goto fin
+    if %errorlevel% neq 0 goto fail
 )
 cd /d "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
@@ -338,11 +337,11 @@ if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
 md "%__module_cache_dir%"
 cd /d "%__module_cache_dir%"
 cmake %__cmake_config_params%
-if %errorlevel% neq 0 goto fin
+if %errorlevel% neq 0 goto fail
 cmake %__cmake_build_params%
-if %errorlevel% neq 0 goto fin
+if %errorlevel% neq 0 goto fail
 %__install_cmdline%
-if %errorlevel% neq 0 goto fin
+if %errorlevel% neq 0 goto fail
 :: Copy 3rd party binary files and import libraries from VCPKG.
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.dll" "%__module_install_dir%\bin"
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.lib" "%__module_install_dir%\lib"
@@ -350,11 +349,16 @@ cd /d "%__repo_root_dir%"
 :: Cleanup. GitHub Actions's machine complains about no enough disk space.
 rd /s /q "%__module_source_dir%"
 rd /s /q "%__module_cache_dir%"
-set __error_code_compile=0
-goto fin
+goto success
 
-:fin
+:success
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b %__error_code_compile%
+exit /b 0
+
+:fail
+cd /d "%__repo_root_dir%"
+endlocal
+if /i not "%GITHUB_ACTIONS%" == "true" pause
+exit /b -1

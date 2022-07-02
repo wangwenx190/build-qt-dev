@@ -21,8 +21,6 @@
 :: SOFTWARE.
 
 @echo off
-:: Must be outside of the scope of "setlocal" and "endlocal".
-set __error_code_pack=-1
 setlocal
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
@@ -30,9 +28,9 @@ set __repo_install_dir=%__repo_root_dir%\build\windows
 set PATH=%ProgramFiles%\7-Zip;%PATH%
 :: This parameter combination means the ultra compression in most situtaions.
 set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=128m:fb=273
-if not exist "%__repo_install_dir%" goto fin
+if not exist "%__repo_install_dir%" goto fail
 where 7z
-if %errorlevel% neq 0 goto fin
+if %errorlevel% neq 0 goto fail
 title Packaging Qt ...
 cd /d "%__repo_install_dir%"
 for /f %%i in ('dir /b') do (
@@ -45,15 +43,20 @@ for /f %%i in ('dir /b') do (
     :: won't put all the files into one parent folder.
     7z a %%i.7z %%i\ %__7zip_compress_params%
     :: Should we continue compressing other folders if we encounter errors?
-    if %errorlevel% neq 0 goto fin
+    if %errorlevel% neq 0 goto fail
     :: Cleanup. Give us some more free disk space.
     rd /s /q "%__repo_install_dir%\%%i"
 )
-set __error_code_pack=0
-goto fin
+goto success
 
-:fin
+:success
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b %__error_code_pack%
+exit /b 0
+
+:fail
+cd /d "%__repo_root_dir%"
+endlocal
+if /i not "%GITHUB_ACTIONS%" == "true" pause
+exit /b -1
