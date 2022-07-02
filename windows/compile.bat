@@ -239,8 +239,7 @@ set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__modu
 :: Use "--target <TARGET>" to choose target explicitly.
 :: Normally you should use "all" as the default target.
 :: Use "--config <CONFIG>" to choose configuration explicitly.
-:: Use "-Wno-dev" to suppress the developer warnings from CMake.
-set __cmake_build_params=--build "%__module_cache_dir%" --parallel -Wno-dev
+set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 :: It's recommended to use the vswhere tool to find the Visual Studio installation path,
 :: it will be installed automatically while installing Visual Studio, but you can also
 :: download it manually from GitHub: https://github.com/microsoft/vswhere/releases/latest
