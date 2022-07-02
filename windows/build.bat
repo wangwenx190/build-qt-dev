@@ -27,6 +27,8 @@ setlocal
 :: Needed by QtWebEngine module. Some files have really long filename.
 :: Modifying the registry requires the administrator privilege.
 regedit /s "%~dp0enable-long-path.reg"
+:: Also enable long path support for GIT.
+git config --system core.longpaths true
 call "%~dp0build-config.bat"
 set __build_script_path=%~dp0compile.bat
 set __build_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%
