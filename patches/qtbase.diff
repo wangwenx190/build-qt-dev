@@ -1,11 +1,11 @@
- cmake/QtCompilerFlags.cmake                      |  4 +--
- cmake/QtCompilerOptimization.cmake               | 14 ++++----
- cmake/QtInternalTargets.cmake                    | 46 ++++++++++++++++++++++--
+ cmake/QtCompilerFlags.cmake                      |  4 +-
+ cmake/QtCompilerOptimization.cmake               | 14 +++---
+ cmake/QtInternalTargets.cmake                    | 64 ++++++++++++++++++++++--
  config_help.txt                                  |  1 +
- configure.cmake                                  |  5 +++
+ configure.cmake                                  |  5 ++
  qt_cmdline.cmake                                 |  1 +
  src/plugins/platforms/windows/qwindowswindow.cpp |  1 -
- 7 files changed, 58 insertions(+), 14 deletions(-)
+ 7 files changed, 76 insertions(+), 14 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index a34aaca20b..011302f1f9 100644
@@ -65,10 +65,10 @@ index 4233aece76..3cef343e22 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index bf7ef3cf36..024a3a81e6 100644
+index bf7ef3cf36..d416cf4642 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -254,14 +254,16 @@ if (MSVC)
+@@ -254,15 +254,19 @@ if (MSVC)
      target_compile_options(PlatformCommonInternal INTERFACE
          -Zc:wchar_t
          -bigobj
@@ -78,16 +78,41 @@ index bf7ef3cf36..024a3a81e6 100644
      target_compile_options(PlatformCommonInternal INTERFACE
 -        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -Gw>
 +        $<$<CONFIG:Debug>:-JMC>
-+        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -GT -Gw -Gy>
++        $<$<NOT:$<CONFIG:Debug>>:-GT -Gw -Gy>
++        # TODO: Add "-GA" for executables.
      )
  
      target_link_options(PlatformCommonInternal INTERFACE
--        -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE
-+        -DYNAMICBASE -HIGHENTROPYVA -NXCOMPAT -LARGEADDRESSAWARE
-         $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
+         -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE
+-        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
++        $<$<STREQUAL:${TEST_architecture_arch},"x86_64">:-HIGHENTROPYVA>
++        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF>
      )
  endif()
-@@ -284,7 +286,45 @@ if(QT_FEATURE_intelcet)
+ 
+@@ -274,6 +278,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+     target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
+ endif()
+ 
++# Control Flow Guard
++if(MSVC) # Including Clang-CL.
++    target_compile_options(PlatformCommonInternal INTERFACE
++        $<$<NOT:$<CONFIG:Debug>>:-guard:cf>
++    )
++    target_link_options(PlatformCommonInternal INTERFACE
++        $<$<NOT:$<CONFIG:Debug>>:-GUARD:CF>
++    )
++elseif(CLANG)
++    target_compile_options(PlatformCommonInternal INTERFACE
++        $<$<NOT:$<CONFIG:Debug>>:-Xclang -cfguard>
++    )
++endif()
++
++# Intel Control-flow Enforcement Technology (CET)
+ if(QT_FEATURE_intelcet)
+     if(MSVC)
+         target_compile_options(PlatformCommonInternal INTERFACE
+@@ -284,7 +303,46 @@ if(QT_FEATURE_intelcet)
          )
      else()
          target_compile_options(PlatformCommonInternal INTERFACE
@@ -113,6 +138,7 @@ index bf7ef3cf36..024a3a81e6 100644
 +    endif()
 +endif()
 +
++# Mitigate for Spectre security vulnerabilities
 +if(QT_FEATURE_spectre)
 +    if(CLANG)
 +        target_compile_options(PlatformCommonInternal INTERFACE

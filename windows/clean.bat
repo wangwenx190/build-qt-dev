@@ -31,4 +31,4 @@ for %%i in (%__build_artifacts%) do (
     if exist "%%i" rd /s /q "%%i"
 )
 endlocal
-exit /b
+exit /b 0

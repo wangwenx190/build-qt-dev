@@ -21,6 +21,8 @@
 :: SOFTWARE.
 
 @echo off
+:: Must be outside of the scope of "setlocal" and "endlocal".
+set __error_code_compile=-1
 setlocal enabledelayedexpansion
 set __compiler=%1
 set __lib_type=%2
@@ -253,14 +255,14 @@ if /i "%__compiler%" == "mingw" (
         g++ --version
     ) else (
         echo g++.exe is not in your PATH environment variable.
-        goto err
+        goto fin
     )
 ) else (
     if exist "%__vswhere_path%" (
         for /f "delims=" %%a in ('"%__vswhere_path%" -property installationPath -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64') do set __vs_install_dir=%%a
     ) else (
         echo Cannot locate vswhere.exe, please install Visual Studio Installer first.
-        goto err
+        goto fin
     )
     set __vs_dev_cmd=!__vs_install_dir!\VC\Auxiliary\Build\vcvarsall.bat
     if exist "!__vs_dev_cmd!" (
@@ -273,16 +275,16 @@ if /i "%__compiler%" == "mingw" (
                     clang-cl --version
                 ) else (
                     echo clang-cl.exe is not in your PATH environment variable.
-                    goto err
+                    goto fin
                 )
             )
         ) else (
             echo cl.exe is not in your PATH environment variable.
-            goto err
+            goto fin
         )
     ) else (
         echo Failed to retrieve Microsoft Visual Studio's installation path.
-        goto err
+        goto fin
     )
 )
 where git
@@ -290,14 +292,14 @@ if %errorlevel% equ 0 (
     git --version
 ) else (
     echo git.exe is not in your PATH environment variable.
-    goto err
+    goto fin
 )
 where cmake
 if %errorlevel% equ 0 (
     cmake --version
 ) else (
     echo cmake.exe is not in your PATH environment variable.
-    goto err
+    goto fin
 )
 where ninja
 if %errorlevel% equ 0 (
@@ -305,7 +307,7 @@ if %errorlevel% equ 0 (
     ninja --version
 ) else (
     echo ninja.exe is not in your PATH environment variable.
-    goto err
+    goto fin
 )
 echo Building Qt module: %__module%
 echo Clone command-line: git %__git_clone_params%
@@ -322,12 +324,12 @@ if not exist "%__repo_source_dir%" md "%__repo_source_dir%"
 cd /d "%__repo_source_dir%"
 if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
 git %__git_clone_params%
-if %errorlevel% neq 0 goto err
+if %errorlevel% neq 0 goto fin
 :: Apply our custom modification to QtBase.
 if /i "%__is_building_qtbase%" == "true" (
     cd /d "%__module_source_dir%"
     git apply "%__repo_root_dir%\patches\qtbase.diff"
-    if %errorlevel% neq 0 goto err
+    if %errorlevel% neq 0 goto fin
 )
 cd /d "%__repo_build_dir%"
 if not exist "%__repo_cache_dir%" md "%__repo_cache_dir%"
@@ -336,11 +338,11 @@ if exist "%__module_cache_dir%" rd /s /q "%__module_cache_dir%"
 md "%__module_cache_dir%"
 cd /d "%__module_cache_dir%"
 cmake %__cmake_config_params%
-if %errorlevel% neq 0 goto err
+if %errorlevel% neq 0 goto fin
 cmake %__cmake_build_params%
-if %errorlevel% neq 0 goto err
+if %errorlevel% neq 0 goto fin
 %__install_cmdline%
-if %errorlevel% neq 0 goto err
+if %errorlevel% neq 0 goto fin
 :: Copy 3rd party binary files and import libraries from VCPKG.
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.dll" "%__module_install_dir%\bin"
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.lib" "%__module_install_dir%\lib"
@@ -348,12 +350,11 @@ cd /d "%__repo_root_dir%"
 :: Cleanup. GitHub Actions's machine complains about no enough disk space.
 rd /s /q "%__module_source_dir%"
 rd /s /q "%__module_cache_dir%"
-endlocal
-exit /b 0
+set __error_code_compile=0
+goto fin
 
-:err
-color 74
+:fin
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b 1
+exit /b %__error_code_compile%

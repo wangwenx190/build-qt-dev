@@ -21,6 +21,8 @@
 :: SOFTWARE.
 
 @echo off
+:: Must be outside of the scope of "setlocal" and "endlocal".
+set __error_code_vcpkg=-1
 setlocal
 title Preparing VCPKG ...
 set __repo_root_dir=%~dp0..
@@ -66,10 +68,11 @@ vcpkg update
 vcpkg upgrade --no-dry-run
 :: Cleanup. GitHub Actions's machine doesn't have too much disk space.
 rd /s /q "%__vcpkg_dir%\buildtrees"
+set __error_code_vcpkg=0
 goto fin
 
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b
+exit /b %__error_code_vcpkg%

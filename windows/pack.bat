@@ -21,6 +21,8 @@
 :: SOFTWARE.
 
 @echo off
+:: Must be outside of the scope of "setlocal" and "endlocal".
+set __error_code_pack=-1
 setlocal
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
@@ -47,10 +49,11 @@ for /f %%i in ('dir /b') do (
     :: Cleanup. Give us some more free disk space.
     rd /s /q "%__repo_install_dir%\%%i"
 )
+set __error_code_pack=0
 goto fin
 
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b
+exit /b %__error_code_pack%

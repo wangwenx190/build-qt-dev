@@ -21,9 +21,11 @@
 :: SOFTWARE.
 
 @echo off
+:: Must be outside of the scope of "setlocal" and "endlocal".
+set __error_code_build=-1
 setlocal
 :: Needed by QtWebEngine module. Some files have really long filename.
-:: Modifying the registry needs the administrator privilege.
+:: Modifying the registry requires the administrator privilege.
 regedit /s "%~dp0enable-long-path.reg"
 call "%~dp0build-config.bat"
 set __build_script_path=%~dp0compile.bat
@@ -35,10 +37,11 @@ for %%i in (%__qt_modules%) do (
     :: repositories won't be able to build due to lack of dependencies.
     if %errorlevel% neq 0 goto fin
 )
+set __error_code_build=0
 goto fin
 
 :fin
 cd /d "%__repo_root_dir%"
 endlocal
 if /i not "%GITHUB_ACTIONS%" == "true" pause
-exit /b
+exit /b %__error_code_build%
