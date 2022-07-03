@@ -27,6 +27,8 @@ setlocal
 regedit /s "%~dp0enable-long-path.reg"
 :: Also enable long path support for GIT.
 git config --system core.longpaths true
+:: Install html5lib for Python. The QtPDF module needs it.
+pip install html5lib
 call "%~dp0build-config.bat"
 set __build_script_path=%~dp0compile.bat
 set __build_params=/%__compiler% /%__lib_type% /%__build_type% /%__arch%

@@ -115,8 +115,6 @@ set __module_source_dir=%__repo_source_dir%\%__module%
 set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
-:: For GitHub Actions, it will always be "C:\vcpkg", normally.
-if /i "%GITHUB_ACTIONS%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
 set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
 set __vcpkg_triplet=%__arch%
 if /i "%__compiler%" == "mingw" (
