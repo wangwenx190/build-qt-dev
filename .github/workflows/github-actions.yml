@@ -10,6 +10,10 @@ jobs:
     - name: Check out the repository code
       uses: actions/checkout@v3
 
+    - name: Set up GIT
+      run: call windows-git.bat
+      shell: cmd
+
     - name: Set up VCPKG (QtBase)
       run: call windows-vcpkg.bat
       shell: cmd
