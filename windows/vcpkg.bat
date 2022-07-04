@@ -40,7 +40,7 @@ if exist "%__vcpkg_dir%" rd /s /q "%__vcpkg_dir%"
 git %__git_clone_params%
 cd /d "%__vcpkg_dir%"
 :: Apply our custom modification to VCPKG.
-git apply -v "%__repo_root_dir%\patches\vcpkg.diff"
+git apply -v "%__repo_root_dir%\patches\vcpkg-*.diff"
 :: Always try to get the latest VCPKG tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"
