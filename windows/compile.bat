@@ -118,6 +118,7 @@ set __vcpkg_dir=%__repo_root_dir%\vcpkg
 set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
 set __vcpkg_triplet=%__arch%
 set LLVM_INSTALL_DIR=%ProgramFiles%\LLVM
+if /i "%GITHUB_ACTIONS%" == "true" set LLVM_INSTALL_DIR=%LLVM_PATH%
 if /i "%__compiler%" == "mingw" (
     set __vcpkg_triplet=%__vcpkg_triplet%-mingw
 ) else (
@@ -234,7 +235,7 @@ if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra
 if /i "%__is_building_qtwebengine%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_qtwebengine_build=OFF
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
-set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DLLVM_INSTALL_DIR="%LLVM_INSTALL_DIR%" "%__module_source_dir%"
 :: Use "--target <TARGET>" to choose target explicitly.
 :: Normally you should use "all" as the default target.
 :: Use "--config <CONFIG>" to choose configuration explicitly.

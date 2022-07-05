@@ -14,16 +14,16 @@ jobs:
       run: call windows-git.bat
       shell: cmd
 
-    - name: Set up VCPKG (QtBase)
-      run: call windows-vcpkg.bat
-      shell: cmd
+    - name: Set up LLVM (Open Source Clang)
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "14.0.6" # Current latest version.
 
     - name: Set up Vulkan SDK (QtGui)
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
+      uses: humbletim/setup-vulkan-sdk@v1
       with:
         vulkan-query-version: 1.3.216.0 # Current latest version.
-        vulkan-components: Vulkan-Headers, Vulkan-Loader
-        vulkan-use-cache: true
+        vulkan-components: Vulkan-Headers
 
     - name: Set up Node.js (QtWebEngine & QtPDF)
       uses: actions/setup-node@v3
@@ -33,7 +33,11 @@ jobs:
     - name: Set up Python (QtWebEngine & QtPDF)
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10.5' # Current latest version.
+        python-version: "3.10.5" # Current latest version.
+
+    - name: Set up VCPKG (QtBase)
+      run: call windows-vcpkg.bat
+      shell: cmd
 
     - name: Build the Qt Toolkit
       run: call windows-build.bat
