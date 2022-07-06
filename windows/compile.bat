@@ -104,6 +104,7 @@ set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 :: Cleanup untracked files, not necessary but recommended.
 set __git_clean_params=clean -fdx
+set __git_apply_params=apply -v
 set __repo_root_dir=%~dp0..
 set __repo_contrib_dir=%__repo_root_dir%\contrib\win
 set __contrib_bin_dir=%__repo_contrib_dir%\bin
@@ -115,10 +116,10 @@ set __module_source_dir=%__repo_source_dir%\%__module%
 set __module_install_dir=%__repo_install_dir%\%__compiler%_%__arch%_%__lib_type%_%__build_type%
 set __module_cache_dir=%__repo_cache_dir%\%__module%
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
+:: For GitHub Actions, it will always be "C:\vcpkg", normally.
+if /i "%GITHUB_ACTIONS%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
 set __vcpkg_toolchain_file=%__vcpkg_dir%\scripts\buildsystems\vcpkg.cmake
 set __vcpkg_triplet=%__arch%
-set LLVM_INSTALL_DIR=%ProgramFiles%\LLVM
-if /i "%GITHUB_ACTIONS%" == "true" set LLVM_INSTALL_DIR=%LLVM_PATH%
 if /i "%__compiler%" == "mingw" (
     set __vcpkg_triplet=%__vcpkg_triplet%-mingw
 ) else (
@@ -133,7 +134,7 @@ set __ninja_multi_config=false
 :: Enable VCPKG by setting the "CMAKE_TOOLCHAIN_FILE" variable. We use VCPKG to provide the 3rd party dependencies.
 set __cmake_extra_params=--log-level=STATUS -Wno-dev -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
 :: Set the "CMAKE_PREFIX_PATH" variable so that modules other than QtBase can still find the host Qt SDK we just built.
-if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%LLVM_INSTALL_DIR%;%__repo_install_dir%"
+if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%__repo_install_dir%"
 set __install_cmdline=
 if /i "%__compiler%" == "clangcl" (
     :: Some make tools will not be able to find the compiler if we don't
@@ -224,7 +225,7 @@ if /i "%__ninja_multi_config%" == "false" (
 :: it's very hard to control the 3rd party repositories, so just disable it by default.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%LLVM_INSTALL_DIR%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_spectre=yes
 :: For the QtWebEngine module, we only build the QtPDF component. Building QtWebEngine itself
 :: is too time consuming and GitHub Actions's machine is not powerful enough to build it either.
 :: QtPDF will be built by default, no need to enable it explicitly. The CMake parameter to control
@@ -235,7 +236,7 @@ if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra
 if /i "%__is_building_qtwebengine%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DFEATURE_qtwebengine_build=OFF
 :: "QT_BUILD_TESTS" controls whether to build Qt's auto tests by default.
 :: "QT_BUILD_EXAMPLES" controls whether to build Qt's example projects by default.
-set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF -DLLVM_INSTALL_DIR="%LLVM_INSTALL_DIR%" "%__module_source_dir%"
+set __cmake_config_params=%__cmake_extra_params% -DCMAKE_INSTALL_PREFIX="%__module_install_dir%" -DQT_BUILD_TESTS=OFF -DQT_BUILD_EXAMPLES=OFF "%__module_source_dir%"
 :: Use "--target <TARGET>" to choose target explicitly.
 :: Normally you should use "all" as the default target.
 :: Use "--config <CONFIG>" to choose configuration explicitly.
@@ -246,7 +247,7 @@ set __cmake_build_params=--build "%__module_cache_dir%" --parallel
 set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe
 set __vs_install_dir=
 set __vs_dev_cmd=
-set PATH=%__contrib_bin_dir%;%LLVM_INSTALL_DIR%\bin;%PATH%
+set PATH=%__contrib_bin_dir%;%PATH%
 if /i "%__compiler%" == "mingw" (
     where g++
     if %errorlevel% equ 0 (
@@ -326,7 +327,7 @@ if %errorlevel% neq 0 goto fail
 :: Apply our custom modification to QtBase.
 if /i "%__is_building_qtbase%" == "true" (
     cd /d "%__module_source_dir%"
-    git apply -v "%__repo_root_dir%\patches\qtbase.diff"
+    git %__git_apply_params% "%__repo_root_dir%\patches\qtbase.diff"
     if %errorlevel% neq 0 goto fail
 )
 cd /d "%__repo_build_dir%"

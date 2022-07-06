@@ -25,6 +25,8 @@ setlocal
 title Preparing VCPKG ...
 set __repo_root_dir=%~dp0..
 set __vcpkg_dir=%__repo_root_dir%\vcpkg
+:: For GitHub Actions, it will always be "C:\vcpkg", normally.
+if /i "%GITHUB_ACTIONS%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
 call "%~dp0vcpkg-config.bat"
 set __git_clone_url=https://github.com/microsoft/vcpkg.git
 :: Separate the branch name here in case it changes to something else
@@ -35,13 +37,23 @@ set __git_clone_branch=master
 set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
 set __git_fetch_params=fetch --depth=1 --no-tags
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
-cd /d "%__repo_root_dir%"
-if exist "%__vcpkg_dir%" rd /s /q "%__vcpkg_dir%"
-git %__git_clone_params%
+set __git_clean_params=clean -fdx
+set __git_pull_params=pull
+set __git_apply_params=apply -v
+if /i "%GITHUB_ACTIONS%" == "true" (
+    cd /d "%__vcpkg_dir%"
+    git %__git_reset_params%
+    git %__git_clean_params%
+    git %__git_pull_params%
+) else (
+    cd /d "%__repo_root_dir%"
+    if exist "%__vcpkg_dir%" rd /s /q "%__vcpkg_dir%"
+    git %__git_clone_params%
+)
 cd /d "%__vcpkg_dir%"
 :: Apply our custom modification to VCPKG.
-git apply -v "%__repo_root_dir%\patches\vcpkg-toolchain.diff"
-git apply -v "%__repo_root_dir%\patches\vcpkg-ffmpeg.diff"
+git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg-toolchain.diff"
+git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg-ffmpeg.diff"
 :: Always try to get the latest VCPKG tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"
