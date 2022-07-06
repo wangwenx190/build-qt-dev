@@ -1,11 +1,11 @@
  cmake/QtCompilerFlags.cmake                      |  4 +-
  cmake/QtCompilerOptimization.cmake               | 14 +++---
- cmake/QtInternalTargets.cmake                    | 64 ++++++++++++++++++++++--
+ cmake/QtInternalTargets.cmake                    | 62 +++++++++++++++++++++++-
  config_help.txt                                  |  1 +
  configure.cmake                                  |  5 ++
  qt_cmdline.cmake                                 |  1 +
  src/plugins/platforms/windows/qwindowswindow.cpp |  1 -
- 7 files changed, 76 insertions(+), 14 deletions(-)
+ 7 files changed, 75 insertions(+), 13 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index a34aaca20b..011302f1f9 100644
@@ -65,7 +65,7 @@ index 4233aece76..3cef343e22 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index bf7ef3cf36..d416cf4642 100644
+index 377099ed62..d416cf4642 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -254,15 +254,19 @@ if (MSVC)
@@ -112,16 +112,10 @@ index bf7ef3cf36..d416cf4642 100644
  if(QT_FEATURE_intelcet)
      if(MSVC)
          target_compile_options(PlatformCommonInternal INTERFACE
-@@ -284,7 +303,46 @@ if(QT_FEATURE_intelcet)
-         )
-     else()
-         target_compile_options(PlatformCommonInternal INTERFACE
--            -fcf-protection
-+            -fcf-protection=full
-+        )
-+    endif()
-+endif()
-+
+@@ -289,6 +308,45 @@ if(QT_FEATURE_intelcet)
+     endif()
+ endif()
+ 
 +# Mitigate for Intel Jump Conditional Code (JCC)
 +if((TEST_architecture_arch STREQUAL "i386")
 +    OR (TEST_architecture_arch STREQUAL "x86_64"))
@@ -157,8 +151,12 @@ index bf7ef3cf36..d416cf4642 100644
 +    elseif(MSVC)
 +        target_compile_options(PlatformCommonInternal INTERFACE
 +            -Qspectre-load
-         )
-     endif()
++        )
++    endif()
++endif()
++
+ if(QT_FEATURE_force_asserts)
+     target_compile_definitions(PlatformCommonInternal INTERFACE QT_FORCE_ASSERTS)
  endif()
 diff --git a/config_help.txt b/config_help.txt
 index bd229c43a4..0452b1e9ec 100644
@@ -173,11 +171,11 @@ index bd229c43a4..0452b1e9ec 100644
                           Force use of the GNU ld, GNU gold, LLVM/LLD or mold
                           linker instead of default one (GCC and clang only)
 diff --git a/configure.cmake b/configure.cmake
-index 32b4abb228..ec1bcdefad 100644
+index 628437460a..94785f9e34 100644
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -987,6 +987,10 @@ qt_feature("intelcet" PRIVATE
-     LABEL "Using Intel CET"
+@@ -986,6 +986,10 @@ qt_feature("intelcet" PRIVATE
+     LABEL "Using Intel Control-flow Enforcement Technology (CET)"
      CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
  )
 +qt_feature("spectre" PRIVATE
@@ -187,7 +185,7 @@ index 32b4abb228..ec1bcdefad 100644
  qt_configure_add_summary_build_type_and_config()
  qt_configure_add_summary_section(NAME "Build options")
  qt_configure_add_summary_build_mode(Mode)
-@@ -1037,6 +1041,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
+@@ -1036,6 +1040,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
  qt_configure_add_summary_entry(ARGS "precompile_header")
  qt_configure_add_summary_entry(ARGS "ltcg")
  qt_configure_add_summary_entry(ARGS "intelcet")
@@ -208,10 +206,10 @@ index c0c875fa78..7a257a4df9 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 76060f45ee..c8843c5a4e 100644
+index 929e468115..23530c39d2 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
-@@ -802,7 +802,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+@@ -807,7 +807,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
      if (topLevel) {
          if ((type == Qt::Window || dialog || tool)) {
              if (!(flags & Qt::FramelessWindowHint)) {
