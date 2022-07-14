@@ -208,7 +208,7 @@ if /i "%__ninja_multi_config%" == "false" (
     :: Ninja will also automatically skip binaries that don't need stripping.
     set __install_cmdline=ninja install/strip
 )
-:: The "Relocatable" feature will be disabled for static builds automatically, so here
+:: The "relocatable" feature will be disabled for static builds automatically, so here
 :: we explicitly enable it unconditionally.
 :: The official Qt packages always use the bundled ZLIB library, so we mirrored the behavior here.
 :: And we also enable the ICU feature here, without it Qt's codec handling will be quite
@@ -218,14 +218,11 @@ if /i "%__ninja_multi_config%" == "false" (
 :: Qt will then try to use the fallback implementation. Since we always build the OpenSSL libraries
 :: in VCPKG, we can let Qt link against them directly. QtNetwork will have some limitations if
 :: the OpenSSL libraries are not available.
-:: We also enable the mitigation for the Spectre security vulnerabilities to make our applications
-:: and libraries extra safe.
-:: However, we don't enable the use of the Intel Control-flow Enforcement Technology (CET) because
-:: it requires the re-compilation of all the binary files, including 3rd party dependencies, and
-:: it's very hard to control the 3rd party repositories, so just disable it by default.
+:: We also enable the mitigation for the Spectre security vulnerabilities and Intel Control-flow
+:: Enforcement Technology (CET) to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: For the QtWebEngine module, we only build the QtPDF component. Building QtWebEngine itself
 :: is too time consuming and GitHub Actions's machine is not powerful enough to build it either.
 :: QtPDF will be built by default, no need to enable it explicitly. The CMake parameter to control
