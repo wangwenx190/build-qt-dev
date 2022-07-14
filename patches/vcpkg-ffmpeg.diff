@@ -8,19 +8,20 @@ index 47296865a..f1763dd7f 100644
 @@ -51,7 +51,7 @@ else()
      set(LIB_PATH_VAR "LIBRARY_PATH")
  endif()
-
+ 
 -set(OPTIONS "--enable-pic --disable-doc --enable-debug --enable-runtime-cpudetect")
 +set(OPTIONS "--enable-pic --disable-doc --enable-runtime-cpudetect")
-
+ 
  if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm")
    set(OPTIONS "${OPTIONS} --disable-asm --disable-x86asm")
 @@ -489,8 +489,8 @@ if(VCPKG_TARGET_IS_UWP)
  endif()
-
+ 
  # Note: --disable-optimizations can't be used due to https://ffmpeg.org/pipermail/libav-user/2013-March/003945.html
 -set(OPTIONS_DEBUG "--debug")
 -set(OPTIONS_RELEASE "")
 +set(OPTIONS_DEBUG "--enable-debug --debug")
 +set(OPTIONS_RELEASE "--disable-debug")
-
+ 
  set(OPTIONS "${OPTIONS} ${OPTIONS_CROSS}")
+ 
