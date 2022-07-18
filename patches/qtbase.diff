@@ -1732,7 +1732,7 @@ index d71d7e547f..e72f673a6a 100644
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 1ace82c5c7..18767e5cb1 100644
+index 929e468115..23530c39d2 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -807,7 +807,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
