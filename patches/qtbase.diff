@@ -1,6 +1,6 @@
  cmake/QtCompilerFlags.cmake                        |   4 +-
  cmake/QtCompilerOptimization.cmake                 |  14 +-
- cmake/QtInternalTargets.cmake                      |  67 +++-
+ cmake/QtInternalTargets.cmake                      |  62 +++-
  config_help.txt                                    |   1 +
  configure.cmake                                    |   5 +
  qt_cmdline.cmake                                   |   1 +
@@ -24,7 +24,7 @@
  .../windows/uiautomation/qwindowsuiabaseprovider.h |   4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |  30 +-
  .../windows/uiautomation/qwindowsuiautils.h        |   2 +-
- 26 files changed, 101 insertions(+), 1431 deletions(-)
+ 26 files changed, 100 insertions(+), 1427 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index a34aaca20b..011302f1f9 100644
@@ -84,7 +84,7 @@ index 4233aece76..3cef343e22 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 6cb2378044..f083bbe65a 100644
+index 86d4dcf9b6..f083bbe65a 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -250,15 +250,19 @@ if (MSVC)
@@ -109,7 +109,7 @@ index 6cb2378044..f083bbe65a 100644
      )
  endif()
  
-@@ -270,13 +274,25 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+@@ -270,6 +274,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
      target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
  endif()
  
@@ -130,16 +130,8 @@ index 6cb2378044..f083bbe65a 100644
 +# Intel Control-flow Enforcement Technology (CET)
  if(QT_FEATURE_intelcet)
      if(MSVC)
--        target_compile_options(PlatformCommonInternal INTERFACE
--            -guard:ehcont
--        )
          target_link_options(PlatformCommonInternal INTERFACE
--            -guard:ehcont -CETCOMPAT
-+            -CETCOMPAT
-         )
-     else()
-         target_compile_options(PlatformCommonInternal INTERFACE
-@@ -285,6 +301,45 @@ if(QT_FEATURE_intelcet)
+@@ -282,6 +301,45 @@ if(QT_FEATURE_intelcet)
      endif()
  endif()
  
@@ -198,11 +190,11 @@ index bd229c43a4..0452b1e9ec 100644
                           Force use of the GNU ld, GNU gold, LLVM/LLD or mold
                           linker instead of default one (GCC and clang only)
 diff --git a/configure.cmake b/configure.cmake
-index 10d8030885..3eacf905e2 100644
+index a800856e15..4dba152204 100644
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -986,6 +986,10 @@ qt_feature("intelcet" PRIVATE
-     LABEL "Using Intel Control-flow Enforcement Technology (CET)"
+@@ -987,6 +987,10 @@ qt_feature("intelcet" PRIVATE
+     LABEL "Using Control-flow Enforcement Technology (CET)"
      CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
  )
 +qt_feature("spectre" PRIVATE
@@ -212,7 +204,7 @@ index 10d8030885..3eacf905e2 100644
  qt_configure_add_summary_build_type_and_config()
  qt_configure_add_summary_section(NAME "Build options")
  qt_configure_add_summary_build_mode(Mode)
-@@ -1036,6 +1040,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
+@@ -1037,6 +1041,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
  qt_configure_add_summary_entry(ARGS "precompile_header")
  qt_configure_add_summary_entry(ARGS "ltcg")
  qt_configure_add_summary_entry(ARGS "intelcet")
@@ -1732,7 +1724,7 @@ index d71d7e547f..e72f673a6a 100644
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 929e468115..23530c39d2 100644
+index 9a9ba36910..c1f6dd5d2e 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -807,7 +807,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
