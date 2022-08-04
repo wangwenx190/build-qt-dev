@@ -27,10 +27,10 @@
  26 files changed, 100 insertions(+), 1427 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
-index a34aaca20b..011302f1f9 100644
+index 15327374b3..5f25437853 100644
 --- a/cmake/QtCompilerFlags.cmake
 +++ b/cmake/QtCompilerFlags.cmake
-@@ -5,18 +5,16 @@
+@@ -8,18 +8,16 @@
  # property checked below, and is equivalent to qmake's CONFIG += warn_off.
  
  set(_qt_compiler_warning_flags_on "")
@@ -51,10 +51,10 @@ index a34aaca20b..011302f1f9 100644
  
  set(_qt_compiler_warning_flags_condition
 diff --git a/cmake/QtCompilerOptimization.cmake b/cmake/QtCompilerOptimization.cmake
-index 4233aece76..3cef343e22 100644
+index 813b16af69..a55c550585 100644
 --- a/cmake/QtCompilerOptimization.cmake
 +++ b/cmake/QtCompilerOptimization.cmake
-@@ -89,14 +89,14 @@ endif()
+@@ -92,14 +92,14 @@ endif()
  
  # Windows MSVC
  if(MSVC)
@@ -75,7 +75,7 @@ index 4233aece76..3cef343e22 100644
      endif()
  endif()
  
-@@ -124,6 +124,6 @@ if(WASM)
+@@ -127,6 +127,6 @@ if(WASM)
      set(QT_CFLAGS_OPTIMIZE_SIZE "-Os")
      set(QT_CFLAGS_OPTIMIZE_DEBUG "-g2")
  
@@ -84,10 +84,10 @@ index 4233aece76..3cef343e22 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 86d4dcf9b6..f083bbe65a 100644
+index 9fcdb37b45..10d8ea17fe 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -250,15 +250,19 @@ if (MSVC)
+@@ -253,15 +253,19 @@ if (MSVC)
      target_compile_options(PlatformCommonInternal INTERFACE
          -Zc:wchar_t
          -bigobj
@@ -109,7 +109,7 @@ index 86d4dcf9b6..f083bbe65a 100644
      )
  endif()
  
-@@ -270,6 +274,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+@@ -273,6 +277,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
      target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
  endif()
  
@@ -131,7 +131,7 @@ index 86d4dcf9b6..f083bbe65a 100644
  if(QT_FEATURE_intelcet)
      if(MSVC)
          target_link_options(PlatformCommonInternal INTERFACE
-@@ -282,6 +301,45 @@ if(QT_FEATURE_intelcet)
+@@ -285,6 +304,45 @@ if(QT_FEATURE_intelcet)
      endif()
  endif()
  
@@ -190,10 +190,10 @@ index bd229c43a4..0452b1e9ec 100644
                           Force use of the GNU ld, GNU gold, LLVM/LLD or mold
                           linker instead of default one (GCC and clang only)
 diff --git a/configure.cmake b/configure.cmake
-index a800856e15..4dba152204 100644
+index 57a32dd708..ad548295cc 100644
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -987,6 +987,10 @@ qt_feature("intelcet" PRIVATE
+@@ -990,6 +990,10 @@ qt_feature("intelcet" PRIVATE
      LABEL "Using Control-flow Enforcement Technology (CET)"
      CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
  )
@@ -204,7 +204,7 @@ index a800856e15..4dba152204 100644
  qt_configure_add_summary_build_type_and_config()
  qt_configure_add_summary_section(NAME "Build options")
  qt_configure_add_summary_build_mode(Mode)
-@@ -1037,6 +1041,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
+@@ -1040,6 +1044,7 @@ qt_configure_add_summary_entry(ARGS "relocatable")
  qt_configure_add_summary_entry(ARGS "precompile_header")
  qt_configure_add_summary_entry(ARGS "ltcg")
  qt_configure_add_summary_entry(ARGS "intelcet")
@@ -213,10 +213,10 @@ index a800856e15..4dba152204 100644
  qt_configure_add_summary_entry(
      TYPE "featureList"
 diff --git a/qt_cmdline.cmake b/qt_cmdline.cmake
-index c0c875fa78..7a257a4df9 100644
+index 36a0a2c716..48bf42e1e5 100644
 --- a/qt_cmdline.cmake
 +++ b/qt_cmdline.cmake
-@@ -68,6 +68,7 @@ qt_commandline_option(libudev TYPE boolean)
+@@ -71,6 +71,7 @@ qt_commandline_option(libudev TYPE boolean)
  qt_commandline_option(linker TYPE optionalString VALUES bfd gold lld mold)
  qt_commandline_option(ltcg TYPE boolean)
  qt_commandline_option(intelcet TYPE boolean)
@@ -225,10 +225,10 @@ index c0c875fa78..7a257a4df9 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
-index 95579b0c9e..bef7f234fb 100644
+index 32b69350c1..d4054c6966 100644
 --- a/src/gui/CMakeLists.txt
 +++ b/src/gui/CMakeLists.txt
-@@ -496,21 +496,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
+@@ -500,21 +500,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
          ${FWFoundation}
  )
  
@@ -1698,10 +1698,10 @@ index 465bd07a07..0000000000
 -
 -#endif
 diff --git a/src/plugins/platforms/direct2d/CMakeLists.txt b/src/plugins/platforms/direct2d/CMakeLists.txt
-index b88ac617aa..89b313036c 100644
+index 41fe0bde5b..9458e55933 100644
 --- a/src/plugins/platforms/direct2d/CMakeLists.txt
 +++ b/src/plugins/platforms/direct2d/CMakeLists.txt
-@@ -207,6 +207,8 @@ qt_internal_extend_target(QWindowsDirect2DIntegrationPlugin CONDITION QT_FEATURE
+@@ -210,6 +210,8 @@ qt_internal_extend_target(QWindowsDirect2DIntegrationPlugin CONDITION QT_FEATURE
          ../windows/uiautomation/qwindowsuiautils.cpp ../windows/uiautomation/qwindowsuiautils.h
          ../windows/uiautomation/qwindowsuiavalueprovider.cpp ../windows/uiautomation/qwindowsuiavalueprovider.h
          ../windows/uiautomation/qwindowsuiawindowprovider.cpp ../windows/uiautomation/qwindowsuiawindowprovider.h
@@ -1711,10 +1711,10 @@ index b88ac617aa..89b313036c 100644
  
  qt_internal_extend_target(QWindowsDirect2DIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/CMakeLists.txt b/src/plugins/platforms/windows/CMakeLists.txt
-index d71d7e547f..e72f673a6a 100644
+index af9c1fccb4..f20a6e6c25 100644
 --- a/src/plugins/platforms/windows/CMakeLists.txt
 +++ b/src/plugins/platforms/windows/CMakeLists.txt
-@@ -195,6 +195,8 @@ qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION QT_FEATURE_accessi
+@@ -198,6 +198,8 @@ qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION QT_FEATURE_accessi
          uiautomation/qwindowsuiautils.cpp uiautomation/qwindowsuiautils.h
          uiautomation/qwindowsuiavalueprovider.cpp uiautomation/qwindowsuiavalueprovider.h
          uiautomation/qwindowsuiawindowprovider.cpp uiautomation/qwindowsuiawindowprovider.h
@@ -1724,7 +1724,7 @@ index d71d7e547f..e72f673a6a 100644
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 9a9ba36910..c1f6dd5d2e 100644
+index a795328bdf..6e739d1f12 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -807,7 +807,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
