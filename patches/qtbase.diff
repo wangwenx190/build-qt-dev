@@ -10,7 +10,7 @@
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
  src/corelib/global/qoperatingsystemversion_win.cpp |    2 +-
  src/corelib/io/qstandardpaths_win.cpp              |   11 +-
- src/corelib/kernel/qcoreapplication.cpp            |    2 +-
+ src/corelib/kernel/qcoreapplication.cpp            |   18 +-
  src/gui/CMakeLists.txt                             |   15 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -74,7 +74,7 @@
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   30 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
- 76 files changed, 163 insertions(+), 7351 deletions(-)
+ 76 files changed, 168 insertions(+), 7362 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -421,10 +421,27 @@ index 13b8fe224a..65e30d5751 100644
          CoTaskMemFree(path);
      }
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 4d69ca9a17..a9c51ecc8e 100644
+index 4d69ca9a17..613973d90c 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
-@@ -547,7 +547,7 @@ QString qAppName()
+@@ -67,15 +67,14 @@
+ #endif
+ 
+ #include <stdlib.h>
++#include <locale.h>
+ 
+ #ifdef Q_OS_UNIX
+-#  include <locale.h>
+ #  ifndef Q_OS_INTEGRITY
+ #    include <langinfo.h>
+ #  endif
+ #  include <unistd.h>
+ #  include <sys/types.h>
+-
+ #  include "qcore_unix_p.h"
+ #endif
+ 
+@@ -547,7 +546,7 @@ QString qAppName()
  
  void QCoreApplicationPrivate::initLocale()
  {
@@ -433,6 +450,33 @@ index 4d69ca9a17..a9c51ecc8e 100644
      Q_CONSTINIT static bool qt_locale_initialized = false;
      if (qt_locale_initialized)
          return;
+@@ -556,14 +555,9 @@ void QCoreApplicationPrivate::initLocale()
+ #ifdef Q_OS_INTEGRITY
+     setlocale(LC_CTYPE, "UTF-8");
+ #else
+-    // Android's Bionic didn't get nl_langinfo until NDK 15 (Android 8.0),
+-    // which is too new for Qt, so we just assume it's always UTF-8.
+-    auto nl_langinfo = [](int) { return "UTF-8"; };
+-
+-    const char *locale = setlocale(LC_ALL, "");
+-    const char *codec = nl_langinfo(CODESET);
+-    if (Q_UNLIKELY(strcmp(codec, "UTF-8") != 0 && strcmp(codec, "utf8") != 0)) {
+-        QByteArray oldLocale = locale;
++
++    const QByteArray locale = setlocale(LC_ALL, "");
++    if (!locale.endsWith("UTF-8") && !locale.endsWith("utf8")) {
+         QByteArray newLocale = setlocale(LC_CTYPE, nullptr);
+         if (qsizetype dot = newLocale.indexOf('.'); dot != -1)
+             newLocale.truncate(dot);    // remove encoding, if any
+@@ -585,7 +579,7 @@ void QCoreApplicationPrivate::initLocale()
+         qWarning("Detected system locale encoding (%s, locale \"%s\") is not UTF-8.\n"
+                  "Qt shall use a UTF-8 locale (\"%s\") instead. If this causes problems,\n"
+                  "reconfigure your locale. See the locale(1) manual for more information.",
+-                 codec, oldLocale.constData(), newLocale.constData());
++                 codec, locale.constData(), newLocale.constData());
+     }
+ #endif
+ #endif
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 32b69350c1..d4054c6966 100644
 --- a/src/gui/CMakeLists.txt
