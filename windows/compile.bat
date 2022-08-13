@@ -104,7 +104,7 @@ set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 :: Cleanup untracked files, not necessary but recommended.
 set __git_clean_params=clean -fdx
-set __git_apply_params=apply -v
+set __git_apply_params=apply --ignore-whitespace --verbose
 set __repo_root_dir=%~dp0..
 set __repo_contrib_dir=%__repo_root_dir%\contrib\win
 set __contrib_bin_dir=%__repo_contrib_dir%\bin

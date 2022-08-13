@@ -1,20 +1,6 @@
- ports/openssl/windows/portfile.cmake |  2 ++
- scripts/toolchains/windows.cmake     | 38 +++++++++++++++++++++++++++---------
- 2 files changed, 31 insertions(+), 9 deletions(-)
+ scripts/toolchains/windows.cmake | 38 +++++++++++++++++++++++++++++---------
+ 1 file changed, 29 insertions(+), 9 deletions(-)
 
-diff --git a/ports/openssl/windows/portfile.cmake b/ports/openssl/windows/portfile.cmake
-index 8d3b668ed..0d0bae64c 100644
---- a/ports/openssl/windows/portfile.cmake
-+++ b/ports/openssl/windows/portfile.cmake
-@@ -59,6 +59,8 @@ if (VCPKG_DETECTED_CMAKE_C_COMPILER_ID MATCHES "Clang" OR VCPKG_LIBRARY_LINKAGE
- else()
-     set(OPENSSL_BUILD_MAKES_PDBS ON)
- endif()
-+# wangwenx190: we don't need the debug symbols.
-+set(OPENSSL_BUILD_MAKES_PDBS OFF)
- 
- if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
-     # Copy openssl sources.
 diff --git a/scripts/toolchains/windows.cmake b/scripts/toolchains/windows.cmake
 index 7c8a54989..f2941690f 100644
 --- a/scripts/toolchains/windows.cmake

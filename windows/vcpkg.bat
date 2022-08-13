@@ -39,7 +39,7 @@ set __git_fetch_params=fetch --depth=1 --no-tags
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 set __git_clean_params=clean -fdx
 set __git_pull_params=pull
-set __git_apply_params=apply -v
+set __git_apply_params=apply --ignore-whitespace --verbose
 if /i "%GITHUB_ACTIONS%" == "true" (
     cd /d "%__vcpkg_dir%"
     git %__git_reset_params%
@@ -53,6 +53,7 @@ if /i "%GITHUB_ACTIONS%" == "true" (
 cd /d "%__vcpkg_dir%"
 :: Apply our custom modification to VCPKG.
 git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg.diff"
+git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg-openssl.diff"
 git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg-ffmpeg.diff"
 :: Always try to get the latest VCPKG tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"

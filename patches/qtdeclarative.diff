@@ -1,13 +1,19 @@
- src/quick/util/qquickshortcut_p.h       | 2 +-
+ src/quick/util/qquickshortcut_p.h       | 3 ++-
  src/quicklayouts/qquicklinearlayout_p.h | 2 +-
  src/quicklayouts/qquickstacklayout_p.h  | 2 +-
- 3 files changed, 3 insertions(+), 3 deletions(-)
+ 3 files changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/src/quick/util/qquickshortcut_p.h b/src/quick/util/qquickshortcut_p.h
-index f303043008..314ea6b5ec 100644
+index f303043008..baa884b6f0 100644
 --- a/src/quick/util/qquickshortcut_p.h
 +++ b/src/quick/util/qquickshortcut_p.h
-@@ -27,7 +27,7 @@ QT_BEGIN_NAMESPACE
+@@ -22,12 +22,13 @@
+ #include <QtQml/qqmlparserstatus.h>
+ #include <QtQml/qqml.h>
+ #include <QtCore/private/qglobal_p.h>
++#include <QtQuick/private/qtquickglobal_p.h>
+ 
+ QT_BEGIN_NAMESPACE
  
  class QShortcutEvent;
  
