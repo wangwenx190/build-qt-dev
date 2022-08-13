@@ -32,7 +32,7 @@ set __compiler=msvc
 :: Supported values: x64, x86 and arm64
 set __arch=x64
 :: Supported values: shared and static
-set __lib_type=static
+set __lib_type=shared
 :: Supported values: debug, minsizerel, release, relwithdebinfo and debugandrelease
 set __build_type=release
 exit /b 0

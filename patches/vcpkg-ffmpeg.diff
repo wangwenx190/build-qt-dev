@@ -2,7 +2,7 @@
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/ports/ffmpeg/portfile.cmake b/ports/ffmpeg/portfile.cmake
-index 47296865a..f1763dd7f 100644
+index f9aa7247c..ce20fd014 100644
 --- a/ports/ffmpeg/portfile.cmake
 +++ b/ports/ffmpeg/portfile.cmake
 @@ -51,7 +51,7 @@ else()

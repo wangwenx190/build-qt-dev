@@ -126,10 +126,11 @@ if /i "%__compiler%" == "mingw" (
     set __vcpkg_triplet=%__vcpkg_triplet%-windows
 )
 set __vcpkg_triplet=%__vcpkg_triplet%-static
+if /i "%__lib_type%" == "shared" set __vcpkg_triplet=%__vcpkg_triplet%-md
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
 :: Increase CMake's message verbosity, it can help us debug configuration errors.
-:: But suppress the developer warnings from CMake, it's not useful to us.
+:: But suppress the developer warnings from CMake, it's not useful for us.
 :: We must set "VCPKG_TARGET_TRIPLET" otherwise VCPKG will always use the default triplet "x64-windows".
 :: Enable VCPKG by setting the "CMAKE_TOOLCHAIN_FILE" variable. We use VCPKG to provide the 3rd party dependencies.
 set __cmake_extra_params=--log-level=STATUS -Wno-dev -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
@@ -218,7 +219,7 @@ if /i "%__ninja_multi_config%" == "false" (
 :: Qt will then try to use the fallback implementation. Since we always build the OpenSSL libraries
 :: in VCPKG, we can let Qt link against them directly. QtNetwork will have some limitations if
 :: the OpenSSL libraries are not available.
-:: We also enable the mitigation for the Spectre security vulnerabilities and Intel Control-flow
+:: We also enable the mitigation for the Spectre security vulnerabilities and the Control-flow
 :: Enforcement Technology (CET) to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
@@ -321,10 +322,10 @@ cd /d "%__repo_source_dir%"
 if exist "%__module_source_dir%" rd /s /q "%__module_source_dir%"
 git %__git_clone_params%
 if %errorlevel% neq 0 goto fail
-:: Apply our custom modification to QtBase.
-if /i "%__is_building_qtbase%" == "true" (
+set __module_patch_file=%__repo_root_dir%\patches\%__module%.diff
+if exist "%__module_patch_file%" (
     cd /d "%__module_source_dir%"
-    git %__git_apply_params% "%__repo_root_dir%\patches\qtbase.diff"
+    git %__git_apply_params% "%__module_patch_file%"
     if %errorlevel% neq 0 goto fail
 )
 cd /d "%__repo_build_dir%"

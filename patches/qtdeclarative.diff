@@ -1,0 +1,44 @@
+ src/quick/util/qquickshortcut_p.h       | 2 +-
+ src/quicklayouts/qquicklinearlayout_p.h | 2 +-
+ src/quicklayouts/qquickstacklayout_p.h  | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/quick/util/qquickshortcut_p.h b/src/quick/util/qquickshortcut_p.h
+index f303043008..314ea6b5ec 100644
+--- a/src/quick/util/qquickshortcut_p.h
++++ b/src/quick/util/qquickshortcut_p.h
+@@ -27,7 +27,7 @@ QT_BEGIN_NAMESPACE
+ 
+ class QShortcutEvent;
+ 
+-class QQuickShortcut : public QObject, public QQmlParserStatus
++class Q_QUICK_PRIVATE_EXPORT QQuickShortcut : public QObject, public QQmlParserStatus
+ {
+     Q_OBJECT
+     Q_INTERFACES(QQmlParserStatus)
+diff --git a/src/quicklayouts/qquicklinearlayout_p.h b/src/quicklayouts/qquicklinearlayout_p.h
+index 26810d5684..15ce953ead 100644
+--- a/src/quicklayouts/qquicklinearlayout_p.h
++++ b/src/quicklayouts/qquicklinearlayout_p.h
+@@ -169,7 +169,7 @@ public:
+  **
+  **/
+ class QQuickLinearLayoutPrivate;
+-class QQuickLinearLayout : public QQuickGridLayoutBase
++class Q_QUICKLAYOUTS_PRIVATE_EXPORT QQuickLinearLayout : public QQuickGridLayoutBase
+ {
+     Q_OBJECT
+     Q_PROPERTY(qreal spacing READ spacing WRITE setSpacing NOTIFY spacingChanged)
+diff --git a/src/quicklayouts/qquickstacklayout_p.h b/src/quicklayouts/qquickstacklayout_p.h
+index 86000759d1..c7c174450e 100644
+--- a/src/quicklayouts/qquickstacklayout_p.h
++++ b/src/quicklayouts/qquickstacklayout_p.h
+@@ -89,7 +89,7 @@ private:
+     bool explicitCurrentIndex;
+ };
+ 
+-class QQuickStackLayoutAttached : public QObject
++class Q_QUICKLAYOUTS_PRIVATE_EXPORT QQuickStackLayoutAttached : public QObject
+ {
+     Q_OBJECT
+     Q_PROPERTY(int index READ index NOTIFY indexChanged)
