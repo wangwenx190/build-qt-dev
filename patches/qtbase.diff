@@ -10,7 +10,7 @@
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
  src/corelib/global/qoperatingsystemversion_win.cpp |    2 +-
  src/corelib/io/qstandardpaths_win.cpp              |   11 +-
- src/corelib/kernel/qcoreapplication.cpp            |   18 +-
+ src/corelib/kernel/qcoreapplication.cpp            |   22 +-
  src/gui/CMakeLists.txt                             |   15 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -74,7 +74,7 @@
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   30 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
- 76 files changed, 168 insertions(+), 7362 deletions(-)
+ 76 files changed, 170 insertions(+), 7364 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -421,7 +421,7 @@ index 13b8fe224a..65e30d5751 100644
          CoTaskMemFree(path);
      }
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 4d69ca9a17..613973d90c 100644
+index 4d69ca9a17..586736bb78 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
 @@ -67,15 +67,14 @@
@@ -468,12 +468,17 @@ index 4d69ca9a17..613973d90c 100644
          QByteArray newLocale = setlocale(LC_CTYPE, nullptr);
          if (qsizetype dot = newLocale.indexOf('.'); dot != -1)
              newLocale.truncate(dot);    // remove encoding, if any
-@@ -585,7 +579,7 @@ void QCoreApplicationPrivate::initLocale()
-         qWarning("Detected system locale encoding (%s, locale \"%s\") is not UTF-8.\n"
+@@ -582,10 +576,10 @@ void QCoreApplicationPrivate::initLocale()
+         if (newLocale.isEmpty())
+             newLocale = setlocale(LC_CTYPE, "C.utf8");
+ 
+-        qWarning("Detected system locale encoding (%s, locale \"%s\") is not UTF-8.\n"
++        qWarning("Detected system locale encoding (\"%s\") is not UTF-8.\n"
                   "Qt shall use a UTF-8 locale (\"%s\") instead. If this causes problems,\n"
-                  "reconfigure your locale. See the locale(1) manual for more information.",
+-                 "reconfigure your locale. See the locale(1) manual for more information.",
 -                 codec, oldLocale.constData(), newLocale.constData());
-+                 codec, locale.constData(), newLocale.constData());
++                 "reconfigure your locale. See the locale(1) manual for more information.\n",
++                 locale.constData(), newLocale.constData());
      }
  #endif
  #endif
