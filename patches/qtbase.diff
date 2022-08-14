@@ -12,7 +12,8 @@
  src/corelib/io/qfilesystemengine_win.cpp           |    2 +-
  src/corelib/io/qstandardpaths_win.cpp              |   34 +-
  src/corelib/kernel/qcoreapplication.cpp            |   22 +-
- src/corelib/plugin/qsystemlibrary.cpp              |    4 +-
+ src/corelib/plugin/qsystemlibrary.cpp              |   53 +-
+ src/corelib/plugin/qsystemlibrary_p.h              |   19 +-
  src/gui/CMakeLists.txt                             |   15 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -78,7 +79,9 @@
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   30 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
- 80 files changed, 307 insertions(+), 7403 deletions(-)
+ src/tools/rcc/main.cpp                             |   11 +-
+ src/tools/rcc/rcc.cpp                              |   10 +-
+ 83 files changed, 352 insertions(+), 7447 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -573,20 +576,147 @@ index 4d69ca9a17..586736bb78 100644
  #endif
  #endif
 diff --git a/src/corelib/plugin/qsystemlibrary.cpp b/src/corelib/plugin/qsystemlibrary.cpp
-index dfca23ca3a..d2a25cdec7 100644
+index dfca23ca3a..ea0e0bebf7 100644
 --- a/src/corelib/plugin/qsystemlibrary.cpp
 +++ b/src/corelib/plugin/qsystemlibrary.cpp
-@@ -70,7 +70,9 @@ HINSTANCE QSystemLibrary::load(const wchar_t *libraryName, bool onlySystemDirect
-         searchOrder << PATH.split(u';', Qt::SkipEmptyParts);
-     }
-     QString fileName = QString::fromWCharArray(libraryName);
--    fileName.append(".dll"_L1);
+@@ -42,48 +42,55 @@ using namespace Qt::StringLiterals;
+ extern QString qAppFileName();
+ #endif
+ 
+-static QString qSystemDirectory()
++[[nodiscard]] static inline QString qSystemDirectory()
+ {
+-    QVarLengthArray<wchar_t, MAX_PATH> fullPath;
+-
+-    UINT retLen = ::GetSystemDirectory(fullPath.data(), MAX_PATH);
+-    if (retLen > MAX_PATH) {
+-        fullPath.resize(retLen);
+-        retLen = ::GetSystemDirectory(fullPath.data(), retLen);
+-    }
+-    // in some rare cases retLen might be 0
+-    return QString::fromWCharArray(fullPath.constData(), int(retLen));
++    static const QString result = []() -> QString {
++        QVarLengthArray<wchar_t, MAX_PATH> fullPath = {};
++        UINT len = ::GetSystemDirectoryW(fullPath.data(), MAX_PATH);
++        if (len > MAX_PATH) {
++            fullPath.resize(len);
++            len = ::GetSystemDirectoryW(fullPath.data(), len);
++        }
++        // In some rare cases len might be 0.
++        return QString::fromWCharArray(fullPath.constData(), int(len));
++    }();
++    return result;
+ }
+ 
+ HINSTANCE QSystemLibrary::load(const wchar_t *libraryName, bool onlySystemDirectory /* = true */)
+ {
+-    QStringList searchOrder;
++    QString fileName = QString::fromWCharArray(libraryName);
 +    if (!fileName.endsWith(u".dll", Qt::CaseInsensitive)) {
 +        fileName.append(u".dll");
 +    }
++
++    if (onlySystemDirectory) {
++        return ::LoadLibraryExW(qUtf16Printable(fileName), nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
++    }
++
++    QStringList searchOrder = {};
+ 
+ #if !defined(QT_BOOTSTRAPPED)
+-    if (!onlySystemDirectory)
+-        searchOrder << QFileInfo(qAppFileName()).path();
++    searchOrder << QFileInfo(qAppFileName()).path();
+ #endif
+     searchOrder << qSystemDirectory();
+ 
+-    if (!onlySystemDirectory) {
+-        const QString PATH(QLatin1StringView(qgetenv("PATH")));
+-        searchOrder << PATH.split(u';', Qt::SkipEmptyParts);
+-    }
+-    QString fileName = QString::fromWCharArray(libraryName);
+-    fileName.append(".dll"_L1);
++    const QString PATH(QLatin1StringView(qgetenv("PATH")));
++    searchOrder << PATH.split(u';', Qt::SkipEmptyParts);
  
      // Start looking in the order specified
-     for (int i = 0; i < searchOrder.count(); ++i) {
+-    for (int i = 0; i < searchOrder.count(); ++i) {
++    for (int i = 0; i != searchOrder.count(); ++i) {
+         QString fullPathAttempt = searchOrder.at(i);
+         if (!fullPathAttempt.endsWith(u'\\')) {
+             fullPathAttempt.append(u'\\');
+         }
+         fullPathAttempt.append(fileName);
+-        HINSTANCE inst = ::LoadLibrary(reinterpret_cast<const wchar_t *>(fullPathAttempt.utf16()));
+-        if (inst != 0)
++        if (const HINSTANCE inst = ::LoadLibraryW(qUtf16Printable(fullPathAttempt))) {
+             return inst;
++        }
+     }
+-    return 0;
++
++    return nullptr;
+ }
+ 
+ QT_END_NAMESPACE
+diff --git a/src/corelib/plugin/qsystemlibrary_p.h b/src/corelib/plugin/qsystemlibrary_p.h
+index c24caf3c2e..ae38111f0f 100644
+--- a/src/corelib/plugin/qsystemlibrary_p.h
++++ b/src/corelib/plugin/qsystemlibrary_p.h
+@@ -28,27 +28,23 @@ public:
+     explicit QSystemLibrary(const QString &libraryName)
+     {
+         m_libraryName = libraryName;
+-        m_handle = 0;
+-        m_didLoad = false;
+     }
+ 
+     explicit QSystemLibrary(const wchar_t *libraryName)
+     {
+         m_libraryName = QString::fromWCharArray(libraryName);
+-        m_handle = 0;
+-        m_didLoad = false;
+     }
+ 
+     bool load(bool onlySystemDirectory = true)
+     {
+-        m_handle = load((const wchar_t *)m_libraryName.utf16(), onlySystemDirectory);
++        m_handle = QSystemLibrary::load(qUtf16Printable(m_libraryName), onlySystemDirectory);
+         m_didLoad = true;
+-        return (m_handle != 0);
++        return (m_handle != nullptr);
+     }
+ 
+     bool isLoaded()
+     {
+-        return (m_handle != 0);
++        return (m_handle != nullptr);
+     }
+ 
+     QFunctionPointer resolve(const char *symbol)
+@@ -56,7 +52,7 @@ public:
+         if (!m_didLoad)
+             load();
+         if (!m_handle)
+-            return 0;
++            return nullptr;
+         return QFunctionPointer(GetProcAddress(m_handle, symbol));
+     }
+ 
+@@ -66,10 +62,11 @@ public:
+     }
+ 
+     static Q_CORE_EXPORT HINSTANCE load(const wchar_t *lpFileName, bool onlySystemDirectory = true);
++
+ private:
+-    HINSTANCE m_handle;
+-    QString m_libraryName;
+-    bool m_didLoad;
++    HINSTANCE m_handle = nullptr;
++    QString m_libraryName = {};
++    bool m_didLoad = false;
+ };
+ 
+ QT_END_NAMESPACE
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 32b69350c1..d4054c6966 100644
 --- a/src/gui/CMakeLists.txt
@@ -8443,7 +8573,7 @@ index 9e284f2366..369f472d63 100644
      }
      return options;
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
-index 006396d92a..71c9412e39 100644
+index 006396d92a..49db7f40c1 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
 +++ b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 @@ -751,6 +751,7 @@ static inline QString messageKeyText(const MSG &msg)
@@ -8494,7 +8624,7 @@ index 006396d92a..71c9412e39 100644
  #undef disabled
      const QPoint pos = QHighDpi::toNativePixels(topLevel->geometry().topLeft(), topLevel);
 -    const int titleBarOffset = isSystemMenuOffsetNeeded(topLevel->flags()) ? getTitleBarHeight(topLevelHwnd) : 0;
-+    const int titleBarOffset = qEnvironmentVariableIntValue("QT_SYSMENU_NEED_OFFSET") ? getTitleBarHeight(topLevelHwnd) : 0;
++    const int titleBarOffset = qEnvironmentVariableIntValue("QT_WINDOWS_SYSTEM_MENU_NEED_OFFSET") ? getTitleBarHeight(topLevelHwnd) : 0;
      const int ret = TrackPopupMenuEx(menu,
                                 TPM_LEFTALIGN  | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 pos.x(), pos.y() + titleBarOffset,
@@ -8695,3 +8825,85 @@ index 8fe8b1c6d7..07367efe01 100644
  
  QT_BEGIN_NAMESPACE
  
+diff --git a/src/tools/rcc/main.cpp b/src/tools/rcc/main.cpp
+index 7323fc9bbb..ccdf6f4203 100644
+--- a/src/tools/rcc/main.cpp
++++ b/src/tools/rcc/main.cpp
+@@ -34,9 +34,7 @@ void dumpRecursive(const QDir &dir, QTextStream &out)
+         if (entry.isDir()) {
+             dumpRecursive(entry.filePath(), out);
+         } else {
+-            out << "<file>"_L1
+-                << entry.filePath()
+-                << "</file>\n"_L1;
++            out << "        <file>"_L1 << entry.filePath() << "</file>\n"_L1;
+         }
+     }
+ }
+@@ -64,13 +62,14 @@ int createProject(const QString &outFileName)
+     }
+ 
+     QTextStream out(&file);
+-    out << "<!DOCTYPE RCC><RCC version=\"1.0\">\n"
+-           "<qresource>\n"_L1;
++    out << "<!DOCTYPE RCC>\n"
++           "<RCC version=\"1.0\">\n"
++           "    <qresource>\n"_L1;
+ 
+     // use "." as dir to get relative file paths
+     dumpRecursive(QDir("."_L1), out);
+ 
+-    out << "</qresource>\n"
++    out << "    </qresource>\n"
+            "</RCC>\n"_L1;
+ 
+     return 0;
+diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
+index 0eefeab065..c4d36e8e0e 100644
+--- a/src/tools/rcc/rcc.cpp
++++ b/src/tools/rcc/rcc.cpp
+@@ -965,7 +965,7 @@ void RCCResourceLibrary::writeDecimal(int value)
+     write(buf, n);
+ }
+ 
+-static const char hexDigits[] = "0123456789abcdef";
++static constexpr char hexDigits[] = "0123456789abcdef";
+ 
+ inline void RCCResourceLibrary::write2HexDigits(quint8 number)
+ {
+@@ -1105,7 +1105,7 @@ bool RCCResourceLibrary::writeDataBlobs()
+     Q_ASSERT(m_errorDevice);
+     switch (m_format) {
+     case C_Code:
+-        writeString("static const unsigned char qt_resource_data[] = {\n");
++        writeString("static constexpr unsigned char qt_resource_data[] = {\n");
+         break;
+     case Python_Code:
+         writeString("qt_resource_data = b\"\\\n");
+@@ -1149,7 +1149,7 @@ bool RCCResourceLibrary::writeDataBlobs()
+     case Pass1:
+         if (offset < 8)
+             offset = 8;
+-        writeString("\nstatic const unsigned char qt_resource_data[");
++        writeString("\nstatic constexpr unsigned char qt_resource_data[");
+         writeByteArray(QByteArray::number(offset));
+         writeString("] = { 'Q', 'R', 'C', '_', 'D', 'A', 'T', 'A' };\n\n");
+         break;
+@@ -1164,7 +1164,7 @@ bool RCCResourceLibrary::writeDataNames()
+     switch (m_format) {
+     case C_Code:
+     case Pass1:
+-        writeString("static const unsigned char qt_resource_name[] = {\n");
++        writeString("static constexpr unsigned char qt_resource_name[] = {\n");
+         break;
+     case Python_Code:
+         writeString("qt_resource_name = b\"\\\n");
+@@ -1226,7 +1226,7 @@ bool RCCResourceLibrary::writeDataStructure()
+     switch (m_format) {
+     case C_Code:
+     case Pass1:
+-        writeString("static const unsigned char qt_resource_struct[] = {\n");
++        writeString("static constexpr unsigned char qt_resource_struct[] = {\n");
+         break;
+     case Python_Code:
+         writeString("qt_resource_struct = b\"\\\n");
