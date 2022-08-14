@@ -80,8 +80,10 @@ if /i "%__module%" == "" (
 )
 title Building %__module% ...
 set __is_building_qtbase=false
+set __is_building_qtmultimedia=false
 set __is_building_qtwebengine=false
 if /i "%__module%" == "qtbase" set __is_building_qtbase=true
+if /i "%__module%" == "qtmultimedia" set __is_building_qtmultimedia=true
 if /i "%__module%" == "qtwebengine" set __is_building_qtwebengine=true
 :: Or use the official read-only repo: https://code.qt.io/qt/%__module%.git
 set __git_clone_url=https://github.com/qt/%__module%.git
@@ -224,6 +226,11 @@ if /i "%__ninja_multi_config%" == "false" (
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
 if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
+:: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
+:: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
+:: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend
+:: manually.
+if /i "%__is_building_qtmultimedia%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DINPUT_ffmpeg=yes
 :: For the QtWebEngine module, we only build the QtPDF component. Building QtWebEngine itself
 :: is too time consuming and GitHub Actions's machine is not powerful enough to build it either.
 :: QtPDF will be built by default, no need to enable it explicitly. The CMake parameter to control
