@@ -9,8 +9,10 @@
  src/corelib/global/qoperatingsystemversion.h       |    6 +
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
  src/corelib/global/qoperatingsystemversion_win.cpp |    2 +-
- src/corelib/io/qstandardpaths_win.cpp              |   11 +-
+ src/corelib/io/qfilesystemengine_win.cpp           |    2 +-
+ src/corelib/io/qstandardpaths_win.cpp              |   34 +-
  src/corelib/kernel/qcoreapplication.cpp            |   22 +-
+ src/corelib/plugin/qsystemlibrary.cpp              |    4 +-
  src/gui/CMakeLists.txt                             |   15 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -24,6 +26,7 @@
  .../windows/apisupport/uiapropertyids_p.h          |  188 --
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
+ src/gui/rhi/qrhid3d11.cpp                          |   12 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
  src/plugins/platforms/direct2d/CMakeLists.txt      |  224 ---
  src/plugins/platforms/direct2d/direct2d.json       |    3 -
@@ -68,13 +71,14 @@
  .../platforms/offscreen/qoffscreenwindow.cpp       |  173 --
  src/plugins/platforms/offscreen/qoffscreenwindow.h |   49 -
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
+ .../platforms/windows/qwindowsintegration.cpp      |  135 +-
  .../platforms/windows/qwindowskeymapper.cpp        |   17 +-
  src/plugins/platforms/windows/qwindowswindow.cpp   |    6 +-
  .../uiautomation/qwindowsuiaaccessibility.cpp      |    9 +-
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   30 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
- 76 files changed, 170 insertions(+), 7364 deletions(-)
+ 80 files changed, 307 insertions(+), 7403 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -384,13 +388,58 @@ index a209fb17b6..a4a3000a41 100644
      v.m_major = osv.dwMajorVersion;
      v.m_minor = osv.dwMinorVersion;
      v.m_micro = osv.dwBuildNumber;
+diff --git a/src/corelib/io/qfilesystemengine_win.cpp b/src/corelib/io/qfilesystemengine_win.cpp
+index d36e896305..d991035d38 100644
+--- a/src/corelib/io/qfilesystemengine_win.cpp
++++ b/src/corelib/io/qfilesystemengine_win.cpp
+@@ -1552,7 +1552,7 @@ QString QFileSystemEngine::rootPath()
+ {
+     QString ret = QString::fromLatin1(qgetenv("SystemDrive"));
+     if (ret.isEmpty())
+-        ret = "c:"_L1;
++        ret = "C:"_L1;
+     ret.append(u'/');
+     return ret;
+ }
 diff --git a/src/corelib/io/qstandardpaths_win.cpp b/src/corelib/io/qstandardpaths_win.cpp
-index 13b8fe224a..65e30d5751 100644
+index 13b8fe224a..2997bb091a 100644
 --- a/src/corelib/io/qstandardpaths_win.cpp
 +++ b/src/corelib/io/qstandardpaths_win.cpp
-@@ -60,8 +60,7 @@ static inline void appendTestMode(QString &path)
+@@ -21,24 +21,24 @@ QT_BEGIN_NAMESPACE
  
- static bool isProcessLowIntegrity()
+ using namespace Qt::StringLiterals;
+ 
+-static QString convertCharArray(const wchar_t *path)
++[[nodiscard]] static inline QString convertCharArray(const wchar_t *path)
+ {
+     return QDir::fromNativeSeparators(QString::fromWCharArray(path));
+ }
+ 
+-static inline bool isGenericConfigLocation(QStandardPaths::StandardLocation type)
++[[nodiscard]] static inline bool isGenericConfigLocation(const QStandardPaths::StandardLocation type)
+ {
+     return type == QStandardPaths::GenericConfigLocation || type == QStandardPaths::GenericDataLocation;
+ }
+ 
+-static inline bool isConfigLocation(QStandardPaths::StandardLocation type)
++[[nodiscard]] static inline bool isConfigLocation(const QStandardPaths::StandardLocation type)
+ {
+     return type == QStandardPaths::ConfigLocation || type == QStandardPaths::AppConfigLocation
+         || type == QStandardPaths::AppDataLocation || type == QStandardPaths::AppLocalDataLocation
+         || isGenericConfigLocation(type);
+ }
+ 
+-static void appendOrganizationAndApp(QString &path) // Courtesy qstandardpaths_unix.cpp
++static inline void appendOrganizationAndApp(QString &path) // Courtesy qstandardpaths_unix.cpp
+ {
+ #ifndef QT_BOOTSTRAPPED
+     const QString &org = QCoreApplication::organizationName();
+@@ -58,10 +58,9 @@ static inline void appendTestMode(QString &path)
+         path += "/qttest"_L1;
+ }
+ 
+-static bool isProcessLowIntegrity()
++[[nodiscard]] static inline bool isProcessLowIntegrity()
  {
 -    // same as GetCurrentProcessToken()
 -    const auto process_token = HANDLE(quintptr(-4));
@@ -398,7 +447,36 @@ index 13b8fe224a..65e30d5751 100644
  
      QVarLengthArray<char,256> token_info_buf(256);
      auto* token_info = reinterpret_cast<TOKEN_MANDATORY_LABEL*>(token_info_buf.data());
-@@ -133,7 +132,7 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
+@@ -81,7 +80,7 @@ static bool isProcessLowIntegrity()
+ }
+ 
+ // Map QStandardPaths::StandardLocation to KNOWNFOLDERID of SHGetKnownFolderPath()
+-static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
++[[nodiscard]] static inline GUID writableSpecialFolderId(const QStandardPaths::StandardLocation type)
+ {
+     // folders for medium & high integrity processes
+     static const GUID folderIds[] = {
+@@ -92,7 +91,8 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
+         FOLDERID_Music,         // MusicLocation
+         FOLDERID_Videos,        // MoviesLocation
+         FOLDERID_Pictures,      // PicturesLocation
+-        GUID(), GUID(),         // TempLocation/HomeLocation
++        GUID(),                 // TempLocation
++        FOLDERID_Profile,       // HomeLocation
+         FOLDERID_LocalAppData,  // AppLocalDataLocation ("Local" path)
+         GUID(),                 // CacheLocation
+         FOLDERID_LocalAppData,  // GenericDataLocation ("Local" path)
+@@ -117,7 +117,8 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
+         FOLDERID_Music,          // MusicLocation
+         FOLDERID_Videos,         // MoviesLocation
+         FOLDERID_Pictures,       // PicturesLocation
+-        GUID(), GUID(),          // TempLocation/HomeLocation
++        GUID(),                  // TempLocation
++        FOLDERID_Profile,        // HomeLocation
+         FOLDERID_LocalAppDataLow,// AppLocalDataLocation ("Local" path)
+         GUID(),                  // CacheLocation
+         FOLDERID_LocalAppDataLow,// GenericDataLocation ("Local" path)
+@@ -133,18 +134,18 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
      };
      static_assert(sizeof(folderIds_li) == sizeof(folderIds));
  
@@ -407,9 +485,11 @@ index 13b8fe224a..65e30d5751 100644
      if (size_t(type) < sizeof(folderIds) / sizeof(folderIds[0]))
          return low_integrity_process ? folderIds_li[type] : folderIds[type];
      return GUID();
-@@ -142,9 +141,9 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
+ }
+ 
  // Convenience for SHGetKnownFolderPath().
- static QString sHGetKnownFolderPath(const GUID &clsid)
+-static QString sHGetKnownFolderPath(const GUID &clsid)
++[[nodiscard]] static inline QString sHGetKnownFolderPath(REFGUID clsid)
  {
 -    QString result;
 -    LPWSTR path;
@@ -420,6 +500,16 @@ index 13b8fe224a..65e30d5751 100644
          result = convertCharArray(path);
          CoTaskMemFree(path);
      }
+@@ -176,8 +177,7 @@ QString QStandardPaths::writableLocation(StandardLocation type)
+         break;
+ 
+     case RuntimeLocation:
+-    case HomeLocation:
+-        result = QDir::homePath();
++        result = sHGetKnownFolderPath(writableSpecialFolderId(HomeLocation));
+         break;
+ 
+     case TempLocation:
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
 index 4d69ca9a17..586736bb78 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
@@ -482,6 +572,21 @@ index 4d69ca9a17..586736bb78 100644
      }
  #endif
  #endif
+diff --git a/src/corelib/plugin/qsystemlibrary.cpp b/src/corelib/plugin/qsystemlibrary.cpp
+index dfca23ca3a..d2a25cdec7 100644
+--- a/src/corelib/plugin/qsystemlibrary.cpp
++++ b/src/corelib/plugin/qsystemlibrary.cpp
+@@ -70,7 +70,9 @@ HINSTANCE QSystemLibrary::load(const wchar_t *libraryName, bool onlySystemDirect
+         searchOrder << PATH.split(u';', Qt::SkipEmptyParts);
+     }
+     QString fileName = QString::fromWCharArray(libraryName);
+-    fileName.append(".dll"_L1);
++    if (!fileName.endsWith(u".dll", Qt::CaseInsensitive)) {
++        fileName.append(u".dll");
++    }
+ 
+     // Start looking in the order specified
+     for (int i = 0; i < searchOrder.count(); ++i) {
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 32b69350c1..d4054c6966 100644
 --- a/src/gui/CMakeLists.txt
@@ -1955,6 +2060,36 @@ index 465bd07a07..0000000000
 -};
 -
 -#endif
+diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
+index 7c45b9c561..fb7aad58c6 100644
+--- a/src/gui/rhi/qrhid3d11.cpp
++++ b/src/gui/rhi/qrhid3d11.cpp
+@@ -255,7 +255,7 @@ bool QRhiD3D11::create(QRhi::Flags flags)
+         }
+ 
+         ID3D11DeviceContext *ctx = nullptr;
+-        HRESULT hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, devFlags,
++        HRESULT hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_HARDWARE, nullptr, devFlags,
+                                        requestFeatureLevels ? requestedFeatureLevels.constData() : nullptr,
+                                        requestFeatureLevels ? requestedFeatureLevels.count() : 0,
+                                        D3D11_SDK_VERSION,
+@@ -265,7 +265,15 @@ bool QRhiD3D11::create(QRhi::Flags flags)
+             qCDebug(QRHI_LOG_INFO, "Debug layer was requested but is not available. "
+                                    "Attempting to create D3D11 device without it.");
+             devFlags &= ~D3D11_CREATE_DEVICE_DEBUG;
+-            hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, devFlags,
++            hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_HARDWARE, nullptr, devFlags,
++                                   requestFeatureLevels ? requestedFeatureLevels.constData() : nullptr,
++                                   requestFeatureLevels ? requestedFeatureLevels.count() : 0,
++                                   D3D11_SDK_VERSION,
++                                   &dev, &featureLevel, &ctx);
++        }
++        if (FAILED(hr)) {
++            // Hardware acceleration is not available. Try using a high performance software rasterizer.
++            hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_WARP, nullptr, devFlags,
+                                    requestFeatureLevels ? requestedFeatureLevels.constData() : nullptr,
+                                    requestFeatureLevels ? requestedFeatureLevels.count() : 0,
+                                    D3D11_SDK_VERSION,
 diff --git a/src/plugins/platforms/CMakeLists.txt b/src/plugins/platforms/CMakeLists.txt
 index 654fb6d1f2..1ee46870b5 100644
 --- a/src/plugins/platforms/CMakeLists.txt
@@ -8139,6 +8274,174 @@ index af9c1fccb4..f20a6e6c25 100644
  )
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
+diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
+index 9e284f2366..369f472d63 100644
+--- a/src/plugins/platforms/windows/qwindowsintegration.cpp
++++ b/src/plugins/platforms/windows/qwindowsintegration.cpp
+@@ -152,52 +152,139 @@ static inline unsigned parseOptions(const QStringList &paramList,
+                                     DarkModeHandling *darkModeHandling)
+ {
+     unsigned options = 0;
+-    for (const QString &param : paramList) {
+-        if (param.startsWith(u"fontengine=")) {
+-            if (param.endsWith(u"directwrite")) {
++    for (auto &&param : qAsConst(paramList)) {
++        if (param.startsWith(u"fontengine=", Qt::CaseInsensitive)) {
++            if (param.endsWith(u"directwrite", Qt::CaseInsensitive)) {
+                 options |= QWindowsIntegration::FontDatabaseDirectWrite;
+-            } else if (param.endsWith(u"freetype")) {
++            } else if (param.endsWith(u"freetype", Qt::CaseInsensitive)) {
+                 options |= QWindowsIntegration::FontDatabaseFreeType;
+-            } else if (param.endsWith(u"native")) {
++            } else if (param.endsWith(u"native", Qt::CaseInsensitive)) {
+                 options |= QWindowsIntegration::FontDatabaseNative;
+             }
+-        } else if (param.startsWith(u"dialogs=")) {
+-            if (param.endsWith(u"xp")) {
++        } else if (param.startsWith(u"dialogs=", Qt::CaseInsensitive)) {
++            if (param.endsWith(u"xp", Qt::CaseInsensitive)) {
+                 options |= QWindowsIntegration::XpNativeDialogs;
+-            } else if (param.endsWith(u"none")) {
++            } else if (param.endsWith(u"none", Qt::CaseInsensitive)) {
+                 options |= QWindowsIntegration::NoNativeDialogs;
+             }
+-        } else if (param == u"altgr") {
++        } else if (param.compare(u"altgr", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::DetectAltGrModifier;
+-        } else if (param == u"gl=gdi") {
++        } else if (param.compare(u"gl=gdi", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::DisableArb;
+-        } else if (param == u"nodirectwrite") {
++        } else if (param.compare(u"nodirectwrite", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::DontUseDirectWriteFonts;
+-        } else if (param == u"nocolorfonts") {
++        } else if (param.compare(u"nocolorfonts", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::DontUseColorFonts;
+-        } else if (param == u"nomousefromtouch") {
++        } else if (param.compare(u"nomousefromtouch", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::DontPassOsMouseEventsSynthesizedFromTouch;
+         } else if (parseIntOption(param, "verbose"_L1, 0, INT_MAX, &QWindowsContext::verbose)
+             || parseIntOption(param, "tabletabsoluterange"_L1, 0, INT_MAX, tabletAbsoluteRange)
+             || parseIntOption(param, "dpiawareness"_L1, QtWindows::ProcessDpiUnaware, QtWindows::ProcessPerMonitorV2DpiAware, dpiAwareness)) {
+-        } else if (param == u"menus=native") {
+-            options |= QWindowsIntegration::AlwaysUseNativeMenus;
+-        } else if (param == u"menus=none") {
+-            options |= QWindowsIntegration::NoNativeMenus;
+-        } else if (param == u"nowmpointer") {
++        } else if (param.startsWith(u"menus=", Qt::CaseInsensitive)) {
++            if (param.endsWith(u"native", Qt::CaseInsensitive)) {
++                options |= QWindowsIntegration::AlwaysUseNativeMenus;
++            } else if (param.endsWith(u"none", Qt::CaseInsensitive)) {
++                options |= QWindowsIntegration::NoNativeMenus;
++            }
++        } else if (param.compare(u"nowmpointer", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::DontUseWMPointer;
+-        } else if (param == u"reverse") {
++        } else if (param.compare(u"reverse", Qt::CaseInsensitive) == 0) {
+             options |= QWindowsIntegration::RtlEnabled;
+-        } else if (param == u"darkmode=0") {
++        } else if (param.startsWith(u"darkmode=", Qt::CaseInsensitive)) {
++            if (param.endsWith(u"0", Qt::CaseInsensitive)) {
++                *darkModeHandling = {};
++            } else if (param.endsWith(u"1", Qt::CaseInsensitive)) {
++                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
++                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle, false);
++            } else if (param.endsWith(u"2", Qt::CaseInsensitive)) {
++                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
++                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle);
++            }
++        } else {
++            qWarning() << "Unknown option" << param;
++        }
++    }
++    if (qEnvironmentVariableIsSet("QT_WINDOWS_FONT_ENGINE")) {
++        const QString engine = qEnvironmentVariable("QT_WINDOWS_FONT_ENGINE");
++        if (engine.isEmpty()) {
++            qWarning() << "QT_WINDOWS_FONT_ENGINE should not be empty.";
++        } else {
++            if (engine.compare(u"directwrite", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::FontDatabaseDirectWrite;
++            } else if (engine.compare(u"freetype", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::FontDatabaseFreeType;
++            } else if (engine.compare(u"native", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::FontDatabaseNative;
++            } else {
++                qWarning() << "QT_WINDOWS_FONT_ENGINE only accepts directwrite/freetype/native.";
++            }
++        }
++    }
++    if (qEnvironmentVariableIsSet("QT_WINDOWS_DIALOGS")) {
++        const QString dialogs = qEnvironmentVariable("QT_WINDOWS_DIALOGS");
++        if (dialogs.isEmpty()) {
++            qWarning() << "QT_WINDOWS_DIALOGS should not be empty.";
++        } else {
++            if (dialogs.compare(u"xp", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::XpNativeDialogs;
++            } else if (dialogs.compare(u"none", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::NoNativeDialogs;
++            } else {
++                qWarning() << "QT_WINDOWS_DIALOGS only accepts xp/none.";
++            }
++        }
++    }
++    if (qEnvironmentVariableIntValue("QT_WINDOWS_ALTGR")) {
++        options |= QWindowsIntegration::DetectAltGrModifier;
++    }
++    if (qEnvironmentVariableIsSet("QT_WINDOWS_DPI_AWARENESS")) {
++        const QString awareness = qEnvironmentVariable("QT_WINDOWS_DPI_AWARENESS");
++        if (awareness.isEmpty()) {
++            qWarning() << "QT_WINDOWS_DPI_AWARENESS should not be empty.";
++        } else {
++            if (awareness.compare(u"permonitorv2", Qt::CaseInsensitive) == 0) {
++                *dpiAwareness = QtWindows::ProcessPerMonitorV2DpiAware;
++            } else if (awareness.compare(u"permonitor", Qt::CaseInsensitive) == 0) {
++                *dpiAwareness = QtWindows::ProcessPerMonitorDpiAware;
++            } else if (awareness.compare(u"system", Qt::CaseInsensitive) == 0) {
++                *dpiAwareness = QtWindows::ProcessSystemDpiAware;
++            } else if (awareness.compare(u"unaware", Qt::CaseInsensitive) == 0) {
++                *dpiAwareness = QtWindows::ProcessDpiUnaware;
++            } else {
++                qWarning() << "QT_WINDOWS_DPI_AWARENESS only accepts permonitorv2/permonitor/system/unaware.";
++            }
++        }
++    }
++    if (qEnvironmentVariableIsSet("QT_WINDOWS_MENUS")) {
++        const QString menus = qEnvironmentVariable("QT_WINDOWS_MENUS");
++        if (menus.isEmpty()) {
++            qWarning() << "QT_WINDOWS_MENUS should not be empty.";
++        } else {
++            if (menus.compare(u"native", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::AlwaysUseNativeMenus;
++            } else if (menus.compare(u"none", Qt::CaseInsensitive) == 0) {
++                options |= QWindowsIntegration::NoNativeMenus;
++            } else {
++                qWarning() << "QT_WINDOWS_MENUS only accepts native/none.";
++            }
++        }
++    }
++    if (qEnvironmentVariableIsSet("QT_WINDOWS_DARK_MODE")) {
++        switch (qEnvironmentVariableIntValue("QT_WINDOWS_DARK_MODE")) {
++        case 0:
+             *darkModeHandling = {};
+-        } else if (param == u"darkmode=1") {
++            break;
++        case 1: {
+             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
+             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle, false);
+-        } else if (param == u"darkmode=2") {
++        } break;
++        case 2: {
+             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
+             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle);
+-        } else {
+-            qWarning() << "Unknown option" << param;
++        } break;
++        default:
++            qWarning() << "QT_WINDOWS_DARK_MODE only accepts 0/1/2.";
++            break;
+         }
+     }
+     return options;
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 index 006396d92a..71c9412e39 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
@@ -8196,7 +8499,7 @@ index 006396d92a..71c9412e39 100644
                                 TPM_LEFTALIGN  | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 pos.x(), pos.y() + titleBarOffset,
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index a795328bdf..4e6870c83b 100644
+index a795328bdf..ab95f39ba0 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -807,7 +807,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
@@ -8215,7 +8518,7 @@ index a795328bdf..4e6870c83b 100644
 +        if (flags & Qt::WindowTransparentForInput)
              exStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT;
 +
-+        if (qEnvironmentVariableIntValue("QT_DISABLE_BITMAP_REDIRECTION"))
++        if (qEnvironmentVariableIntValue("QT_WINDOWS_DISABLE_BITMAP_REDIRECTION"))
 +            exStyle |= WS_EX_NOREDIRECTIONBITMAP;
      }
  }

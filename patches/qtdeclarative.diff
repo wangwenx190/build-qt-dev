@@ -1,26 +1,6 @@
- src/quick/util/qquickshortcut_p.h       | 3 ++-
  src/quicklayouts/qquicklinearlayout_p.h | 2 +-
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/src/quick/util/qquickshortcut_p.h b/src/quick/util/qquickshortcut_p.h
-index f303043008..baa884b6f0 100644
---- a/src/quick/util/qquickshortcut_p.h
-+++ b/src/quick/util/qquickshortcut_p.h
-@@ -22,12 +22,13 @@
- #include <QtQml/qqmlparserstatus.h>
- #include <QtQml/qqml.h>
- #include <QtCore/private/qglobal_p.h>
-+#include <QtQuick/private/qtquickglobal_p.h>
- 
- QT_BEGIN_NAMESPACE
- 
- class QShortcutEvent;
- 
--class QQuickShortcut : public QObject, public QQmlParserStatus
-+class Q_QUICK_PRIVATE_EXPORT QQuickShortcut : public QObject, public QQmlParserStatus
- {
-     Q_OBJECT
-     Q_INTERFACES(QQmlParserStatus)
 diff --git a/src/quicklayouts/qquicklinearlayout_p.h b/src/quicklayouts/qquicklinearlayout_p.h
 index 26810d5684..15ce953ead 100644
 --- a/src/quicklayouts/qquicklinearlayout_p.h
