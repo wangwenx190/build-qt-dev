@@ -4,16 +4,18 @@
  config_help.txt                                    |    1 +
  configure.cmake                                    |    5 +
  qt_cmdline.cmake                                   |    1 +
- src/corelib/Qt6CoreMacros.cmake                    |    2 +-
+ src/corelib/Qt6CoreMacros.cmake                    |   12 +-
+ src/corelib/global/qlibraryinfo.cpp                |    4 +-
  src/corelib/global/qoperatingsystemversion.cpp     |   41 +
  src/corelib/global/qoperatingsystemversion.h       |    6 +
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
  src/corelib/global/qoperatingsystemversion_win.cpp |    2 +-
  src/corelib/io/qfilesystemengine_win.cpp           |    2 +-
  src/corelib/io/qstandardpaths_win.cpp              |   34 +-
- src/corelib/kernel/qcoreapplication.cpp            |   22 +-
+ src/corelib/kernel/qcoreapplication.cpp            |   34 +-
  src/corelib/plugin/qsystemlibrary.cpp              |   53 +-
  src/corelib/plugin/qsystemlibrary_p.h              |   19 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   10 +-
  src/gui/CMakeLists.txt                             |   15 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -81,7 +83,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  src/tools/rcc/main.cpp                             |   11 +-
  src/tools/rcc/rcc.cpp                              |   10 +-
- 83 files changed, 352 insertions(+), 7447 deletions(-)
+ 85 files changed, 374 insertions(+), 7461 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -282,7 +284,7 @@ index 36a0a2c716..48bf42e1e5 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
-index 09d62232db..04a5a4494a 100644
+index 09d62232db..a1e06cae28 100644
 --- a/src/corelib/Qt6CoreMacros.cmake
 +++ b/src/corelib/Qt6CoreMacros.cmake
 @@ -1790,7 +1790,7 @@ function(_qt_internal_generate_win32_rc_file target)
@@ -294,6 +296,58 @@ index 09d62232db..04a5a4494a 100644
      else()
          set(extra_rc_flags)
      endif()
+@@ -1894,6 +1894,8 @@ function(_qt_internal_generate_win32_rc_file target)
+             set(target_file_type "VFT_APP")
+         endif()
+ 
++        set(brand_suffix "[WANGWENX190 CUSTOMIZED EDITION]")
++
+         set(contents "#include <windows.h>
+ ${icons}
+ VS_VERSION_INFO VERSIONINFO
+@@ -1901,9 +1903,9 @@ FILEVERSION ${version_comma}
+ PRODUCTVERSION ${version_comma}
+ FILEFLAGSMASK 0x3fL
+ #ifdef _DEBUG
+-    FILEFLAGS VS_FF_DEBUG
++FILEFLAGS VS_FF_DEBUG
+ #else
+-    FILEFLAGS 0x0L
++FILEFLAGS 0x0L
+ #endif
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE ${target_file_type}
+@@ -1914,11 +1916,11 @@ BEGIN
+         BLOCK \"040904b0\"
+         BEGIN
+             VALUE \"CompanyName\", \"${company_name}\"
+-            VALUE \"FileDescription\", \"${file_description}\"
++            VALUE \"FileDescription\", \"${file_description} ${brand_suffix}\"
+             VALUE \"FileVersion\", \"${file_version}\"
+             VALUE \"LegalCopyright\", \"${legal_copyright}\"
+             VALUE \"OriginalFilename\", \"${original_file_name}\"
+-            VALUE \"ProductName\", \"${product_name}\"
++            VALUE \"ProductName\", \"${product_name} ${brand_suffix}\"
+             VALUE \"ProductVersion\", \"${product_version}\"
+             VALUE \"Comments\", \"${comments}\"
+             VALUE \"LegalTrademarks\", \"${legal_trademarks}\"
+diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
+index d931dfac48..e40fd8c36d 100644
+--- a/src/corelib/global/qlibraryinfo.cpp
++++ b/src/corelib/global/qlibraryinfo.cpp
+@@ -202,9 +202,11 @@ QLibraryInfo::QLibraryInfo()
+ #else
+ #  define SHARED_STRING " static"
+ #endif
++#define BRAND_STRING " [WANGWENX190 CUSTOMIZED EDITION]"
++
+ static const char *qt_build_string() noexcept
+ {
+-    return "Qt " QT_VERSION_STR " (" ARCH_FULL SHARED_STRING DEBUG_STRING " build; by " COMPILER_STRING ")";
++    return "Qt " QT_VERSION_STR " (" ARCH_FULL SHARED_STRING DEBUG_STRING " build; by " COMPILER_STRING ")" BRAND_STRING;
+ }
+ 
+ /*!
 diff --git a/src/corelib/global/qoperatingsystemversion.cpp b/src/corelib/global/qoperatingsystemversion.cpp
 index a89cfa88d2..fbb4393b48 100644
 --- a/src/corelib/global/qoperatingsystemversion.cpp
@@ -514,7 +568,7 @@ index 13b8fe224a..2997bb091a 100644
  
      case TempLocation:
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 4d69ca9a17..586736bb78 100644
+index 4d69ca9a17..22ae7bf069 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
 @@ -67,15 +67,14 @@
@@ -534,7 +588,7 @@ index 4d69ca9a17..586736bb78 100644
  #  include "qcore_unix_p.h"
  #endif
  
-@@ -547,7 +546,7 @@ QString qAppName()
+@@ -547,23 +546,18 @@ QString qAppName()
  
  void QCoreApplicationPrivate::initLocale()
  {
@@ -543,9 +597,11 @@ index 4d69ca9a17..586736bb78 100644
      Q_CONSTINIT static bool qt_locale_initialized = false;
      if (qt_locale_initialized)
          return;
-@@ -556,14 +555,9 @@ void QCoreApplicationPrivate::initLocale()
+     qt_locale_initialized = true;
+ 
  #ifdef Q_OS_INTEGRITY
-     setlocale(LC_CTYPE, "UTF-8");
+-    setlocale(LC_CTYPE, "UTF-8");
++    setlocale(LC_CTYPE, "en_US.UTF-8");
  #else
 -    // Android's Bionic didn't get nl_langinfo until NDK 15 (Android 8.0),
 -    // which is too new for Qt, so we just assume it's always UTF-8.
@@ -561,9 +617,25 @@ index 4d69ca9a17..586736bb78 100644
          QByteArray newLocale = setlocale(LC_CTYPE, nullptr);
          if (qsizetype dot = newLocale.indexOf('.'); dot != -1)
              newLocale.truncate(dot);    // remove encoding, if any
-@@ -582,10 +576,10 @@ void QCoreApplicationPrivate::initLocale()
+@@ -573,19 +567,23 @@ void QCoreApplicationPrivate::initLocale()
+         newLocale = setlocale(LC_CTYPE, newLocale);
+ 
+         // if locale doesn't exist, try some fallbacks
+-#  ifdef Q_OS_DARWIN
+         if (newLocale.isEmpty())
+-            newLocale = setlocale(LC_CTYPE, "UTF-8");
+-#  endif
++            newLocale = setlocale(LC_CTYPE, "en_US.UTF-8");
++        if (newLocale.isEmpty())
++            newLocale = setlocale(LC_CTYPE, "en_US.utf8");
+         if (newLocale.isEmpty())
+             newLocale = setlocale(LC_CTYPE, "C.UTF-8");
          if (newLocale.isEmpty())
              newLocale = setlocale(LC_CTYPE, "C.utf8");
++#  ifdef Q_OS_DARWIN
++        if (newLocale.isEmpty())
++            newLocale = setlocale(LC_CTYPE, "UTF-8");
++#  endif
  
 -        qWarning("Detected system locale encoding (%s, locale \"%s\") is not UTF-8.\n"
 +        qWarning("Detected system locale encoding (\"%s\") is not UTF-8.\n"
@@ -717,6 +789,39 @@ index c24caf3c2e..ae38111f0f 100644
  };
  
  QT_END_NAMESPACE
+diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
+index 6ecb814948..824450fea9 100644
+--- a/src/entrypoint/qtentrypoint_win.cpp
++++ b/src/entrypoint/qtentrypoint_win.cpp
+@@ -28,23 +28,23 @@ extern "C" int main(int, char **);
+ 
+ // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
+ // when passed CP_ACP.
+-static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
++[[nodiscard]] static inline char *wideToMulti(const UINT codePage, const wchar_t *aw)
+ {
+     const int required = WideCharToMultiByte(codePage, 0, aw, -1, nullptr, 0, nullptr, nullptr);
+-    char *result = new char[required];
++    auto result = new char[required];
+     WideCharToMultiByte(codePage, 0, aw, -1, result, required, nullptr, nullptr);
+     return result;
+ }
+ 
+-extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
++extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
+ {
+     int argc = 0;
+     wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
+     if (argvW == nullptr)
+         return -1;
+-    char **argv = new char *[argc + 1];
++    auto argv = new char *[argc + 1];
+     for (int i = 0; i != argc; ++i)
+-        argv[i] = wideToMulti(CP_ACP, argvW[i]);
++        argv[i] = wideToMulti(CP_UTF8, argvW[i]);
+     argv[argc] = nullptr;
+     LocalFree(argvW);
+     const int exitCode = main(argc, argv);
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 32b69350c1..d4054c6966 100644
 --- a/src/gui/CMakeLists.txt
