@@ -29,7 +29,6 @@
  .../windows/apisupport/uiapropertyids_p.h          |  188 --
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
- src/gui/rhi/qrhid3d11.cpp                          |   12 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
  src/plugins/platforms/direct2d/CMakeLists.txt      |  224 ---
  src/plugins/platforms/direct2d/direct2d.json       |    3 -
@@ -83,7 +82,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  src/tools/rcc/main.cpp                             |   11 +-
  src/tools/rcc/rcc.cpp                              |   10 +-
- 85 files changed, 374 insertions(+), 7461 deletions(-)
+ 84 files changed, 364 insertions(+), 7459 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -2295,36 +2294,6 @@ index 465bd07a07..0000000000
 -};
 -
 -#endif
-diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index 7c45b9c561..fb7aad58c6 100644
---- a/src/gui/rhi/qrhid3d11.cpp
-+++ b/src/gui/rhi/qrhid3d11.cpp
-@@ -255,7 +255,7 @@ bool QRhiD3D11::create(QRhi::Flags flags)
-         }
- 
-         ID3D11DeviceContext *ctx = nullptr;
--        HRESULT hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, devFlags,
-+        HRESULT hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_HARDWARE, nullptr, devFlags,
-                                        requestFeatureLevels ? requestedFeatureLevels.constData() : nullptr,
-                                        requestFeatureLevels ? requestedFeatureLevels.count() : 0,
-                                        D3D11_SDK_VERSION,
-@@ -265,7 +265,15 @@ bool QRhiD3D11::create(QRhi::Flags flags)
-             qCDebug(QRHI_LOG_INFO, "Debug layer was requested but is not available. "
-                                    "Attempting to create D3D11 device without it.");
-             devFlags &= ~D3D11_CREATE_DEVICE_DEBUG;
--            hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_UNKNOWN, nullptr, devFlags,
-+            hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_HARDWARE, nullptr, devFlags,
-+                                   requestFeatureLevels ? requestedFeatureLevels.constData() : nullptr,
-+                                   requestFeatureLevels ? requestedFeatureLevels.count() : 0,
-+                                   D3D11_SDK_VERSION,
-+                                   &dev, &featureLevel, &ctx);
-+        }
-+        if (FAILED(hr)) {
-+            // Hardware acceleration is not available. Try using a high performance software rasterizer.
-+            hr = D3D11CreateDevice(activeAdapter, D3D_DRIVER_TYPE_WARP, nullptr, devFlags,
-                                    requestFeatureLevels ? requestedFeatureLevels.constData() : nullptr,
-                                    requestFeatureLevels ? requestedFeatureLevels.count() : 0,
-                                    D3D11_SDK_VERSION,
 diff --git a/src/plugins/platforms/CMakeLists.txt b/src/plugins/platforms/CMakeLists.txt
 index 654fb6d1f2..1ee46870b5 100644
 --- a/src/plugins/platforms/CMakeLists.txt
