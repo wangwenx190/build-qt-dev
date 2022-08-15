@@ -225,7 +225,7 @@ if /i "%__ninja_multi_config%" == "false" (
 :: Enforcement Technology (CET) to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend
