@@ -1,11 +1,12 @@
  cmake/QtCompilerFlags.cmake                        |    4 +-
  cmake/QtCompilerOptimization.cmake                 |   14 +-
- cmake/QtInternalTargets.cmake                      |   62 +-
+ cmake/QtInternalTargets.cmake                      |   75 +-
  config_help.txt                                    |    1 +
  configure.cmake                                    |    5 +
  qt_cmdline.cmake                                   |    1 +
  src/corelib/Qt6CoreMacros.cmake                    |   12 +-
- src/corelib/global/qlibraryinfo.cpp                |    4 +-
+ src/corelib/global/qlibraryinfo.cpp                |   54 +-
+ src/corelib/global/qlibraryinfo.h                  |    6 +
  src/corelib/global/qoperatingsystemversion.cpp     |   41 +
  src/corelib/global/qoperatingsystemversion.h       |    6 +
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
@@ -82,7 +83,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  src/tools/rcc/main.cpp                             |   11 +-
  src/tools/rcc/rcc.cpp                              |   10 +-
- 84 files changed, 364 insertions(+), 7459 deletions(-)
+ 85 files changed, 432 insertions(+), 7460 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -142,10 +143,26 @@ index 813b16af69..a55c550585 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 9fcdb37b45..fb5be102a3 100644
+index 9fcdb37b45..01ada8960d 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -253,15 +253,19 @@ if (MSVC)
+@@ -249,19 +249,36 @@ if (MSVC)
+             -Zc:externConstexpr
+         )
+     endif()
++    if(NOT CLANG)
++        target_compile_options(PlatformCommonInternal INTERFACE
++            -Zc:char8_t
++            -Zc:externC
++            -Zc:hiddenFriend
++            -Zc:lambda
++            -Zc:preprocessor
++            -Zc:static_assert
++            -Zc:ternary
++            -Zc:trigraphs
++        )
++    endif()
+ 
      target_compile_options(PlatformCommonInternal INTERFACE
          -Zc:wchar_t
          -bigobj
@@ -164,10 +181,11 @@ index 9fcdb37b45..fb5be102a3 100644
 -        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
 +        $<$<STREQUAL:${TEST_architecture_arch},"x86_64">:-HIGHENTROPYVA>
 +        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF>
++        # TODO: Add "-TSAWARE" for executables.
      )
  endif()
  
-@@ -273,6 +277,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+@@ -273,6 +290,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
      target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
  endif()
  
@@ -189,7 +207,7 @@ index 9fcdb37b45..fb5be102a3 100644
  if(QT_FEATURE_intelcet)
      if(MSVC)
          target_link_options(PlatformCommonInternal INTERFACE
-@@ -285,6 +304,45 @@ if(QT_FEATURE_intelcet)
+@@ -285,6 +317,45 @@ if(QT_FEATURE_intelcet)
      endif()
  endif()
  
@@ -331,22 +349,95 @@ index 09d62232db..a1e06cae28 100644
              VALUE \"Comments\", \"${comments}\"
              VALUE \"LegalTrademarks\", \"${legal_trademarks}\"
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
-index d931dfac48..e40fd8c36d 100644
+index d931dfac48..ce08270e7b 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
 +++ b/src/corelib/global/qlibraryinfo.cpp
 @@ -202,9 +202,11 @@ QLibraryInfo::QLibraryInfo()
  #else
  #  define SHARED_STRING " static"
  #endif
+-static const char *qt_build_string() noexcept
 +#define BRAND_STRING " [WANGWENX190 CUSTOMIZED EDITION]"
 +
- static const char *qt_build_string() noexcept
++[[nodiscard]] static inline const char *qt_build_string() noexcept
  {
 -    return "Qt " QT_VERSION_STR " (" ARCH_FULL SHARED_STRING DEBUG_STRING " build; by " COMPILER_STRING ")";
 +    return "Qt " QT_VERSION_STR " (" ARCH_FULL SHARED_STRING DEBUG_STRING " build; by " COMPILER_STRING ")" BRAND_STRING;
  }
  
  /*!
+@@ -246,6 +248,54 @@ QVersionNumber QLibraryInfo::version() noexcept
+     return QVersionNumber(QT_VERSION_MAJOR, QT_VERSION_MINOR, QT_VERSION_PATCH);
+ }
+ 
++/*!
++    \since 6.5
++    Returns the brand name of the current build.
++*/
++const char *QLibraryInfo::brand() noexcept
++{
++    return "WANGWENX190";
++}
++
++/*!
++    \since 6.5
++    Returns the commit hash that the current build is based on.
++*/
++const char *QLibraryInfo::commit() noexcept
++{
++    // ### TODO
++    return nullptr;
++}
++
++/*!
++    \since 6.5
++    Returns the compilation date and time of the current build.
++*/
++const char *QLibraryInfo::build_date_time() noexcept
++{
++    return __DATE__ " " __TIME__;
++}
++
++/*!
++    \since 6.5
++    Returns the compiler name and version of the current build.
++*/
++const char *QLibraryInfo::compiler() noexcept
++{
++    return COMPILER_STRING;
++}
++
++/*!
++    \since 6.5
++    Returns the command line used by the CMake configuration process
++    of the current build.
++*/
++const char *QLibraryInfo::configure_command_line() noexcept
++{
++    // ### TODO
++    return nullptr;
++}
++
+ static QString prefixFromAppDirHelper()
+ {
+     QString appDir;
+diff --git a/src/corelib/global/qlibraryinfo.h b/src/corelib/global/qlibraryinfo.h
+index e0f2273787..61c9baee1d 100644
+--- a/src/corelib/global/qlibraryinfo.h
++++ b/src/corelib/global/qlibraryinfo.h
+@@ -21,6 +21,12 @@ public:
+     static QVersionNumber version() noexcept Q_DECL_CONST_FUNCTION;
+ #endif
+ 
++    static const char *brand() noexcept;
++    static const char *commit() noexcept;
++    static const char *build_date_time() noexcept;
++    static const char *compiler() noexcept;
++    static const char *configure_command_line() noexcept;
++
+     enum LibraryPath {
+         PrefixPath = 0,
+         DocumentationPath,
 diff --git a/src/corelib/global/qoperatingsystemversion.cpp b/src/corelib/global/qoperatingsystemversion.cpp
 index a89cfa88d2..fbb4393b48 100644
 --- a/src/corelib/global/qoperatingsystemversion.cpp
