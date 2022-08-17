@@ -8,7 +8,7 @@
 - The latest Ruby: <https://rubyinstaller.org/downloads/>
 - The latest Perl: <https://strawberryperl.com/>
 - The latest Python: <https://www.python.org/downloads/windows/>
-- The latest Node.js: <https://nodejs.org/en/download/current/>
+- The latest Node.js: <https://github.com/coreybutler/nvm-windows/releases/latest/>
 - The latest Vulkan SDK: <https://vulkan.lunarg.com/sdk/home#windows>
 - The latest 7-Zip tool: <https://www.7-zip.org/download.html>
 
@@ -24,6 +24,7 @@
 
 ## Linux specific
 
+- The latest GCC
 - The latest Clang
 - TODO
 
