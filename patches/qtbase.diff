@@ -1,12 +1,14 @@
  cmake/QtCompilerFlags.cmake                        |    4 +-
  cmake/QtCompilerOptimization.cmake                 |   14 +-
- cmake/QtInternalTargets.cmake                      |   75 +-
+ cmake/QtInternalTargets.cmake                      |   71 +-
+ cmake/QtQmakeHelpers.cmake                         |   13 +
  config_help.txt                                    |    1 +
  configure.cmake                                    |    5 +
  qt_cmdline.cmake                                   |    1 +
- src/corelib/Qt6CoreMacros.cmake                    |   12 +-
- src/corelib/global/qlibraryinfo.cpp                |   54 +-
- src/corelib/global/qlibraryinfo.h                  |    6 +
+ src/corelib/Qt6CoreMacros.cmake                    |   18 +-
+ src/corelib/global/qconfig.cpp.in                  |   15 +-
+ src/corelib/global/qlibraryinfo.cpp                |   66 +-
+ src/corelib/global/qlibraryinfo.h                  |    7 +
  src/corelib/global/qoperatingsystemversion.cpp     |   41 +
  src/corelib/global/qoperatingsystemversion.h       |    6 +
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
@@ -16,7 +18,7 @@
  src/corelib/kernel/qcoreapplication.cpp            |   34 +-
  src/corelib/plugin/qsystemlibrary.cpp              |   53 +-
  src/corelib/plugin/qsystemlibrary_p.h              |   19 +-
- src/entrypoint/qtentrypoint_win.cpp                |   10 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   36 +-
  src/gui/CMakeLists.txt                             |   15 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -60,8 +62,8 @@
  src/plugins/platforms/minimal/minimal.json         |    3 -
  .../platforms/minimal/qminimalbackingstore.cpp     |   57 -
  .../platforms/minimal/qminimalbackingstore.h       |   30 -
- .../platforms/minimal/qminimalintegration.cpp      |  165 --
- .../platforms/minimal/qminimalintegration.h        |   61 -
+ .../platforms/minimal/qminimalintegration.cpp      |  173 --
+ .../platforms/minimal/qminimalintegration.h        |   66 -
  src/plugins/platforms/offscreen/CMakeLists.txt     |   42 -
  src/plugins/platforms/offscreen/main.cpp           |   30 -
  src/plugins/platforms/offscreen/offscreen.json     |    3 -
@@ -83,7 +85,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  src/tools/rcc/main.cpp                             |   11 +-
  src/tools/rcc/rcc.cpp                              |   10 +-
- 85 files changed, 432 insertions(+), 7460 deletions(-)
+ 87 files changed, 486 insertions(+), 7488 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 15327374b3..5f25437853 100644
@@ -143,10 +145,10 @@ index 813b16af69..a55c550585 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 9fcdb37b45..01ada8960d 100644
+index 9fcdb37b45..abc31c71f3 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -249,19 +249,36 @@ if (MSVC)
+@@ -249,19 +249,35 @@ if (MSVC)
              -Zc:externConstexpr
          )
      endif()
@@ -177,15 +179,15 @@ index 9fcdb37b45..01ada8960d 100644
      )
  
      target_link_options(PlatformCommonInternal INTERFACE
-         -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE
+-        -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE
 -        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
-+        $<$<STREQUAL:${TEST_architecture_arch},"x86_64">:-HIGHENTROPYVA>
++        -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE -HIGHENTROPYVA
 +        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF>
 +        # TODO: Add "-TSAWARE" for executables.
      )
  endif()
  
-@@ -273,6 +290,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+@@ -273,6 +289,21 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
      target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
  endif()
  
@@ -207,24 +209,19 @@ index 9fcdb37b45..01ada8960d 100644
  if(QT_FEATURE_intelcet)
      if(MSVC)
          target_link_options(PlatformCommonInternal INTERFACE
-@@ -285,6 +317,45 @@ if(QT_FEATURE_intelcet)
+@@ -285,6 +316,40 @@ if(QT_FEATURE_intelcet)
      endif()
  endif()
  
 +# Mitigate for Intel Jump Conditional Code (JCC)
-+if((TEST_architecture_arch STREQUAL "i386")
-+    OR (TEST_architecture_arch STREQUAL "x86_64"))
-+    if(MSVC AND NOT CLANG)
-+        if(MSVC_VERSION GREATER_EQUAL 1925)
-+            target_compile_options(PlatformCommonInternal INTERFACE
-+                $<$<NOT:$<CONFIG:Debug>>:-QIntel-jcc-erratum>
-+            )
-+        endif()
-+    else()
-+        target_compile_options(PlatformCommonInternal INTERFACE
-+            $<$<NOT:$<CONFIG:Debug>>:-Wa,-mno-branches-within-32B-boundaries>
-+        )
-+    endif()
++if(MSVC AND NOT CLANG)
++    target_compile_options(PlatformCommonInternal INTERFACE
++        $<$<NOT:$<CONFIG:Debug>>:-QIntel-jcc-erratum>
++    )
++else()
++    target_compile_options(PlatformCommonInternal INTERFACE
++        $<$<NOT:$<CONFIG:Debug>>:-Wa,-mno-branches-within-32B-boundaries>
++    )
 +endif()
 +
 +# Mitigate for Spectre security vulnerabilities
@@ -253,6 +250,30 @@ index 9fcdb37b45..01ada8960d 100644
  if(QT_FEATURE_force_asserts)
      target_compile_definitions(PlatformCommonInternal INTERFACE QT_FORCE_ASSERTS)
  endif()
+diff --git a/cmake/QtQmakeHelpers.cmake b/cmake/QtQmakeHelpers.cmake
+index a81ba8d4b3..406b77723e 100644
+--- a/cmake/QtQmakeHelpers.cmake
++++ b/cmake/QtQmakeHelpers.cmake
+@@ -74,6 +74,19 @@ function(qt_generate_qconfig_cpp in_file out_file)
+         endif()
+     endif()
+ 
++    set(QT_QTBASE_COMMIT_STR "UNKNOWN")
++    find_program(GIT_EXECUTABLE_PATH git)
++    if(GIT_EXECUTABLE_PATH AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
++        execute_process(
++            COMMAND ${GIT_EXECUTABLE_PATH} rev-parse HEAD
++            OUTPUT_VARIABLE QT_QTBASE_COMMIT_STR
++            OUTPUT_STRIP_TRAILING_WHITESPACE
++            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
++    endif()
++
++    set(QT_QTBASE_BUILD_DATE_TIME_STR "UNKNOWN")
++    string(TIMESTAMP QT_QTBASE_BUILD_DATE_TIME_STR UTC)
++
+     configure_file(${in_file} ${out_file} @ONLY)
+ endfunction()
+ 
 diff --git a/config_help.txt b/config_help.txt
 index bd229c43a4..0452b1e9ec 100644
 --- a/config_help.txt
@@ -301,7 +322,7 @@ index 36a0a2c716..48bf42e1e5 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
-index 09d62232db..a1e06cae28 100644
+index 09d62232db..63425642d7 100644
 --- a/src/corelib/Qt6CoreMacros.cmake
 +++ b/src/corelib/Qt6CoreMacros.cmake
 @@ -1790,7 +1790,7 @@ function(_qt_internal_generate_win32_rc_file target)
@@ -313,16 +334,18 @@ index 09d62232db..a1e06cae28 100644
      else()
          set(extra_rc_flags)
      endif()
-@@ -1894,6 +1894,8 @@ function(_qt_internal_generate_win32_rc_file target)
+@@ -1894,6 +1894,10 @@ function(_qt_internal_generate_win32_rc_file target)
              set(target_file_type "VFT_APP")
          endif()
  
-+        set(brand_suffix "[WANGWENX190 CUSTOMIZED EDITION]")
++        set(brand_name "[WANGWENX190 CUSTOMIZED EDITION]")
++        set(brand_trademark "(C) ${company_name} & wangwenx190 & other contributors.")
++        set(brand_comment "This is a special Qt build which is based on the customization of wangwenx190.")
 +
          set(contents "#include <windows.h>
  ${icons}
  VS_VERSION_INFO VERSIONINFO
-@@ -1901,9 +1903,9 @@ FILEVERSION ${version_comma}
+@@ -1901,9 +1905,9 @@ FILEVERSION ${version_comma}
  PRODUCTVERSION ${version_comma}
  FILEFLAGSMASK 0x3fL
  #ifdef _DEBUG
@@ -334,22 +357,59 @@ index 09d62232db..a1e06cae28 100644
  #endif
  FILEOS VOS_NT_WINDOWS32
  FILETYPE ${target_file_type}
-@@ -1914,11 +1916,11 @@ BEGIN
+@@ -1914,14 +1918,14 @@ BEGIN
          BLOCK \"040904b0\"
          BEGIN
              VALUE \"CompanyName\", \"${company_name}\"
 -            VALUE \"FileDescription\", \"${file_description}\"
-+            VALUE \"FileDescription\", \"${file_description} ${brand_suffix}\"
++            VALUE \"FileDescription\", \"${file_description} ${brand_name}\"
              VALUE \"FileVersion\", \"${file_version}\"
              VALUE \"LegalCopyright\", \"${legal_copyright}\"
              VALUE \"OriginalFilename\", \"${original_file_name}\"
 -            VALUE \"ProductName\", \"${product_name}\"
-+            VALUE \"ProductName\", \"${product_name} ${brand_suffix}\"
++            VALUE \"ProductName\", \"${product_name} ${brand_name}\"
              VALUE \"ProductVersion\", \"${product_version}\"
-             VALUE \"Comments\", \"${comments}\"
-             VALUE \"LegalTrademarks\", \"${legal_trademarks}\"
+-            VALUE \"Comments\", \"${comments}\"
+-            VALUE \"LegalTrademarks\", \"${legal_trademarks}\"
++            VALUE \"Comments\", \"${comments} ${brand_comment}\"
++            VALUE \"LegalTrademarks\", \"${legal_trademarks} ${brand_trademark}\"
+             VALUE \"InternalName\", \"${internal_name}\"
+         END
+     END
+diff --git a/src/corelib/global/qconfig.cpp.in b/src/corelib/global/qconfig.cpp.in
+index 016bdf40d1..f11831f178 100644
+--- a/src/corelib/global/qconfig.cpp.in
++++ b/src/corelib/global/qconfig.cpp.in
+@@ -1,4 +1,5 @@
+-/* This file is used to generate the Qt configuration info for the Core library.
++/*
++ * This file is used to generate the Qt configuration info for the Core library.
+  * The 'qt_generate_qconfig_cpp' cmake routine
+  * contains variables that replace '@' entries in this file. It's important to
+  * align these values with the following:
+@@ -9,12 +10,16 @@
+ #include "private/qoffsetstringarray_p.h"
+ 
+ /* Installation Info */
+-static const char qt_configure_prefix_path_str  [12+256] = "qt_prfxpath=@QT_CONFIGURE_PREFIX_PATH_STR@";
++static constexpr const char qt_configure_prefix_path_str[12+256] = "qt_prfxpath=@QT_CONFIGURE_PREFIX_PATH_STR@";
+ 
+-static constexpr auto qt_configure_strs = QT_PREPEND_NAMESPACE(qOffsetStringArray)(
++static constexpr const auto qt_configure_strs = QT_PREPEND_NAMESPACE(qOffsetStringArray)(
+ @QT_CONFIG_STRS@
+ );
+ 
+-#define QT_CONFIGURE_SETTINGS_PATH "@QT_SYS_CONF_DIR@"
+-#define QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH "@QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH@"_L1
++static constexpr const char QT_CONFIGURE_SETTINGS_PATH[] = "@QT_SYS_CONF_DIR@";
++static constexpr const char QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH[] = "@QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH@";
++
+ #define QT_CONFIGURE_PREFIX_PATH qt_configure_prefix_path_str + 12
++
++static constexpr const char qt_commit_str[] = "@QT_QTBASE_COMMIT_STR@";
++static constexpr const char qt_build_date_time_str[] = "@QT_QTBASE_BUILD_DATE_TIME_STR@";
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
-index d931dfac48..ce08270e7b 100644
+index d931dfac48..ab6c83dc45 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
 +++ b/src/corelib/global/qlibraryinfo.cpp
 @@ -202,9 +202,11 @@ QLibraryInfo::QLibraryInfo()
@@ -366,7 +426,27 @@ index d931dfac48..ce08270e7b 100644
  }
  
  /*!
-@@ -246,6 +248,54 @@ QVersionNumber QLibraryInfo::version() noexcept
+@@ -235,6 +237,19 @@ QLibraryInfo::isDebugBuild() noexcept
+ #endif
+ }
+ 
++/*!
++    \since 6.5
++    Returns \c true if this is a shared (dynamic) build of Qt.
++*/
++bool QLibraryInfo::isSharedBuild() noexcept
++{
++#if (defined(QT_SHARED) && !defined(QT_STATIC))
++    return true;
++#else
++    return false;
++#endif
++}
++
+ /*!
+     \since 5.8
+     Returns the version of the Qt library.
+@@ -246,6 +261,42 @@ QVersionNumber QLibraryInfo::version() noexcept
      return QVersionNumber(QT_VERSION_MAJOR, QT_VERSION_MINOR, QT_VERSION_PATCH);
  }
  
@@ -385,8 +465,7 @@ index d931dfac48..ce08270e7b 100644
 +*/
 +const char *QLibraryInfo::commit() noexcept
 +{
-+    // ### TODO
-+    return nullptr;
++    return qt_commit_str;
 +}
 +
 +/*!
@@ -395,7 +474,7 @@ index d931dfac48..ce08270e7b 100644
 +*/
 +const char *QLibraryInfo::build_date_time() noexcept
 +{
-+    return __DATE__ " " __TIME__;
++    return qt_build_date_time_str;
 +}
 +
 +/*!
@@ -407,25 +486,45 @@ index d931dfac48..ce08270e7b 100644
 +    return COMPILER_STRING;
 +}
 +
-+/*!
-+    \since 6.5
-+    Returns the command line used by the CMake configuration process
-+    of the current build.
-+*/
-+const char *QLibraryInfo::configure_command_line() noexcept
-+{
-+    // ### TODO
-+    return nullptr;
-+}
-+
  static QString prefixFromAppDirHelper()
  {
      QString appDir;
+@@ -283,8 +334,13 @@ static QString prefixFromQtCoreLibraryHelper(const QString &qtCoreLibraryPath)
+ {
+     const QString qtCoreLibrary = QDir::fromNativeSeparators(qtCoreLibraryPath);
+     const QString libDir = QFileInfo(qtCoreLibrary).absolutePath();
+-    const QString prefixDir = libDir + "/" QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH;
+-    return QDir::cleanPath(prefixDir);
++    const QString prefix = libDir + "/";
++    return QDir::cleanPath([&prefix]() -> QString {
++        if (qEnvironmentVariableIntValue("QT_FORCE_LOAD_PLUGINS_FROM_CORE_DIR")) {
++            return prefix;
++        }
++        return prefix + QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH;
++    }());
+ }
+ #endif
+ 
+@@ -349,7 +405,7 @@ static QString getRelocatablePrefix(QLibraryInfoPrivate::UsageMode usageMode)
+ 
+     const QCFString libDirCFString = CFURLCopyFileSystemPath(libDirCFPath, kCFURLPOSIXPathStyle);
+ 
+-    const QString prefixDir = QString(libDirCFString) + "/" QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH;
++    const QString prefixDir = QString(libDirCFString) + "/" + QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH;
+ 
+     prefixPath = QDir::cleanPath(prefixDir);
+ #elif QT_CONFIG(dlopen)
 diff --git a/src/corelib/global/qlibraryinfo.h b/src/corelib/global/qlibraryinfo.h
-index e0f2273787..61c9baee1d 100644
+index e0f2273787..a593a169fd 100644
 --- a/src/corelib/global/qlibraryinfo.h
 +++ b/src/corelib/global/qlibraryinfo.h
-@@ -21,6 +21,12 @@ public:
+@@ -17,10 +17,17 @@ public:
+ 
+     static bool isDebugBuild() noexcept Q_DECL_CONST_FUNCTION;
+ 
++    static bool isSharedBuild() noexcept Q_DECL_CONST_FUNCTION;
++
+ #ifndef QT_BOOTSTRAPPED
      static QVersionNumber version() noexcept Q_DECL_CONST_FUNCTION;
  #endif
  
@@ -433,7 +532,6 @@ index e0f2273787..61c9baee1d 100644
 +    static const char *commit() noexcept;
 +    static const char *build_date_time() noexcept;
 +    static const char *compiler() noexcept;
-+    static const char *configure_command_line() noexcept;
 +
      enum LibraryPath {
          PrefixPath = 0,
@@ -880,10 +978,19 @@ index c24caf3c2e..ae38111f0f 100644
  
  QT_END_NAMESPACE
 diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..824450fea9 100644
+index 6ecb814948..b32af30b16 100644
 --- a/src/entrypoint/qtentrypoint_win.cpp
 +++ b/src/entrypoint/qtentrypoint_win.cpp
-@@ -28,23 +28,23 @@ extern "C" int main(int, char **);
+@@ -14,7 +14,7 @@
+ */
+ 
+ #if defined(QT_NEEDS_QMAIN)
+-int qMain(int, char **);
++extern "C" int qMain(int, char **);
+ #define main qMain
+ #else
+ extern "C" int main(int, char **);
+@@ -28,28 +28,46 @@ extern "C" int main(int, char **);
  
  // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
  // when passed CP_ACP.
@@ -898,20 +1005,46 @@ index 6ecb814948..824450fea9 100644
  }
  
 -extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
-+extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
++[[nodiscard]] static inline int qWinMain()
  {
      int argc = 0;
      wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
-     if (argvW == nullptr)
+-    if (argvW == nullptr)
++    if (!argvW) {
          return -1;
 -    char **argv = new char *[argc + 1];
-+    auto argv = new char *[argc + 1];
-     for (int i = 0; i != argc; ++i)
+-    for (int i = 0; i != argc; ++i)
 -        argv[i] = wideToMulti(CP_ACP, argvW[i]);
++    }
++    auto argv = new char *[argc + 1];
++    for (int i = 0; i != argc; ++i) {
 +        argv[i] = wideToMulti(CP_UTF8, argvW[i]);
++    }
      argv[argc] = nullptr;
      LocalFree(argvW);
      const int exitCode = main(argc, argv);
+-    for (int i = 0; (i != argc) && (argv[i] != nullptr); ++i)
++    for (int i = 0; (i != argc) && (argv[i] != nullptr); ++i) {
+         delete [] argv[i];
++    }
+     delete [] argv;
+     return exitCode;
+ }
++
++extern "C" int WINAPI wmain(int, wchar_t **)
++{
++    return qWinMain();
++}
++
++extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
++{
++    return qWinMain();
++}
++
++extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
++{
++    return qWinMain();
++}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 32b69350c1..d4054c6966 100644
 --- a/src/gui/CMakeLists.txt
@@ -6701,10 +6834,10 @@ index 4bd58fd23d..0000000000
 -#endif
 diff --git a/src/plugins/platforms/minimal/qminimalintegration.cpp b/src/plugins/platforms/minimal/qminimalintegration.cpp
 deleted file mode 100644
-index 7523a2d966..0000000000
+index a145093872..0000000000
 --- a/src/plugins/platforms/minimal/qminimalintegration.cpp
 +++ /dev/null
-@@ -1,165 +0,0 @@
+@@ -1,173 +0,0 @@
 -// Copyright (C) 2016 The Qt Company Ltd.
 -// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 -
@@ -6713,6 +6846,7 @@ index 7523a2d966..0000000000
 -
 -#include <QtGui/private/qpixmap_raster_p.h>
 -#include <QtGui/private/qguiapplication_p.h>
+-#include <qpa/qplatformnativeinterface.h>
 -#include <qpa/qplatformwindow.h>
 -#include <qpa/qwindowsysteminterface.h>
 -
@@ -6864,6 +6998,13 @@ index 7523a2d966..0000000000
 -#endif
 -}
 -
+-QPlatformNativeInterface *QMinimalIntegration::nativeInterface() const
+-{
+-    if (!m_nativeInterface)
+-        m_nativeInterface.reset(new QPlatformNativeInterface);
+-    return m_nativeInterface.get();
+-}
+-
 -QMinimalIntegration *QMinimalIntegration::instance()
 -{
 -    return static_cast<QMinimalIntegration *>(QGuiApplicationPrivate::platformIntegration());
@@ -6872,10 +7013,10 @@ index 7523a2d966..0000000000
 -QT_END_NAMESPACE
 diff --git a/src/plugins/platforms/minimal/qminimalintegration.h b/src/plugins/platforms/minimal/qminimalintegration.h
 deleted file mode 100644
-index 914f26bf25..0000000000
+index 6070972b1b..0000000000
 --- a/src/plugins/platforms/minimal/qminimalintegration.h
 +++ /dev/null
-@@ -1,61 +0,0 @@
+@@ -1,66 +0,0 @@
 -// Copyright (C) 2016 The Qt Company Ltd.
 -// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 -
@@ -6884,6 +7025,8 @@ index 914f26bf25..0000000000
 -
 -#include <qpa/qplatformintegration.h>
 -#include <qpa/qplatformscreen.h>
+-
+-#include <qscopedpointer.h>
 -
 -QT_BEGIN_NAMESPACE
 -
@@ -6924,12 +7067,15 @@ index 914f26bf25..0000000000
 -    QPlatformBackingStore *createPlatformBackingStore(QWindow *window) const override;
 -    QAbstractEventDispatcher *createEventDispatcher() const override;
 -
+-    QPlatformNativeInterface *nativeInterface() const override;
+-
 -    unsigned options() const { return m_options; }
 -
 -    static QMinimalIntegration *instance();
 -
 -private:
 -    mutable QPlatformFontDatabase *m_fontDatabase;
+-    mutable QScopedPointer<QPlatformNativeInterface> m_nativeInterface;
 -    QMinimalScreen *m_primaryScreen;
 -    unsigned m_options;
 -};
@@ -8570,7 +8716,7 @@ index af9c1fccb4..f20a6e6c25 100644
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
-index 9e284f2366..369f472d63 100644
+index 2faeb7456b..d397200efa 100644
 --- a/src/plugins/platforms/windows/qwindowsintegration.cpp
 +++ b/src/plugins/platforms/windows/qwindowsintegration.cpp
 @@ -152,52 +152,139 @@ static inline unsigned parseOptions(const QStringList &paramList,
@@ -8794,7 +8940,7 @@ index 006396d92a..49db7f40c1 100644
                                 TPM_LEFTALIGN  | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 pos.x(), pos.y() + titleBarOffset,
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index a795328bdf..ab95f39ba0 100644
+index 468b028b8b..27137f912c 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -807,7 +807,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
