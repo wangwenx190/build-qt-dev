@@ -322,7 +322,7 @@ index 36a0a2c716..48bf42e1e5 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
-index 09d62232db..63425642d7 100644
+index 09d62232db..76e5b38e9f 100644
 --- a/src/corelib/Qt6CoreMacros.cmake
 +++ b/src/corelib/Qt6CoreMacros.cmake
 @@ -1790,7 +1790,7 @@ function(_qt_internal_generate_win32_rc_file target)
@@ -371,8 +371,8 @@ index 09d62232db..63425642d7 100644
              VALUE \"ProductVersion\", \"${product_version}\"
 -            VALUE \"Comments\", \"${comments}\"
 -            VALUE \"LegalTrademarks\", \"${legal_trademarks}\"
-+            VALUE \"Comments\", \"${comments} ${brand_comment}\"
-+            VALUE \"LegalTrademarks\", \"${legal_trademarks} ${brand_trademark}\"
++            VALUE \"Comments\", \"${brand_comment}\"
++            VALUE \"LegalTrademarks\", \"${brand_trademark}\"
              VALUE \"InternalName\", \"${internal_name}\"
          END
      END
@@ -978,7 +978,7 @@ index c24caf3c2e..ae38111f0f 100644
  
  QT_END_NAMESPACE
 diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..b32af30b16 100644
+index 6ecb814948..41485ddb43 100644
 --- a/src/entrypoint/qtentrypoint_win.cpp
 +++ b/src/entrypoint/qtentrypoint_win.cpp
 @@ -14,7 +14,7 @@
@@ -1005,7 +1005,7 @@ index 6ecb814948..b32af30b16 100644
  }
  
 -extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
-+[[nodiscard]] static inline int qWinMain()
++[[nodiscard]] static inline int qtMainImpl()
  {
      int argc = 0;
      wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -1033,17 +1033,17 @@ index 6ecb814948..b32af30b16 100644
 +
 +extern "C" int WINAPI wmain(int, wchar_t **)
 +{
-+    return qWinMain();
++    return qtMainImpl();
 +}
 +
 +extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 +{
-+    return qWinMain();
++    return qtMainImpl();
 +}
 +
 +extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 +{
-+    return qWinMain();
++    return qtMainImpl();
 +}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 32b69350c1..d4054c6966 100644
