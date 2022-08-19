@@ -41,6 +41,7 @@ set __git_clean_params=clean -fdx
 set __git_pull_params=pull
 set __git_apply_params=apply --ignore-whitespace --verbose
 if /i "%GITHUB_ACTIONS%" == "true" (
+    :: Update local VCPKG ports to the latest upstream version.
     cd /d "%__vcpkg_dir%"
     git %__git_reset_params%
     git %__git_clean_params%
@@ -65,6 +66,8 @@ vcpkg update
 :: the installed libraries in reality.
 vcpkg upgrade --no-dry-run
 :: Cleanup. GitHub Actions's machine doesn't have too much disk space.
+rd /s /q "%__vcpkg_dir%\downloads"
+rd /s /q "%__vcpkg_dir%\packages"
 rd /s /q "%__vcpkg_dir%\buildtrees"
 goto success
 

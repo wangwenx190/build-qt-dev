@@ -27,6 +27,8 @@ set __repo_install_dir=%__repo_root_dir%\build\windows
 :: Add 7-Zip executable's folder path to the PATH env var.
 set PATH=%ProgramFiles%\7-Zip;%PATH%
 :: This parameter combination means the ultra compression in most situtaions.
+:: You can increase the dictionary size to get better compression ratio, however,
+:: it will be VERY CPU & memory & time consuming.
 set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=128m:fb=273
 if not exist "%__repo_install_dir%" goto fail
 where 7z
