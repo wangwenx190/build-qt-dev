@@ -2,10 +2,10 @@
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/ports/ffmpeg/portfile.cmake b/ports/ffmpeg/portfile.cmake
-index c7dabdf4b..fa7e39efc 100644
+index 1ab26da6d..691505658 100644
 --- a/ports/ffmpeg/portfile.cmake
 +++ b/ports/ffmpeg/portfile.cmake
-@@ -52,7 +52,7 @@ else()
+@@ -53,7 +53,7 @@ else()
      set(LIB_PATH_VAR "LIBRARY_PATH")
  endif()
  
@@ -14,7 +14,7 @@ index c7dabdf4b..fa7e39efc 100644
  
  if(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm")
    set(OPTIONS "${OPTIONS} --disable-asm --disable-x86asm")
-@@ -490,8 +490,8 @@ if(VCPKG_TARGET_IS_UWP)
+@@ -491,8 +491,8 @@ if(VCPKG_TARGET_IS_UWP)
  endif()
  
  # Note: --disable-optimizations can't be used due to https://ffmpeg.org/pipermail/libav-user/2013-March/003945.html

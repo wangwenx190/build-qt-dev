@@ -26,7 +26,7 @@
 :: qtbase should always be the first one to build.
 :: We need the QtTools module for its linguist tools,
 :: they are necessary for applications that support i18n.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtwebengine
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative
 :: Supported values: clang-cl, mingw and msvc
 set __compiler=msvc
 :: Supported values: x64, x86 and arm64
