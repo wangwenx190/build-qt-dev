@@ -21,7 +21,7 @@
  src/corelib/kernel/qfunctions_win.cpp              |   15 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
- src/entrypoint/qtentrypoint_win.cpp                |   41 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   38 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -117,7 +117,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 119 files changed, 1393 insertions(+), 7806 deletions(-)
+ 119 files changed, 1390 insertions(+), 7806 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -1275,7 +1275,7 @@ index 9363cc02de..ff81407ed9 100644
  QT_END_NAMESPACE
  #else
 diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..abac940afe 100644
+index 6ecb814948..bdbd9206b2 100644
 --- a/src/entrypoint/qtentrypoint_win.cpp
 +++ b/src/entrypoint/qtentrypoint_win.cpp
 @@ -3,6 +3,7 @@
@@ -1295,16 +1295,13 @@ index 6ecb814948..abac940afe 100644
  #define main qMain
  #else
  extern "C" int main(int, char **);
-@@ -28,28 +29,50 @@ extern "C" int main(int, char **);
+@@ -28,28 +29,47 @@ extern "C" int main(int, char **);
  
  // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
  // when passed CP_ACP.
 -static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
 +[[nodiscard]] static inline char *wideToMulti(const UINT codePage, const wchar_t *aw)
  {
-+    Q_ASSERT(aw);
-+    if (!aw)
-+        return nullptr;
      const int required = WideCharToMultiByte(codePage, 0, aw, -1, nullptr, 0, nullptr, nullptr);
 -    char *result = new char[required];
 +    auto result = new char[required];
