@@ -4,24 +4,24 @@
  cmake/QtQmakeHelpers.cmake                         |   13 +
  config_help.txt                                    |    2 +
  configure.cmake                                    |   12 +-
+ qmake/main.cpp                                     |    1 +
  qt_cmdline.cmake                                   |    2 +
  src/corelib/Qt6CoreMacros.cmake                    |   14 +-
  src/corelib/global/qconfig.cpp.in                  |   15 +-
  src/corelib/global/qlibraryinfo.cpp                |   53 +-
  src/corelib/global/qlibraryinfo.h                  |    5 +
- src/corelib/global/qoperatingsystemversion.cpp     |   45 +
- src/corelib/global/qoperatingsystemversion.h       |    6 +
+ src/corelib/global/qoperatingsystemversion.cpp     |   41 +
+ src/corelib/global/qoperatingsystemversion.h       |   36 +
  .../global/qoperatingsystemversion_darwin.mm       |    2 +-
  src/corelib/global/qoperatingsystemversion_win.cpp |   36 +-
  src/corelib/global/qoperatingsystemversion_win_p.h |    2 +-
- src/corelib/global/qsysinfo.cpp                    |  263 ++-
- src/corelib/global/qsysinfo.h                      |  134 ++
+ src/corelib/global/qsysinfo.cpp                    |   44 +-
  src/corelib/io/qstandardpaths_win.cpp              |   34 +-
  src/corelib/kernel/qcoreapplication.cpp            |   34 +-
- src/corelib/kernel/qfunctions_win.cpp              |   16 +-
- src/corelib/text/qlocale_win.cpp                   |   18 +-
- src/corelib/thread/qfutex_p.h                      |   83 +-
- src/entrypoint/qtentrypoint_win.cpp                |   36 +-
+ src/corelib/kernel/qfunctions_win.cpp              |   15 +-
+ src/corelib/text/qlocale_win.cpp                   |   17 +-
+ src/corelib/thread/qfutex_p.h                      |   76 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   41 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -35,11 +35,12 @@
  .../windows/apisupport/uiapropertyids_p.h          |  188 --
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
+ src/gui/opengl/qopengl.cpp                         |    5 +-
  src/gui/rhi/cs_tdr_p.h                             |    2 +-
- src/gui/rhi/qrhid3d11.cpp                          |  338 ++--
+ src/gui/rhi/qrhid3d11.cpp                          |  334 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
  src/gui/rhi/vs_test_p.h                            |    2 +-
- .../qnetworklistmanagerevents.cpp                  |   56 +-
+ .../qnetworklistmanagerevents.cpp                  |   51 +-
  .../networklistmanager/qnetworklistmanagerevents.h |    2 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
  src/plugins/platforms/direct2d/CMakeLists.txt      |  224 ---
@@ -85,24 +86,38 @@
  .../platforms/offscreen/qoffscreenwindow.cpp       |  173 --
  src/plugins/platforms/offscreen/qoffscreenwindow.h |   49 -
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
- src/plugins/platforms/windows/qwin10helpers.cpp    |   46 +-
- src/plugins/platforms/windows/qwindowscontext.cpp  |  165 +-
- src/plugins/platforms/windows/qwindowscontext.h    |  109 +-
+ src/plugins/platforms/windows/qwin10helpers.cpp    |   39 +-
+ src/plugins/platforms/windows/qwindowscontext.cpp  |  168 +-
+ src/plugins/platforms/windows/qwindowscontext.h    |   98 ++
  .../platforms/windows/qwindowsintegration.cpp      |  143 +-
  .../platforms/windows/qwindowskeymapper.cpp        |   24 +-
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
  src/plugins/platforms/windows/qwindowsscreen.cpp   |   65 +-
- src/plugins/platforms/windows/qwindowstheme.cpp    |  136 +-
- src/plugins/platforms/windows/qwindowswindow.cpp   |   91 +-
+ src/plugins/platforms/windows/qwindowstheme.cpp    |  133 +-
+ src/plugins/platforms/windows/qwindowswindow.cpp   |   88 +-
  .../uiautomation/qwindowsuiaaccessibility.cpp      |    9 +-
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   32 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   15 +
- src/tools/rcc/main.cpp                             |    7 +-
+ src/plugins/tls/schannel/qtls_schannel.cpp         |    2 +-
+ src/tools/androiddeployqt/main.cpp                 |    2 +
+ src/tools/androidtestrunner/main.cpp               |    2 +
+ src/tools/cmake_automoc_parser/main.cpp            |    2 +
+ src/tools/macdeployqt/macdeployqt/main.cpp         |    3 +
+ src/tools/moc/main.cpp                             |    2 +
+ src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp            |    2 +
+ src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp            |    2 +
+ src/tools/qlalr/main.cpp                           |    2 +
+ src/tools/qtpaths/qtpaths.cpp                      |    3 +
+ src/tools/qvkgen/qvkgen.cpp                        |    2 +
+ src/tools/rcc/main.cpp                             |    9 +-
  src/tools/rcc/rcc.cpp                              |   10 +-
- src/widgets/dialogs/qwizard_win.cpp                |   10 +-
- 104 files changed, 1718 insertions(+), 7805 deletions(-)
+ src/tools/tracegen/tracegen.cpp                    |    3 +
+ src/tools/uic/main.cpp                             |    1 +
+ src/tools/windeployqt/main.cpp                     |    2 +
+ src/widgets/dialogs/qwizard_win.cpp                |    9 +-
+ 119 files changed, 1393 insertions(+), 7806 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -356,6 +371,18 @@ index 5d3d1e139f..bcb391968e 100644
  qt_configure_add_summary_section(NAME "Target compiler supports")
  qt_configure_add_summary_entry(
      TYPE "featureList"
+diff --git a/qmake/main.cpp b/qmake/main.cpp
+index 9b96ab7338..301cd9f231 100644
+--- a/qmake/main.cpp
++++ b/qmake/main.cpp
+@@ -573,6 +573,7 @@ QT_END_NAMESPACE
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
+     // Set name of the qmake application in QCoreApplication instance
+     QT_PREPEND_NAMESPACE(QCoreApplication) app(argc, argv);
+     return QT_PREPEND_NAMESPACE(runQMake)(argc, argv);
 diff --git a/qt_cmdline.cmake b/qt_cmdline.cmake
 index ca0f2b1a60..4cf733b463 100644
 --- a/qt_cmdline.cmake
@@ -370,7 +397,7 @@ index ca0f2b1a60..4cf733b463 100644
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
 diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
-index bcb76d4256..af70340567 100644
+index dfd37c43af..e5a9b74701 100644
 --- a/src/corelib/Qt6CoreMacros.cmake
 +++ b/src/corelib/Qt6CoreMacros.cmake
 @@ -1288,6 +1288,10 @@ function(_qt_internal_generate_win32_rc_file target)
@@ -549,21 +576,10 @@ index 71d9a01308..2c6e61152a 100644
          PrefixPath = 0,
          DocumentationPath,
 diff --git a/src/corelib/global/qoperatingsystemversion.cpp b/src/corelib/global/qoperatingsystemversion.cpp
-index a89cfa88d2..853ab077fb 100644
+index a89cfa88d2..fbb4393b48 100644
 --- a/src/corelib/global/qoperatingsystemversion.cpp
 +++ b/src/corelib/global/qoperatingsystemversion.cpp
-@@ -33,6 +33,10 @@ QT_BEGIN_NAMESPACE
-     operating system version (as opposed to the kernel version number or
-     marketing version).
- 
-+    This class is also a complete replacement for QSysInfo::macVersion and
-+    QSysInfo::windowsVersion, additionally providing access to the third (micro)
-+    version number component.
-+
-     Presently, Android, Apple Platforms (iOS, macOS, tvOS, and watchOS),
-     and Windows are supported.
- 
-@@ -388,6 +392,47 @@ const QOperatingSystemVersion QOperatingSystemVersion::Windows8_1 =
+@@ -388,6 +388,47 @@ const QOperatingSystemVersion QOperatingSystemVersion::Windows8_1 =
  const QOperatingSystemVersion QOperatingSystemVersion::Windows10 =
      QOperatingSystemVersion(QOperatingSystemVersion::Windows, 10);
  
@@ -612,7 +628,7 @@ index a89cfa88d2..853ab077fb 100644
      \variable QOperatingSystemVersion::Windows10_1809
      \brief a version corresponding to Windows 10 October 2018 Update
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index 5fcc3411de..df8069a376 100644
+index 5fcc3411de..29ecce1ed1 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
 @@ -188,6 +188,12 @@ public:
@@ -628,6 +644,43 @@ index 5fcc3411de..df8069a376 100644
      static constexpr QOperatingSystemVersionBase Windows10_1809 { QOperatingSystemVersionBase::Windows, 10, 0, 17763 }; // RS5
      static constexpr QOperatingSystemVersionBase Windows10_1903 { QOperatingSystemVersionBase::Windows, 10, 0, 18362 }; // 19H1
      static constexpr QOperatingSystemVersionBase Windows10_1909 { QOperatingSystemVersionBase::Windows, 10, 0, 18363 }; // 19H2
+@@ -199,6 +205,36 @@ public:
+     static constexpr QOperatingSystemVersionBase Windows11_21H2 = Windows11;
+     static constexpr QOperatingSystemVersionBase Windows11_22H2 { QOperatingSystemVersionBase::Windows, 10, 0, 22621 };
+ 
++#ifdef Q_OS_WINDOWS
++#  define MAKE_VERSION_FUNCTION(Name, Version) \
++    [[nodiscard]] static inline bool is##Name##OrGreater() \
++    { \
++        static const bool result = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Version; \
++        return result; \
++    }
++    MAKE_VERSION_FUNCTION(Win7, Windows7)
++    MAKE_VERSION_FUNCTION(Win8, Windows8)
++    MAKE_VERSION_FUNCTION(Win8Point1, Windows8_1)
++    MAKE_VERSION_FUNCTION(Win10, Windows10)
++    MAKE_VERSION_FUNCTION(Win10TH1, Windows10_1507)
++    MAKE_VERSION_FUNCTION(Win10TH2, Windows10_1511)
++    MAKE_VERSION_FUNCTION(Win10RS1, Windows10_1607)
++    MAKE_VERSION_FUNCTION(Win10RS2, Windows10_1703)
++    MAKE_VERSION_FUNCTION(Win10RS3, Windows10_1709)
++    MAKE_VERSION_FUNCTION(Win10RS4, Windows10_1803)
++    MAKE_VERSION_FUNCTION(Win10RS5, Windows10_1809)
++    MAKE_VERSION_FUNCTION(Win1019H1, Windows10_1903)
++    MAKE_VERSION_FUNCTION(Win1019H2, Windows10_1909)
++    MAKE_VERSION_FUNCTION(Win1020H1, Windows10_2004)
++    MAKE_VERSION_FUNCTION(Win1020H2, Windows10_20H2)
++    MAKE_VERSION_FUNCTION(Win1021H1, Windows10_21H1)
++    MAKE_VERSION_FUNCTION(Win1021H2, Windows10_21H2)
++    MAKE_VERSION_FUNCTION(Win11, Windows11)
++    MAKE_VERSION_FUNCTION(Win1121H2, Windows11_21H2)
++    MAKE_VERSION_FUNCTION(Win1122H2, Windows11_22H2)
++#  undef MAKE_VERSION_FUNCTION
++#endif // Q_OS_WINDOWS
++
+     constexpr QOperatingSystemVersion(const QOperatingSystemVersionBase &osversion)
+         : QOperatingSystemVersionBase(osversion) {}
+ 
 diff --git a/src/corelib/global/qoperatingsystemversion_darwin.mm b/src/corelib/global/qoperatingsystemversion_darwin.mm
 index 6581244821..e3175446a6 100644
 --- a/src/corelib/global/qoperatingsystemversion_darwin.mm
@@ -747,255 +800,23 @@ index 92fc0e12f3..a0b10a3643 100644
  QT_END_NAMESPACE
  
 diff --git a/src/corelib/global/qsysinfo.cpp b/src/corelib/global/qsysinfo.cpp
-index 6e9f8a0eea..70d7c9bc8d 100644
+index 6e9f8a0eea..6d8df852a4 100644
 --- a/src/corelib/global/qsysinfo.cpp
 +++ b/src/corelib/global/qsysinfo.cpp
-@@ -76,6 +76,49 @@ using namespace Qt::StringLiterals;
-            the application is compiled (32 or 64).
- */
+@@ -87,7 +87,7 @@ using namespace Qt::StringLiterals;
  
-+#if QT_DEPRECATED_SINCE(5, 9)
-+/*!
-+    \deprecated
-+    \variable QSysInfo::WindowsVersion
-+    \brief the version of the Windows operating system on which the
-+           application is run.
-+
-+    Use QOperatingSystemVersion::current() instead.
-+*/
-+
-+/*!
-+    \deprecated
-+    \fn QSysInfo::WindowsVersion QSysInfo::windowsVersion()
-+    \since 4.4
-+
-+    Use QOperatingSystemVersion::current() instead.
-+
-+    Returns the version of the Windows operating system on which the
-+    application is run, or WV_None if the operating system is not
-+    Windows.
-+*/
-+
-+/*!
-+    \deprecated
-+    \variable QSysInfo::MacintoshVersion
-+    \brief the version of the Macintosh operating system on which
-+           the application is run.
-+
-+    Use QOperatingSystemVersion::current() instead.
-+*/
-+
-+/*!
-+    \deprecated
-+    \fn QSysInfo::MacVersion QSysInfo::macVersion()
-+
-+    Use QOperatingSystemVersion::current() instead.
-+
-+    Returns the version of Darwin (\macos or iOS) on which the
-+    application is run, or MV_None if the operating system
-+    is not a version of Darwin.
-+*/
-+#endif
-+
- /*!
-     \enum QSysInfo::Endian
- 
-@@ -85,9 +128,169 @@ using namespace Qt::StringLiterals;
-                       the platform's byte order.
- */
- 
-+#if QT_DEPRECATED_SINCE(5, 9)
-+/*!
-+    \deprecated
-+    \enum QSysInfo::WinVersion
-+
-+    Use the versions defined in QOperatingSystemVersion instead.
-+
-+    This enum provides symbolic names for the various versions of the
-+    Windows operating system. On Windows, the
-+    QSysInfo::WindowsVersion variable gives the version of the system
-+    on which the application is run.
-+
-+    MS-DOS-based versions:
-+
-+    \value WV_32s   Windows 3.1 with Win 32s
-+    \value WV_95    Windows 95
-+    \value WV_98    Windows 98
-+    \value WV_Me    Windows Me
-+
-+    NT-based versions (note that each operating system version is only represented once rather than each Windows edition):
-+
-+    \value WV_NT    Windows NT (operating system version 4.0)
-+    \value WV_2000  Windows 2000 (operating system version 5.0)
-+    \value WV_XP    Windows XP (operating system version 5.1)
-+    \value WV_2003  Windows Server 2003, Windows Server 2003 R2, Windows Home Server, Windows XP Professional x64 Edition (operating system version 5.2)
-+    \value WV_VISTA Windows Vista, Windows Server 2008 (operating system version 6.0)
-+    \value WV_WINDOWS7 Windows 7, Windows Server 2008 R2 (operating system version 6.1)
-+    \value WV_WINDOWS8 Windows 8 (operating system version 6.2)
-+    \value WV_WINDOWS8_1 Windows 8.1 (operating system version 6.3), introduced in Qt 5.2
-+    \value WV_WINDOWS10 Windows 10 (operating system version 10.0), introduced in Qt 5.5
-+
-+    Alternatively, you may use the following macros which correspond directly to the Windows operating system version number:
-+
-+    \value WV_4_0   Operating system version 4.0, corresponds to Windows NT
-+    \value WV_5_0   Operating system version 5.0, corresponds to Windows 2000
-+    \value WV_5_1   Operating system version 5.1, corresponds to Windows XP
-+    \value WV_5_2   Operating system version 5.2, corresponds to Windows Server 2003, Windows Server 2003 R2, Windows Home Server, and Windows XP Professional x64 Edition
-+    \value WV_6_0   Operating system version 6.0, corresponds to Windows Vista and Windows Server 2008
-+    \value WV_6_1   Operating system version 6.1, corresponds to Windows 7 and Windows Server 2008 R2
-+    \value WV_6_2   Operating system version 6.2, corresponds to Windows 8
-+    \value WV_6_3   Operating system version 6.3, corresponds to Windows 8.1, introduced in Qt 5.2
-+    \value WV_10_0  Operating system version 10.0, corresponds to Windows 10, introduced in Qt 5.5
-+
-+    The following masks can be used for testing whether a Windows
-+    version is MS-DOS-based or NT-based:
-+
-+    \value WV_DOS_based MS-DOS-based version of Windows
-+    \value WV_NT_based  NT-based version of Windows
-+
-+    \value WV_None Operating system other than Windows.
-+
-+    \omitvalue WV_CE
-+    \omitvalue WV_CENET
-+    \omitvalue WV_CE_5
-+    \omitvalue WV_CE_6
-+    \omitvalue WV_CE_based
-+
-+    \sa MacVersion
-+*/
-+
-+/*!
-+    \deprecated
-+    \enum QSysInfo::MacVersion
-+
-+    Use the versions defined in QOperatingSystemVersion instead.
-+
-+    This enum provides symbolic names for the various versions of the
-+    Darwin operating system, covering both \macos and iOS. The
-+    QSysInfo::MacintoshVersion variable gives the version of the
-+    system on which the application is run.
-+
-+    \value MV_9        \macos 9
-+    \value MV_10_0     \macos 10.0
-+    \value MV_10_1     \macos 10.1
-+    \value MV_10_2     \macos 10.2
-+    \value MV_10_3     \macos 10.3
-+    \value MV_10_4     \macos 10.4
-+    \value MV_10_5     \macos 10.5
-+    \value MV_10_6     \macos 10.6
-+    \value MV_10_7     \macos 10.7
-+    \value MV_10_8     \macos 10.8
-+    \value MV_10_9     \macos 10.9
-+    \value MV_10_10    \macos 10.10
-+    \value MV_10_11    \macos 10.11
-+    \value MV_10_12    \macos 10.12
-+    \value MV_Unknown  An unknown and currently unsupported platform
-+
-+    \value MV_CHEETAH  Apple codename for MV_10_0
-+    \value MV_PUMA     Apple codename for MV_10_1
-+    \value MV_JAGUAR   Apple codename for MV_10_2
-+    \value MV_PANTHER  Apple codename for MV_10_3
-+    \value MV_TIGER    Apple codename for MV_10_4
-+    \value MV_LEOPARD  Apple codename for MV_10_5
-+    \value MV_SNOWLEOPARD  Apple codename for MV_10_6
-+    \value MV_LION     Apple codename for MV_10_7
-+    \value MV_MOUNTAINLION Apple codename for MV_10_8
-+    \value MV_MAVERICKS    Apple codename for MV_10_9
-+    \value MV_YOSEMITE     Apple codename for MV_10_10
-+    \value MV_ELCAPITAN    Apple codename for MV_10_11
-+    \value MV_SIERRA       Apple codename for MV_10_12
-+
-+    \value MV_IOS      iOS (any)
-+    \value MV_IOS_4_3  iOS 4.3
-+    \value MV_IOS_5_0  iOS 5.0
-+    \value MV_IOS_5_1  iOS 5.1
-+    \value MV_IOS_6_0  iOS 6.0
-+    \value MV_IOS_6_1  iOS 6.1
-+    \value MV_IOS_7_0  iOS 7.0
-+    \value MV_IOS_7_1  iOS 7.1
-+    \value MV_IOS_8_0  iOS 8.0
-+    \value MV_IOS_8_1  iOS 8.1
-+    \value MV_IOS_8_2  iOS 8.2
-+    \value MV_IOS_8_3  iOS 8.3
-+    \value MV_IOS_8_4  iOS 8.4
-+    \value MV_IOS_9_0  iOS 9.0
-+    \value MV_IOS_9_1  iOS 9.1
-+    \value MV_IOS_9_2  iOS 9.2
-+    \value MV_IOS_9_3  iOS 9.3
-+    \value MV_IOS_10_0 iOS 10.0
-+
-+    \value MV_TVOS          tvOS (any)
-+    \value MV_TVOS_9_0      tvOS 9.0
-+    \value MV_TVOS_9_1      tvOS 9.1
-+    \value MV_TVOS_9_2      tvOS 9.2
-+    \value MV_TVOS_10_0     tvOS 10.0
-+
-+    \value MV_WATCHOS       watchOS (any)
-+    \value MV_WATCHOS_2_0   watchOS 2.0
-+    \value MV_WATCHOS_2_1   watchOS 2.1
-+    \value MV_WATCHOS_2_2   watchOS 2.2
-+    \value MV_WATCHOS_3_0   watchOS 3.0
-+
-+    \value MV_None     Not a Darwin operating system
-+
-+    \sa WinVersion
-+*/
-+#endif
-+
  #if defined(Q_OS_DARWIN)
  
 -static const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
-+#if QT_DEPRECATED_SINCE(5, 9)
-+QT_WARNING_PUSH
-+QT_WARNING_DISABLE_DEPRECATED
-+QSysInfo::MacVersion QSysInfo::macVersion()
-+{
-+    static const auto version = QOperatingSystemVersion::current();
-+#if defined(Q_OS_MACOS)
-+    return QSysInfo::MacVersion(Q_MV_OSX(version.majorVersion(), version.minorVersion()));
-+#elif defined(Q_OS_IOS)
-+    return QSysInfo::MacVersion(Q_MV_IOS(version.majorVersion(), version.minorVersion()));
-+#elif defined(Q_OS_TVOS)
-+    return QSysInfo::MacVersion(Q_MV_TVOS(version.majorVersion(), version.minorVersion()));
-+#elif defined(Q_OS_WATCHOS)
-+    return QSysInfo::MacVersion(Q_MV_WATCHOS(version.majorVersion(), version.minorVersion()));
-+#else
-+    return QSysInfo::MV_Unknown;
-+#endif
-+}
-+const QSysInfo::MacVersion QSysInfo::MacintoshVersion = QSysInfo::macVersion();
-+QT_WARNING_POP
-+#endif
-+
 +[[nodiscard]] static inline const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
  {
  #ifdef Q_OS_MACOS
      if (version.majorVersion() == 12)
-@@ -152,13 +355,33 @@ QWindowsSockInit::~QWindowsSockInit()
+@@ -152,23 +152,28 @@ QWindowsSockInit::~QWindowsSockInit()
  Q_GLOBAL_STATIC(QWindowsSockInit, winsockInit)
  #  endif // QT_BOOTSTRAPPED
  
 -static QString readVersionRegistryString(const wchar_t *subKey)
-+#if QT_DEPRECATED_SINCE(5, 9)
-+QT_WARNING_PUSH
-+QT_WARNING_DISABLE_DEPRECATED
-+QSysInfo::WinVersion QSysInfo::windowsVersion()
-+{
-+    static const auto version = QOperatingSystemVersion::current();
-+    if (version.majorVersion() == 6 && version.minorVersion() == 1)
-+        return QSysInfo::WV_WINDOWS7;
-+    if (version.majorVersion() == 6 && version.minorVersion() == 2)
-+        return QSysInfo::WV_WINDOWS8;
-+    if (version.majorVersion() == 6 && version.minorVersion() == 3)
-+        return QSysInfo::WV_WINDOWS8_1;
-+    if (version.majorVersion() == 10 && version.minorVersion() == 0)
-+        return QSysInfo::WV_WINDOWS10;
-+    return QSysInfo::WV_NT_based;
-+}
-+const QSysInfo::WinVersion QSysInfo::WindowsVersion = QSysInfo::windowsVersion();
-+QT_WARNING_POP
-+#endif
-+
 +[[nodiscard]] static inline QString readVersionRegistryString(const wchar_t *subKey)
  {
      return QWinRegistryKey(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Microsoft\Windows NT\CurrentVersion)")
@@ -1007,7 +828,10 @@ index 6e9f8a0eea..70d7c9bc8d 100644
  {
      // https://tickets.puppetlabs.com/browse/FACT-3058
      // The "ReleaseId" key stopped updating since Windows 10 20H2.
-@@ -168,7 +391,12 @@ static inline QString windowsDisplayVersion()
+-    if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10_20H2)
++    if (QOperatingSystemVersion::isWin1020H2OrGreater())
+         return readVersionRegistryString(L"DisplayVersion");
+     else
          return readVersionRegistryString(L"ReleaseId");
  }
  
@@ -1021,7 +845,7 @@ index 6e9f8a0eea..70d7c9bc8d 100644
  {
      const auto osv = qWindowsVersionInfo();
      const qint16 major = osv.wServicePackMajor;
-@@ -183,7 +411,7 @@ static QString winSp_helper()
+@@ -183,14 +188,20 @@ static QString winSp_helper()
      return QString();
  }
  
@@ -1029,8 +853,9 @@ index 6e9f8a0eea..70d7c9bc8d 100644
 +[[nodiscard]] static inline const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
  {
      Q_UNUSED(version);
-     const OSVERSIONINFOEX osver = qWindowsVersionInfo();
-@@ -191,6 +419,12 @@ static const char *osVer_helper(QOperatingSystemVersion version = QOperatingSyst
+-    const OSVERSIONINFOEX osver = qWindowsVersionInfo();
++    const OSVERSIONINFOEXW osver = qWindowsVersionInfo();
+     const bool workstation = osver.wProductType == VER_NT_WORKSTATION;
  
  #define Q_WINVER(major, minor) (major << 8 | minor)
      switch (Q_WINVER(osver.dwMajorVersion, osver.dwMinorVersion)) {
@@ -1043,7 +868,7 @@ index 6e9f8a0eea..70d7c9bc8d 100644
      case Q_WINVER(10, 0):
          if (workstation) {
              if (osver.dwBuildNumber >= 22000)
-@@ -882,10 +1116,21 @@ QString QSysInfo::prettyProductName()
+@@ -882,10 +893,21 @@ QString QSysInfo::prettyProductName()
      return result + " ("_L1 + versionString + u')';
  #  else
      // (resembling winver.exe): Windows 10 "Windows 10 Version 1809"
@@ -1069,158 +894,6 @@ index 6e9f8a0eea..70d7c9bc8d 100644
  #  endif // Windows
  #elif defined(Q_OS_HAIKU)
      return "Haiku "_L1 + productVersion();
-diff --git a/src/corelib/global/qsysinfo.h b/src/corelib/global/qsysinfo.h
-index b1d7f000be..4c0a70f417 100644
---- a/src/corelib/global/qsysinfo.h
-+++ b/src/corelib/global/qsysinfo.h
-@@ -3,6 +3,7 @@
- // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
- 
- #include <QtCore/qglobal.h>
-+#include <QtCore/qtdeprecationmarkers.h>
- 
- #ifndef QSYSINFO_H
- #define QSYSINFO_H
-@@ -35,6 +36,139 @@ public:
- #  endif
-     };
- 
-+#if QT_DEPRECATED_SINCE(5, 9)
-+    enum QT_DEPRECATED_X("Use QOperatingSystemVersion") WinVersion {
-+        WV_None     = 0x0000,
-+
-+        WV_32s      = 0x0001,
-+        WV_95       = 0x0002,
-+        WV_98       = 0x0003,
-+        WV_Me       = 0x0004,
-+        WV_DOS_based= 0x000f,
-+
-+        /* codenames */
-+        WV_NT       = 0x0010,
-+        WV_2000     = 0x0020,
-+        WV_XP       = 0x0030,
-+        WV_2003     = 0x0040,
-+        WV_VISTA    = 0x0080,
-+        WV_WINDOWS7 = 0x0090,
-+        WV_WINDOWS8 = 0x00a0,
-+        WV_WINDOWS8_1 = 0x00b0,
-+        WV_WINDOWS10 = 0x00c0,
-+        WV_NT_based = 0x00f0,
-+
-+        /* version numbers */
-+        WV_4_0      = WV_NT,
-+        WV_5_0      = WV_2000,
-+        WV_5_1      = WV_XP,
-+        WV_5_2      = WV_2003,
-+        WV_6_0      = WV_VISTA,
-+        WV_6_1      = WV_WINDOWS7,
-+        WV_6_2      = WV_WINDOWS8,
-+        WV_6_3      = WV_WINDOWS8_1,
-+        WV_10_0     = WV_WINDOWS10,
-+
-+        WV_CE       = 0x0100,
-+        WV_CENET    = 0x0200,
-+        WV_CE_5     = 0x0300,
-+        WV_CE_6     = 0x0400,
-+        WV_CE_based = 0x0f00
-+    };
-+
-+#define Q_MV_OSX(major, minor) (major == 10 ? minor + 2 : (major == 9 ? 1 : 0))
-+#define Q_MV_IOS(major, minor) (QSysInfo::MV_IOS | major << 4 | minor)
-+#define Q_MV_TVOS(major, minor) (QSysInfo::MV_TVOS | major << 4 | minor)
-+#define Q_MV_WATCHOS(major, minor) (QSysInfo::MV_WATCHOS | major << 4 | minor)
-+    enum QT_DEPRECATED_X("Use QOperatingSystemVersion") MacVersion {
-+        MV_None    = 0xffff,
-+        MV_Unknown = 0x0000,
-+
-+        /* version */
-+        MV_9 = Q_MV_OSX(9, 0),
-+        MV_10_0 = Q_MV_OSX(10, 0),
-+        MV_10_1 = Q_MV_OSX(10, 1),
-+        MV_10_2 = Q_MV_OSX(10, 2),
-+        MV_10_3 = Q_MV_OSX(10, 3),
-+        MV_10_4 = Q_MV_OSX(10, 4),
-+        MV_10_5 = Q_MV_OSX(10, 5),
-+        MV_10_6 = Q_MV_OSX(10, 6),
-+        MV_10_7 = Q_MV_OSX(10, 7),
-+        MV_10_8 = Q_MV_OSX(10, 8),
-+        MV_10_9 = Q_MV_OSX(10, 9),
-+        MV_10_10 = Q_MV_OSX(10, 10),
-+        MV_10_11 = Q_MV_OSX(10, 11),
-+        MV_10_12 = Q_MV_OSX(10, 12),
-+
-+        /* codenames */
-+        MV_CHEETAH = MV_10_0,
-+        MV_PUMA = MV_10_1,
-+        MV_JAGUAR = MV_10_2,
-+        MV_PANTHER = MV_10_3,
-+        MV_TIGER = MV_10_4,
-+        MV_LEOPARD = MV_10_5,
-+        MV_SNOWLEOPARD = MV_10_6,
-+        MV_LION = MV_10_7,
-+        MV_MOUNTAINLION = MV_10_8,
-+        MV_MAVERICKS = MV_10_9,
-+        MV_YOSEMITE = MV_10_10,
-+        MV_ELCAPITAN = MV_10_11,
-+        MV_SIERRA = MV_10_12,
-+
-+        /* iOS */
-+        MV_IOS     = 1 << 8,
-+        MV_IOS_4_3 = Q_MV_IOS(4, 3),
-+        MV_IOS_5_0 = Q_MV_IOS(5, 0),
-+        MV_IOS_5_1 = Q_MV_IOS(5, 1),
-+        MV_IOS_6_0 = Q_MV_IOS(6, 0),
-+        MV_IOS_6_1 = Q_MV_IOS(6, 1),
-+        MV_IOS_7_0 = Q_MV_IOS(7, 0),
-+        MV_IOS_7_1 = Q_MV_IOS(7, 1),
-+        MV_IOS_8_0 = Q_MV_IOS(8, 0),
-+        MV_IOS_8_1 = Q_MV_IOS(8, 1),
-+        MV_IOS_8_2 = Q_MV_IOS(8, 2),
-+        MV_IOS_8_3 = Q_MV_IOS(8, 3),
-+        MV_IOS_8_4 = Q_MV_IOS(8, 4),
-+        MV_IOS_9_0 = Q_MV_IOS(9, 0),
-+        MV_IOS_9_1 = Q_MV_IOS(9, 1),
-+        MV_IOS_9_2 = Q_MV_IOS(9, 2),
-+        MV_IOS_9_3 = Q_MV_IOS(9, 3),
-+        MV_IOS_10_0 = Q_MV_IOS(10, 0),
-+
-+        /* tvOS */
-+        MV_TVOS     = 1 << 9,
-+        MV_TVOS_9_0 = Q_MV_TVOS(9, 0),
-+        MV_TVOS_9_1 = Q_MV_TVOS(9, 1),
-+        MV_TVOS_9_2 = Q_MV_TVOS(9, 2),
-+        MV_TVOS_10_0 = Q_MV_TVOS(10, 0),
-+
-+        /* watchOS */
-+        MV_WATCHOS     = 1 << 10,
-+        MV_WATCHOS_2_0 = Q_MV_WATCHOS(2, 0),
-+        MV_WATCHOS_2_1 = Q_MV_WATCHOS(2, 1),
-+        MV_WATCHOS_2_2 = Q_MV_WATCHOS(2, 2),
-+        MV_WATCHOS_3_0 = Q_MV_WATCHOS(3, 0)
-+    };
-+
-+QT_WARNING_PUSH
-+QT_WARNING_DISABLE_DEPRECATED
-+#if defined(Q_OS_WIN) || defined(Q_OS_CYGWIN)
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static const WinVersion WindowsVersion;
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static WinVersion windowsVersion();
-+#else
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static const WinVersion WindowsVersion = WV_None;
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static WinVersion windowsVersion() { return WV_None; }
-+#endif
-+#if defined(Q_OS_MAC)
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static const MacVersion MacintoshVersion;
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static MacVersion macVersion();
-+#else
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static const MacVersion MacintoshVersion = MV_None;
-+    QT_DEPRECATED_X("Use QOperatingSystemVersion::current()") static MacVersion macVersion() { return MV_None; }
-+#endif
-+QT_WARNING_POP
-+#endif // QT_DEPRECATED_SINCE(5, 9)
-+
-     static QString buildCpuArchitecture();
-     static QString currentCpuArchitecture();
-     static QString buildAbi();
 diff --git a/src/corelib/io/qstandardpaths_win.cpp b/src/corelib/io/qstandardpaths_win.cpp
 index 13b8fe224a..2997bb091a 100644
 --- a/src/corelib/io/qstandardpaths_win.cpp
@@ -1411,7 +1084,7 @@ index 4d69ca9a17..22ae7bf069 100644
  #endif
  #endif
 diff --git a/src/corelib/kernel/qfunctions_win.cpp b/src/corelib/kernel/qfunctions_win.cpp
-index ed0e25467c..57d983f314 100644
+index ed0e25467c..c964cd5141 100644
 --- a/src/corelib/kernel/qfunctions_win.cpp
 +++ b/src/corelib/kernel/qfunctions_win.cpp
 @@ -4,6 +4,8 @@
@@ -1432,14 +1105,13 @@ index ed0e25467c..57d983f314 100644
  QComHelper::QComHelper(COINIT concurrencyModel)
  {
      // Avoid overhead of initializing and using obsolete technology
-@@ -43,9 +47,17 @@ QComHelper::~QComHelper()
+@@ -43,9 +47,16 @@ QComHelper::~QComHelper()
  bool qt_win_hasPackageIdentity()
  {
  #if defined(HAS_APPMODEL)
 -    static const bool hasPackageIdentity = []() {
 +    static const auto hasPackageIdentity = []() -> bool {
-+        static const bool isWin8OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+        if (!isWin8OrGreater)
++        if (!QOperatingSystemVersion::isWin8OrGreater())
 +            return false;
 +        static const auto pGetCurrentPackageFullName =
 +            reinterpret_cast<decltype(&::GetCurrentPackageFullName)>(
@@ -1453,7 +1125,7 @@ index ed0e25467c..57d983f314 100644
              return true;
          case APPMODEL_ERROR_NO_PACKAGE:
 diff --git a/src/corelib/text/qlocale_win.cpp b/src/corelib/text/qlocale_win.cpp
-index 3a3ae443c6..f81702085b 100644
+index 3a3ae443c6..ff2bcacbbb 100644
 --- a/src/corelib/text/qlocale_win.cpp
 +++ b/src/corelib/text/qlocale_win.cpp
 @@ -15,6 +15,7 @@
@@ -1464,7 +1136,7 @@ index 3a3ae443c6..f81702085b 100644
  #   include <qt_windows.h>
  #   include <time.h>
  #endif
-@@ -662,13 +663,16 @@ QVariant QSystemLocalePrivate::uiLanguages()
+@@ -662,13 +663,15 @@ QVariant QSystemLocalePrivate::uiLanguages()
  {
      QStringList result;
  #if QT_CONFIG(cpp_winrt)
@@ -1475,8 +1147,7 @@ index 3a3ae443c6..f81702085b 100644
 -        result << QString::fromStdString(winrt::to_string(lang));
 -    if (!result.isEmpty())
 -        return result; // else just fall back to WIN32 API implementation
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (isWin10OrGreater) {
++    if (QOperatingSystemVersion::isWin10OrGreater()) {
 +        using namespace winrt;
 +        using namespace Windows::System::UserProfile;
 +        const auto languages = GlobalizationPreferences::Languages();
@@ -1489,7 +1160,7 @@ index 3a3ae443c6..f81702085b 100644
      // mingw and clang still have to use Win32 API
      unsigned long cnt = 0;
 diff --git a/src/corelib/thread/qfutex_p.h b/src/corelib/thread/qfutex_p.h
-index 9363cc02de..9f564347dd 100644
+index 9363cc02de..ff81407ed9 100644
 --- a/src/corelib/thread/qfutex_p.h
 +++ b/src/corelib/thread/qfutex_p.h
 @@ -17,9 +17,12 @@
@@ -1505,7 +1176,7 @@ index 9363cc02de..9f564347dd 100644
  namespace QtDummyFutex {
      constexpr inline bool futexAvailable() { return false; }
      template <typename Atomic>
-@@ -109,35 +112,93 @@ namespace QtFutex = QtLinuxFutex;
+@@ -109,35 +112,86 @@ namespace QtFutex = QtLinuxFutex;
  QT_END_NAMESPACE
  
  #elif defined(Q_OS_WIN)
@@ -1526,8 +1197,7 @@ index 9363cc02de..9f564347dd 100644
 +
 +[[nodiscard]] inline bool futexAvailable()
 +{
-+    static const bool result = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+    return result;
++    return QOperatingSystemVersion::isWin8OrGreater();
 +}
 +
 +struct QFutexApi
@@ -1547,21 +1217,15 @@ index 9363cc02de..9f564347dd 100644
 +
 +    explicit QFutexApi()
 +    {
-+        if (inited)
-+            return;
-+        inited = true;
 +        if (!futexAvailable())
 +            return;
-+        QSystemLibrary apiSet(u"api-ms-win-core-synch-l1-2-0"_s);
-+        pWaitOnAddress = reinterpret_cast<decltype(pWaitOnAddress)>(apiSet.resolve("WaitOnAddress"));
-+        pWakeByAddressAll = reinterpret_cast<decltype(pWakeByAddressAll)>(apiSet.resolve("WakeByAddressAll"));
-+        pWakeByAddressSingle = reinterpret_cast<decltype(pWakeByAddressSingle)>(apiSet.resolve("WakeByAddressSingle"));
++        QSystemLibrary library(u"kernelbase"_s);
++        pWaitOnAddress = reinterpret_cast<decltype(pWaitOnAddress)>(library.resolve("WaitOnAddress"));
++        pWakeByAddressAll = reinterpret_cast<decltype(pWakeByAddressAll)>(library.resolve("WakeByAddressAll"));
++        pWakeByAddressSingle = reinterpret_cast<decltype(pWakeByAddressSingle)>(library.resolve("WakeByAddressSingle"));
 +    }
 +
 +    ~QFutexApi() = default;
-+
-+private:
-+    bool inited = false;
 +};
  
  template <typename Atomic>
@@ -1611,10 +1275,18 @@ index 9363cc02de..9f564347dd 100644
  QT_END_NAMESPACE
  #else
 diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..6073922b61 100644
+index 6ecb814948..abac940afe 100644
 --- a/src/entrypoint/qtentrypoint_win.cpp
 +++ b/src/entrypoint/qtentrypoint_win.cpp
-@@ -14,7 +14,7 @@
+@@ -3,6 +3,7 @@
+ 
+ #include <qt_windows.h>
+ #include <shellapi.h>
++#include <clocale>
+ 
+ /*
+   This file contains the code in the QtEntryPoint library for Windows.
+@@ -14,7 +15,7 @@
  */
  
  #if defined(QT_NEEDS_QMAIN)
@@ -1623,13 +1295,16 @@ index 6ecb814948..6073922b61 100644
  #define main qMain
  #else
  extern "C" int main(int, char **);
-@@ -28,28 +28,46 @@ extern "C" int main(int, char **);
+@@ -28,28 +29,50 @@ extern "C" int main(int, char **);
  
  // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
  // when passed CP_ACP.
 -static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
 +[[nodiscard]] static inline char *wideToMulti(const UINT codePage, const wchar_t *aw)
  {
++    Q_ASSERT(aw);
++    if (!aw)
++        return nullptr;
      const int required = WideCharToMultiByte(codePage, 0, aw, -1, nullptr, 0, nullptr, nullptr);
 -    char *result = new char[required];
 +    auto result = new char[required];
@@ -1640,6 +1315,7 @@ index 6ecb814948..6073922b61 100644
 -extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
 +[[nodiscard]] static inline int qtEntryPoint()
  {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
      int argc = 0;
      wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
 -    if (argvW == nullptr)
@@ -1679,10 +1355,10 @@ index 6ecb814948..6073922b61 100644
 +    return qtEntryPoint();
 +}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
-index bbcacccac0..66c7ceee36 100644
+index f6c2b2979a..cc7deddab1 100644
 --- a/src/gui/CMakeLists.txt
 +++ b/src/gui/CMakeLists.txt
-@@ -426,7 +426,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
+@@ -430,7 +430,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
          d3d11
          dxgi
          dxguid
@@ -1690,7 +1366,7 @@ index bbcacccac0..66c7ceee36 100644
  )
  
  #### Keys ignored in scope 7:.:.:gui.pro:WIN32:
-@@ -502,21 +501,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
+@@ -506,21 +505,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
          ${FWFoundation}
  )
  
@@ -3159,6 +2835,22 @@ index 465bd07a07..0000000000
 -};
 -
 -#endif
+diff --git a/src/gui/opengl/qopengl.cpp b/src/gui/opengl/qopengl.cpp
+index d8b22050c1..ffc55dec1c 100644
+--- a/src/gui/opengl/qopengl.cpp
++++ b/src/gui/opengl/qopengl.cpp
+@@ -210,7 +210,10 @@ struct OsTypeTerm
+             ver = QStringLiteral("8.1");
+             break;
+         case Q_WINVER(10, 0):
+-            ver = QStringLiteral("10");
++            if (osver.minorVersion() >= 22000)
++                ver = QStringLiteral("11");
++            else
++                ver = QStringLiteral("10");
+             break;
+         default:
+             break;
 diff --git a/src/gui/rhi/cs_tdr_p.h b/src/gui/rhi/cs_tdr_p.h
 index 3e442de39c..8f06781944 100644
 --- a/src/gui/rhi/cs_tdr_p.h
@@ -3173,7 +2865,7 @@ index 3e442de39c..8f06781944 100644
       68,  88,  66,  67, 217,  62,
      220,  38, 136,  51,  86, 245,
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index 2a69474433..fd90f5ec31 100644
+index 2a69474433..e47c053969 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
 +++ b/src/gui/rhi/qrhid3d11.cpp
 @@ -9,6 +9,8 @@
@@ -3185,7 +2877,7 @@ index 2a69474433..fd90f5ec31 100644
  
  #include <d3dcompiler.h>
  #include <comdef.h>
-@@ -138,15 +140,32 @@ inline Int aligned(Int v, Int byteAlign)
+@@ -138,15 +140,31 @@ inline Int aligned(Int v, Int byteAlign)
      return (v + byteAlign - 1) & ~(byteAlign - 1);
  }
  
@@ -3208,8 +2900,7 @@ index 2a69474433..fd90f5ec31 100644
 +
 +[[nodiscard]] static inline IDXGIFactory2 *createDXGIFactory2()
 +{
-+    static const bool isWin8Point1OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8_1;
-+    if (!isWin8Point1OrGreater)
++    if (!QOperatingSystemVersion::isWin8Point1OrGreater())
 +        return nullptr;
 +    static const auto pCreateDXGIFactory2 =
 +        reinterpret_cast<decltype(&::CreateDXGIFactory2)>(
@@ -3225,15 +2916,13 @@ index 2a69474433..fd90f5ec31 100644
  }
  
  bool QRhiD3D11::create(QRhi::Flags flags)
-@@ -158,32 +177,42 @@ bool QRhiD3D11::create(QRhi::Flags flags)
+@@ -158,32 +176,40 @@ bool QRhiD3D11::create(QRhi::Flags flags)
          devFlags |= D3D11_CREATE_DEVICE_DEBUG;
  
      dxgiFactory = createDXGIFactory2();
 +    if (dxgiFactory) {
-+        static const bool isWin10OrGreater =
-+            QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+        supportsFlipSwapchain = isWin10OrGreater &&
-+            !qEnvironmentVariableIntValue("QT_D3D_NO_FLIP");
++        supportsFlipSwapchain = QOperatingSystemVersion::isWin10OrGreater()
++            && !qEnvironmentVariableIntValue("QT_D3D_NO_FLIP");
 +    } else {
 +        supportsFlipSwapchain = false;
 +        dxgiFactory = createDXGIFactory1();
@@ -3285,7 +2974,7 @@ index 2a69474433..fd90f5ec31 100644
  
      if (!importedDeviceAndContext) {
          IDXGIAdapter1 *adapter;
-@@ -4105,12 +4134,12 @@ static inline D3D11_BLEND_OP toD3DBlendOp(QRhiGraphicsPipeline::BlendOp op)
+@@ -4105,12 +4131,12 @@ static inline D3D11_BLEND_OP toD3DBlendOp(QRhiGraphicsPipeline::BlendOp op)
      }
  }
  
@@ -3300,7 +2989,7 @@ index 2a69474433..fd90f5ec31 100644
                  return reinterpret_cast<pD3DCompile>(symbol);
          }
      }
-@@ -4750,17 +4779,27 @@ bool QD3D11SwapChain::newColorBuffer(const QSize &size, DXGI_FORMAT format, DXGI
+@@ -4750,17 +4776,26 @@ bool QD3D11SwapChain::newColorBuffer(const QSize &size, DXGI_FORMAT format, DXGI
      return true;
  }
  
@@ -3311,8 +3000,7 @@ index 2a69474433..fd90f5ec31 100644
  
  bool QRhiD3D11::ensureDirectCompositionDevice()
  {
-+    static const bool isWin8OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+    if (!isWin8OrGreater)
++    if (!QOperatingSystemVersion::isWin8OrGreater())
 +        return false;
 +
 +    static const auto pDCompositionCreateDevice =
@@ -3331,7 +3019,7 @@ index 2a69474433..fd90f5ec31 100644
      if (FAILED(hr)) {
          qWarning("Failed to Direct Composition device: %s", qPrintable(comErrorMessage(hr)));
          return false;
-@@ -4788,16 +4827,22 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4788,16 +4823,22 @@ bool QD3D11SwapChain::createOrResize()
      if (pixelSize.isEmpty())
          return false;
  
@@ -3356,7 +3044,7 @@ index 2a69474433..fd90f5ec31 100644
                      qWarning("Failed to create Direct Compsition target for the window: %s",
                               qPrintable(comErrorMessage(hr)));
                  }
-@@ -4805,10 +4850,15 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4805,10 +4846,15 @@ bool QD3D11SwapChain::createOrResize()
              if (dcompTarget && !dcompVisual) {
                  hr = rhiD->dcompDevice->CreateVisual(&dcompVisual);
                  if (FAILED(hr)) {
@@ -3372,7 +3060,7 @@ index 2a69474433..fd90f5ec31 100644
          }
          // simple consistency check
          if (window->requestedFormat().alphaBufferSize() <= 0)
-@@ -4823,7 +4873,7 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4823,7 +4869,7 @@ bool QD3D11SwapChain::createOrResize()
      // ALLOW_TEARING, and ALLOW_TEARING is not compatible with it at all so the
      // flag must not be set then. Whereas for flip we should use it, if
      // supported, to get better results for 'unthrottled' presentation.
@@ -3381,7 +3069,7 @@ index 2a69474433..fd90f5ec31 100644
          swapChainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
  
      if (!swapChain) {
-@@ -4831,122 +4881,144 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4831,122 +4877,144 @@ bool QD3D11SwapChain::createOrResize()
          colorFormat = DEFAULT_FORMAT;
          srgbAdjustedColorFormat = m_flags.testFlag(sRGB) ? DEFAULT_SRGB_FORMAT : DEFAULT_FORMAT;
  
@@ -3625,7 +3313,7 @@ index 2a69474433..fd90f5ec31 100644
          }
          if (FAILED(hr)) {
              qWarning("Failed to create D3D11 swapchain: %s", qPrintable(comErrorMessage(hr)));
-@@ -4955,8 +5027,8 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4955,8 +5023,8 @@ bool QD3D11SwapChain::createOrResize()
          rhiD->dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_WINDOW_CHANGES);
      } else {
          releaseBuffers();
@@ -3662,7 +3350,7 @@ index e24472cd95..0405e9a630 100644
       68,  88,  66,  67,  75, 198,
       18, 149, 172, 244, 247, 123,
 diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
-index 8d4411c10b..76d33bfcb3 100644
+index 8d4411c10b..0e5f1cc5b8 100644
 --- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 +++ b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 @@ -3,6 +3,8 @@
@@ -3674,7 +3362,7 @@ index 8d4411c10b..76d33bfcb3 100644
  #if QT_CONFIG(cpp_winrt)
  #include <winrt/base.h>
  // Workaround for Windows SDK bug.
-@@ -100,15 +102,18 @@ bool QNetworkListManagerEvents::start()
+@@ -100,15 +102,17 @@ bool QNetworkListManagerEvents::start()
          emit connectivityChanged(connectivity);
  
  #if QT_CONFIG(cpp_winrt)
@@ -3687,8 +3375,7 @@ index 8d4411c10b..76d33bfcb3 100644
 -            });
 -    // Emit initial state
 -    emitWinRTUpdates();
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (isWin10OrGreater) {
++    if (QOperatingSystemVersion::isWin10OrGreater()) {
 +        using namespace winrt::Windows::Networking::Connectivity;
 +        // Register for changes in the network and store a token to unregister later:
 +        token = NetworkInformation::NetworkStatusChanged(
@@ -3702,7 +3389,7 @@ index 8d4411c10b..76d33bfcb3 100644
  #endif
  
      return true;
-@@ -126,10 +131,13 @@ bool QNetworkListManagerEvents::stop()
+@@ -126,10 +130,12 @@ bool QNetworkListManagerEvents::stop()
      cookie = 0;
  
  #if QT_CONFIG(cpp_winrt)
@@ -3710,8 +3397,7 @@ index 8d4411c10b..76d33bfcb3 100644
 -    // Pass the token we stored earlier to unregister:
 -    NetworkInformation::NetworkStatusChanged(token);
 -    token = {};
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (isWin10OrGreater) {
++    if (QOperatingSystemVersion::isWin10OrGreater()) {
 +        using namespace winrt::Windows::Networking::Connectivity;
 +        // Pass the token we stored earlier to unregister:
 +        NetworkInformation::NetworkStatusChanged(token);
@@ -3720,12 +3406,11 @@ index 8d4411c10b..76d33bfcb3 100644
  #endif
      return true;
  }
-@@ -180,13 +188,17 @@ using namespace winrt::Windows::Networking::Connectivity;
+@@ -180,13 +186,16 @@ using namespace winrt::Windows::Networking::Connectivity;
  [[nodiscard]]
  QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile &profile)
  {
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (!isWin10OrGreater)
++    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return QNetworkInformation::TransportMedium::Unknown;
 +
      if (profile.IsWwanConnectionProfile())
@@ -3740,14 +3425,13 @@ index 8d4411c10b..76d33bfcb3 100644
          return QNetworkInformation::TransportMedium::Unknown;
  
      // Note: Bluetooth is given an iana iftype of 6, which is the same as Ethernet.
-@@ -208,17 +220,23 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
+@@ -208,17 +217,21 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  [[nodiscard]] bool getMetered(const ConnectionProfile &profile)
  {
 -    ConnectionCost cost = profile.GetConnectionCost();
 -    NetworkCostType type = cost.NetworkCostType();
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (!isWin10OrGreater)
++    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return false;
 +    const ConnectionCost cost = profile.GetConnectionCost();
 +    const NetworkCostType type = cost.NetworkCostType();
@@ -3757,8 +3441,7 @@ index 8d4411c10b..76d33bfcb3 100644
  
  void QNetworkListManagerEvents::emitWinRTUpdates()
  {
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (!isWin10OrGreater)
++    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return;
      using namespace winrt::Windows::Networking::Connectivity;
 -    ConnectionProfile profile = NetworkInformation::GetInternetConnectionProfile();
@@ -9979,7 +9662,7 @@ index 7d6c2bb6a7..eb3b6e6527 100644
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/qwin10helpers.cpp b/src/plugins/platforms/windows/qwin10helpers.cpp
-index 026e81cb0c..dc2b259e61 100644
+index 026e81cb0c..1fabf7a261 100644
 --- a/src/plugins/platforms/windows/qwin10helpers.cpp
 +++ b/src/plugins/platforms/windows/qwin10helpers.cpp
 @@ -4,6 +4,8 @@
@@ -9991,7 +9674,7 @@ index 026e81cb0c..dc2b259e61 100644
  #include <winstring.h>
  #include <roapi.h>
  
-@@ -60,23 +62,63 @@ public:
+@@ -60,23 +62,56 @@ public:
  
  QT_BEGIN_NAMESPACE
  
@@ -10013,11 +9696,7 @@ index 026e81cb0c..dc2b259e61 100644
 +
 +    explicit QComBaseApi()
 +    {
-+        if (inited)
-+            return;
-+        inited = true;
-+        static const bool isWin8OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+        if (!isWin8OrGreater)
++        if (!QOperatingSystemVersion::isWin8OrGreater())
 +            return;
 +        QSystemLibrary comBase(u"combase"_s);
 +        pRoGetActivationFactory = reinterpret_cast<decltype(pRoGetActivationFactory)>(comBase.resolve("RoGetActivationFactory"));
@@ -10025,9 +9704,6 @@ index 026e81cb0c..dc2b259e61 100644
 +    }
 +
 +    ~QComBaseApi() = default;
-+
-+private:
-+    bool inited = false;
 +};
 +
  // Return tablet mode, note: Does not work for GetDesktopWindow().
@@ -10058,7 +9734,7 @@ index 026e81cb0c..dc2b259e61 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index c95f2ef272..d934c7c462 100644
+index c95f2ef272..f8668fb949 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -119,15 +119,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -10086,17 +9762,20 @@ index c95f2ef272..d934c7c462 100644
          if (!result) {
              const DWORD errorCode = GetLastError();
              qErrnoWarning(int(errorCode), "EnableNonClientDpiScaling() failed for HWND %p (%lu)",
-@@ -294,6 +300,9 @@ bool QWindowsContext::initPointer(unsigned integrationOptions)
+@@ -294,6 +300,12 @@ bool QWindowsContext::initPointer(unsigned integrationOptions)
      if (integrationOptions & QWindowsIntegration::DontUseWMPointer)
          return false;
  
++    if (!QOperatingSystemVersion::isWin8OrGreater())
++        return false;
++
 +    if (!QWindowsApi::instance()->supportsPointerApi())
 +        return false;
 +
      d->m_systemInfo |= QWindowsContext::SI_SupportsPointer;
      return true;
  }
-@@ -363,17 +372,21 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
+@@ -363,17 +375,21 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
  
  int QWindowsContext::processDpiAwareness()
  {
@@ -10122,7 +9801,7 @@ index c95f2ef272..d934c7c462 100644
      // E_ACCESSDENIED means set externally (MSVC manifest or external app loading Qt plugin).
      // Silence warning in that case unless debug is enabled.
      if (FAILED(hr) && (hr != E_ACCESSDENIED || lcQpaWindow().isDebugEnabled())) {
-@@ -385,8 +398,10 @@ void QWindowsContext::setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiA
+@@ -385,8 +401,10 @@ void QWindowsContext::setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiA
  
  bool QWindowsContext::setProcessDpiV2Awareness()
  {
@@ -10134,7 +9813,7 @@ index c95f2ef272..d934c7c462 100644
      if (!ok) {
          const HRESULT errorCode = GetLastError();
          qCWarning(lcQpaWindow).noquote().nospace() << "setProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) failed: "
-@@ -913,8 +928,8 @@ void QWindowsContext::forceNcCalcSize(HWND hwnd)
+@@ -913,8 +931,8 @@ void QWindowsContext::forceNcCalcSize(HWND hwnd)
  bool QWindowsContext::systemParametersInfo(unsigned action, unsigned param, void *out,
                                             unsigned dpi)
  {
@@ -10145,17 +9824,17 @@ index c95f2ef272..d934c7c462 100644
          : SystemParametersInfo(action, param, out, 0);
      return result == TRUE;
  }
-@@ -961,7 +976,8 @@ bool QWindowsContext::shouldHaveNonClientDpiScaling(const QWindow *window)
+@@ -961,7 +979,8 @@ bool QWindowsContext::shouldHaveNonClientDpiScaling(const QWindow *window)
      if (QWindowsContextPrivate::m_v2DpiAware)
          return true;
  
 -    return window->isTopLevel()
-+    return QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10
++    return QOperatingSystemVersion::isWin10OrGreater()
 +        && window->isTopLevel()
          && !window->property(QWindowsWindow::embeddedNativeParentHandleProperty).isValid()
  #if QT_CONFIG(opengl) // /QTBUG-62901, EnableNonClientDpiScaling has problems with GL
          && (window->surfaceType() != QSurface::OpenGLSurface
-@@ -1602,4 +1618,131 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
+@@ -1602,4 +1621,131 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
      return false;
  }
  
@@ -10288,10 +9967,10 @@ index c95f2ef272..d934c7c462 100644
 +
  QT_END_NAMESPACE
 diff --git a/src/plugins/platforms/windows/qwindowscontext.h b/src/plugins/platforms/windows/qwindowscontext.h
-index 47c5ead772..e517fa6b1d 100644
+index 11cfbb06f2..506401abed 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.h
 +++ b/src/plugins/platforms/windows/qwindowscontext.h
-@@ -10,16 +10,18 @@
+@@ -10,13 +10,18 @@
  #include <QtCore/qscopedpointer.h>
  #include <QtCore/qsharedpointer.h>
  #include <QtCore/qloggingcategory.h>
@@ -10301,9 +9980,6 @@ index 47c5ead772..e517fa6b1d 100644
  #define STRICT_TYPED_ITEMIDS
  #include <shlobj.h>
  #include <shlwapi.h>
--
--struct IBindCtx;
--struct _SHSTOCKICONINFO;
 +#include <shellscalingapi.h>
  
  QT_BEGIN_NAMESPACE
@@ -10313,7 +9989,7 @@ index 47c5ead772..e517fa6b1d 100644
  Q_DECLARE_LOGGING_CATEGORY(lcQpaWindow)
  Q_DECLARE_LOGGING_CATEGORY(lcQpaEvents)
  Q_DECLARE_LOGGING_CATEGORY(lcQpaGl)
-@@ -47,6 +49,95 @@ class QPoint;
+@@ -44,6 +49,87 @@ class QPoint;
  class QKeyEvent;
  class QPointingDevice;
  
@@ -10348,8 +10024,7 @@ index 47c5ead772..e517fa6b1d 100644
 +
 +    [[nodiscard]] bool supportsPointerApi() const
 +    {
-+        static const bool isWin8OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+        if (!isWin8OrGreater)
++        if (!QOperatingSystemVersion::isWin8OrGreater())
 +            return false;
 +        return pGetPointerType && pGetPointerFrameTouchInfo && pGetPointerFrameTouchInfoHistory
 +            && pGetPointerPenInfo && pGetPointerPenInfoHistory && pSkipPointerFrameMessages
@@ -10361,11 +10036,7 @@ index 47c5ead772..e517fa6b1d 100644
 +
 +    explicit QWindowsApi()
 +    {
-+        if (inited)
-+            return;
-+        inited = true;
-+
-+        if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8) {
++        if (QOperatingSystemVersion::isWin8OrGreater()) {
 +            QSystemLibrary user32(u"user32"_s);
 +            pGetPointerType = reinterpret_cast<decltype(pGetPointerType)>(user32.resolve("GetPointerType"));
 +            pGetPointerFrameTouchInfo = reinterpret_cast<decltype(pGetPointerFrameTouchInfo)>(user32.resolve("GetPointerFrameTouchInfo"));
@@ -10377,13 +10048,13 @@ index 47c5ead772..e517fa6b1d 100644
 +            pSetDisplayAutoRotationPreferences = reinterpret_cast<decltype(pSetDisplayAutoRotationPreferences)>(user32.resolve("SetDisplayAutoRotationPreferences"));
 +            pGetDisplayAutoRotationPreferences = reinterpret_cast<decltype(pGetDisplayAutoRotationPreferences)>(user32.resolve("GetDisplayAutoRotationPreferences"));
 +
-+            if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8_1) {
++            if (QOperatingSystemVersion::isWin8Point1OrGreater()) {
 +                QSystemLibrary shcore(u"shcore"_s);
 +                pGetDpiForMonitor = reinterpret_cast<decltype(pGetDpiForMonitor)>(shcore.resolve("GetDpiForMonitor"));
 +                pGetProcessDpiAwareness = reinterpret_cast<decltype(pGetProcessDpiAwareness)>(shcore.resolve("GetProcessDpiAwareness"));
 +                pSetProcessDpiAwareness = reinterpret_cast<decltype(pSetProcessDpiAwareness)>(shcore.resolve("SetProcessDpiAwareness"));
 +
-+                if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10_1607) {
++                if (QOperatingSystemVersion::isWin10RS1OrGreater()) {
 +                    pGetDpiForWindow = reinterpret_cast<decltype(pGetDpiForWindow)>(user32.resolve("GetDpiForWindow"));
 +                    pSystemParametersInfoForDpi = reinterpret_cast<decltype(pSystemParametersInfoForDpi)>(user32.resolve("SystemParametersInfoForDpi"));
 +                    pGetSystemMetricsForDpi = reinterpret_cast<decltype(pGetSystemMetricsForDpi)>(user32.resolve("GetSystemMetricsForDpi"));
@@ -10392,7 +10063,7 @@ index 47c5ead772..e517fa6b1d 100644
 +                    pGetAwarenessFromDpiAwarenessContext = reinterpret_cast<decltype(pGetAwarenessFromDpiAwarenessContext)>(user32.resolve("GetAwarenessFromDpiAwarenessContext"));
 +                    pGetWindowDpiAwarenessContext = reinterpret_cast<decltype(pGetWindowDpiAwarenessContext)>(user32.resolve("GetWindowDpiAwarenessContext"));
 +
-+                    if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10_1703) {
++                    if (QOperatingSystemVersion::isWin10RS2OrGreater()) {
 +                        pSetProcessDpiAwarenessContext = reinterpret_cast<decltype(pSetProcessDpiAwarenessContext)>(user32.resolve("SetProcessDpiAwarenessContext"));
 +                    }
 +                }
@@ -10401,15 +10072,12 @@ index 47c5ead772..e517fa6b1d 100644
 +    }
 +
 +    ~QWindowsApi() = default;
-+
-+private:
-+    bool inited = false;
 +};
 +
  class QWindowsContext
  {
      Q_DISABLE_COPY_MOVE(QWindowsContext)
-@@ -164,6 +255,18 @@ public:
+@@ -161,6 +247,18 @@ public:
      static bool filterNativeEvent(MSG *msg, LRESULT *result);
      static bool filterNativeEvent(QWindow *window, MSG *msg, LRESULT *result);
  
@@ -10620,7 +10288,7 @@ index 2faeb7456b..8e4a38d630 100644
                      qCDebug(lcQpaWindow, "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2");
                      dpiAwarenessSet = true;
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
-index 1324ab52d1..fccc1d4fc8 100644
+index 6a6d8ac5a9..22d2ad280d 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
 +++ b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 @@ -749,21 +749,10 @@ static inline QString messageKeyText(const MSG &msg)
@@ -10657,7 +10325,7 @@ index 1324ab52d1..fccc1d4fc8 100644
 +#define disabled (MF_BYCOMMAND | MFS_DISABLED)
  
      EnableMenuItem(menu, SC_MINIMIZE, (topLevel->flags() & Qt::WindowMinimizeButtonHint) ? enabled : disabled);
-     bool maximized = IsZoomed(topLevelHwnd);
+     const bool maximized = IsZoomed(topLevelHwnd);
 @@ -798,7 +787,7 @@ static void showSystemMenu(QWindow* w)
      SecureZeroMemory(&restoreItem, sizeof(restoreItem));
      restoreItem.cbSize = sizeof(restoreItem);
@@ -10906,7 +10574,7 @@ index 6f0b949b67..da7281263d 100644
  
  /*!
 diff --git a/src/plugins/platforms/windows/qwindowstheme.cpp b/src/plugins/platforms/windows/qwindowstheme.cpp
-index 3704fce15e..00bacea555 100644
+index 3704fce15e..4d656193ae 100644
 --- a/src/plugins/platforms/windows/qwindowstheme.cpp
 +++ b/src/plugins/platforms/windows/qwindowstheme.cpp
 @@ -44,6 +44,7 @@
@@ -10923,11 +10591,11 @@ index 3704fce15e..00bacea555 100644
  #if QT_CONFIG(cpp_winrt)
 -    if (QWindowsIntegration::instance()->darkModeHandling().testFlag(QWindowsApplication::DarkModeStyle)) {
 +    if (QWindowsIntegration::instance()->darkModeHandling().testFlag(QWindowsApplication::DarkModeStyle)
-+        && QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10) {
++        && QOperatingSystemVersion::isWin10RS5OrGreater()) {
          using namespace winrt::Windows::UI::ViewManagement;
          const auto settings = UISettings();
  
-@@ -300,41 +302,63 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -300,41 +302,62 @@ static void populateLightSystemBasePalette(QPalette &result)
  
  static void populateDarkSystemBasePalette(QPalette &result)
  {
@@ -10978,8 +10646,7 @@ index 3704fce15e..00bacea555 100644
 -    const QColor accentLighter = accentLight.lighter(120);
 -    const QColor accentLightest = accentLighter.lighter(120);
 -    const QColor linkColor = Qt::blue;
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (isWin10OrGreater) {
++    if (QOperatingSystemVersion::isWin10RS5OrGreater()) {
 +        using namespace winrt::Windows::UI::ViewManagement;
 +        const auto settings = UISettings();
 +
@@ -11024,7 +10691,7 @@ index 3704fce15e..00bacea555 100644
      const QColor buttonColor = background.lighter(200);
  
      result.setColor(QPalette::All, QPalette::WindowText, foreground);
-@@ -589,25 +613,32 @@ void QWindowsTheme::refreshPalettes()
+@@ -589,25 +612,31 @@ void QWindowsTheme::refreshPalettes()
      m_palettes[MenuPalette] = new QPalette(menuPalette(*m_palettes[SystemPalette], light));
      m_palettes[MenuBarPalette] = menuBarPalette(*m_palettes[MenuPalette], light);
      if (!light) {
@@ -11047,8 +10714,7 @@ index 3704fce15e..00bacea555 100644
 -        m_palettes[CheckBoxPalette]->setColor(QPalette::Base, checkBoxBlue);
 -        m_palettes[CheckBoxPalette]->setColor(QPalette::Button, checkBoxBlue);
 -        m_palettes[CheckBoxPalette]->setColor(QPalette::ButtonText, Qt::white);
-+        static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+        if (isWin10OrGreater) {
++        if (QOperatingSystemVersion::isWin10RS5OrGreater()) {
 +            using namespace winrt::Windows::UI::ViewManagement;
 +            const auto settings = UISettings();
 +            const QColor accent = getSysColor(settings.GetColorValue(UIColorType::Accent));
@@ -11074,18 +10740,17 @@ index 3704fce15e..00bacea555 100644
          m_palettes[RadioButtonPalette] = new QPalette(*m_palettes[CheckBoxPalette]);
      }
  }
-@@ -1096,7 +1127,8 @@ bool QWindowsTheme::useNativeMenus()
+@@ -1096,7 +1125,7 @@ bool QWindowsTheme::useNativeMenus()
  
  bool QWindowsTheme::queryDarkMode()
  {
 -    if (queryHighContrast()) {
-+    static const bool isWin10RS5OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10_1809;
-+    if (!isWin10RS5OrGreater || queryHighContrast()) {
++    if (!QOperatingSystemVersion::isWin10RS5OrGreater() || queryHighContrast()) {
          return false;
      }
      const auto setting = QWinRegistryKey(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 468b028b8b..ceb6af197b 100644
+index 468b028b8b..5a2e772366 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -24,6 +24,7 @@
@@ -11096,15 +10761,14 @@ index 468b028b8b..ceb6af197b 100644
  #include <QtGui/qguiapplication.h>
  #include <QtGui/qscreen.h>
  #include <QtGui/qwindow.h>
-@@ -443,13 +444,27 @@ static inline bool windowIsAccelerated(const QWindow *w)
+@@ -443,13 +444,26 @@ static inline bool windowIsAccelerated(const QWindow *w)
      }
  }
  
 -static bool applyBlurBehindWindow(HWND hwnd)
 +[[nodiscard]] static inline bool dwmIsCompositionEnabled()
 +{
-+    static const bool isWin8OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+    if (isWin8OrGreater)
++    if (QOperatingSystemVersion::isWin8OrGreater())
 +        return true;
 +    BOOL enabled = FALSE;
 +    return SUCCEEDED(DwmIsCompositionEnabled(&enabled)) && enabled != FALSE;
@@ -11128,7 +10792,7 @@ index 468b028b8b..ceb6af197b 100644
  
      const bool result = DwmEnableBlurBehindWindow(hwnd, &blurBehind) == S_OK;
  
-@@ -516,38 +531,31 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
+@@ -516,38 +530,29 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
      setWindowOpacity(hwnd, flags, hasAlpha, isAccelerated, opacity);
  }
  
@@ -11157,8 +10821,7 @@ index 468b028b8b..ceb6af197b 100644
 -            const int gap = getResizeBorderThickness(dpiX);
 -            return QMargins(gap, 0, gap, gap);
 -        }
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (!isWin10OrGreater)
++    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return QMargins();
 +    const POINT pt = {screenPoint.x(), screenPoint.y()};
 +    if (const HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST)) {
@@ -11173,14 +10836,13 @@ index 468b028b8b..ceb6af197b 100644
 -    const UINT dpi = GetDpiForWindow(hwnd);
 -    const int gap = getResizeBorderThickness(dpi);
 +    Q_ASSERT(hwnd);
-+    static const bool isWin10OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10;
-+    if (!isWin10OrGreater)
++    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return QMargins();
 +    const int gap = QWindowsContext::getResizeBorderThickness(hwnd);
      return QMargins(gap, 0, gap, gap);
  }
  
-@@ -807,7 +815,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+@@ -807,7 +812,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
      if (topLevel) {
          if ((type == Qt::Window || dialog || tool)) {
              if (!(flags & Qt::FramelessWindowHint)) {
@@ -11188,7 +10850,7 @@ index 468b028b8b..ceb6af197b 100644
                  if (flags & Qt::MSWindowsFixedSizeDialogHint) {
                      style |= WS_DLGFRAME;
                  } else {
-@@ -841,8 +848,11 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+@@ -841,8 +845,11 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
  
          // make mouse events fall through this window
          // NOTE: WS_EX_TRANSPARENT flag can make mouse inputs fall through a layered window
@@ -11201,7 +10863,7 @@ index 468b028b8b..ceb6af197b 100644
      }
  }
  
-@@ -1052,9 +1062,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
+@@ -1052,9 +1059,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -11215,7 +10877,7 @@ index 468b028b8b..ceb6af197b 100644
          qErrnoWarning("%s: AdjustWindowRectExForDpi failed", __FUNCTION__);
      }
      const QMargins result(qAbs(rect.left), qAbs(rect.top),
-@@ -1094,7 +1107,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
+@@ -1094,7 +1104,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -11225,7 +10887,7 @@ index 468b028b8b..ceb6af197b 100644
          || !QWindowsContext::shouldHaveNonClientDpiScaling(w)) {
          return frameOnPrimaryScreen(w, style, exStyle);
      }
-@@ -1545,7 +1559,7 @@ void QWindowsWindow::initialize()
+@@ -1545,7 +1556,7 @@ void QWindowsWindow::initialize()
              QWindowSystemInterface::handleGeometryChange<QWindowSystemInterface::SynchronousDelivery>(w, obtainedGeometry);
          }
      }
@@ -11234,7 +10896,7 @@ index 468b028b8b..ceb6af197b 100644
  }
  
  QSurfaceFormat QWindowsWindow::format() const
-@@ -2011,7 +2025,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
+@@ -2011,7 +2022,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
  
  void QWindowsWindow::handleDpiChangedAfterParent(HWND hwnd)
  {
@@ -11243,7 +10905,7 @@ index 468b028b8b..ceb6af197b 100644
      const qreal scale = qreal(dpi) / qreal(savedDpi());
      setSavedDpi(dpi);
  
-@@ -2317,13 +2331,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
+@@ -2317,13 +2328,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
          return false;
      PAINTSTRUCT ps;
  
@@ -11268,7 +10930,7 @@ index 468b028b8b..ceb6af197b 100644
      // If the a window is obscured by another window (such as a child window)
      // we still need to send isExposed=true, for compatibility.
      // Our tests depend on it.
-@@ -2912,7 +2935,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
+@@ -2912,7 +2932,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
              mmi->ptMaxPosition.x = availablePositionDiff.x();
              mmi->ptMaxPosition.y = availablePositionDiff.y();
              if (!m_data.flags.testFlag(Qt::FramelessWindowHint)) {
@@ -11277,7 +10939,7 @@ index 468b028b8b..ceb6af197b 100644
                  mmi->ptMaxSize.x += borderWidth * 2;
                  mmi->ptMaxSize.y += borderWidth * 2;
                  mmi->ptMaxTrackSize = mmi->ptMaxSize;
-@@ -2953,7 +2976,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
+@@ -2953,7 +2973,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
              return true;
          }
          if (localPos.y() < 0) {
@@ -11464,7 +11126,7 @@ index 8fe8b1c6d7..07367efe01 100644
  QT_BEGIN_NAMESPACE
  
 diff --git a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-index 0380ef82d8..22618d3f04 100644
+index 0380ef82d8..a091a06022 100644
 --- a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 +++ b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 @@ -1751,6 +1751,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
@@ -11472,7 +11134,7 @@ index 0380ef82d8..22618d3f04 100644
                      theme.stateId = stateId;
                      d->drawBackground(theme);
 +
-+                    if (QOperatingSystemVersion::current() < QOperatingSystemVersion::Windows8) {
++                    if (!QOperatingSystemVersion::isWin8OrGreater()) {
 +                        const QRect gripperBounds = QWindowsXPStylePrivate::scrollBarGripperBounds(flags, widget, &theme);
 +                        // Draw gripper if there is enough space
 +                        if (!gripperBounds.isEmpty() && flags & State_Enabled) {
@@ -11489,8 +11151,178 @@ index 0380ef82d8..22618d3f04 100644
                  }
              }
          }
+diff --git a/src/plugins/tls/schannel/qtls_schannel.cpp b/src/plugins/tls/schannel/qtls_schannel.cpp
+index ba14e61b57..2ee5c12f5f 100644
+--- a/src/plugins/tls/schannel/qtls_schannel.cpp
++++ b/src/plugins/tls/schannel/qtls_schannel.cpp
+@@ -384,7 +384,7 @@ QString schannelErrorToString(qint32 status)
+ bool supportsTls13()
+ {
+ #ifdef SUPPORTS_TLS13
+-    static bool supported = []() {
++    static const auto supported = []() -> bool {
+         const auto current = QOperatingSystemVersion::current();
+         // 20221 just happens to be the preview version I run on my laptop where I tested TLS 1.3.
+         const auto minimum =
+diff --git a/src/tools/androiddeployqt/main.cpp b/src/tools/androiddeployqt/main.cpp
+index f9ba885a33..80d4dedf9a 100644
+--- a/src/tools/androiddeployqt/main.cpp
++++ b/src/tools/androiddeployqt/main.cpp
+@@ -3098,6 +3098,8 @@ bool writeDependencyFile(const Options &options)
+ 
+ int main(int argc, char *argv[])
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QCoreApplication a(argc, argv);
+ 
+     Options options = parseOptions();
+diff --git a/src/tools/androidtestrunner/main.cpp b/src/tools/androidtestrunner/main.cpp
+index 60dfc84ab3..d009047034 100644
+--- a/src/tools/androidtestrunner/main.cpp
++++ b/src/tools/androidtestrunner/main.cpp
+@@ -483,6 +483,8 @@ struct RunnerLocker
+ 
+ int main(int argc, char *argv[])
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QCoreApplication a(argc, argv);
+     if (!parseOptions()) {
+         printHelp();
+diff --git a/src/tools/cmake_automoc_parser/main.cpp b/src/tools/cmake_automoc_parser/main.cpp
+index 801483cdd7..53c9c50122 100644
+--- a/src/tools/cmake_automoc_parser/main.cpp
++++ b/src/tools/cmake_automoc_parser/main.cpp
+@@ -6,6 +6,7 @@
+ #include <cstdio>
+ #include <cstdlib>
+ #include <limits>
++#include <clocale>
+ 
+ #include <qcommandlineoption.h>
+ #include <qcommandlineparser.h>
+@@ -226,6 +227,7 @@ static bool writeJsonFiles(const QList<QString> &fileList, const QString &fileLi
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
+ 
+     QCoreApplication app(argc, argv);
+     QCommandLineParser parser;
+diff --git a/src/tools/macdeployqt/macdeployqt/main.cpp b/src/tools/macdeployqt/macdeployqt/main.cpp
+index 8b6c476fa5..e3dcf000e8 100644
+--- a/src/tools/macdeployqt/macdeployqt/main.cpp
++++ b/src/tools/macdeployqt/macdeployqt/main.cpp
+@@ -3,11 +3,14 @@
+ #include <QCoreApplication>
+ #include <QDir>
+ #include <QLibraryInfo>
++#include <clocale>
+ 
+ #include "../shared/shared.h"
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QCoreApplication app(argc, argv);
+ 
+     QString appBundlePath;
+diff --git a/src/tools/moc/main.cpp b/src/tools/moc/main.cpp
+index 71b9757ebc..337d2e7980 100644
+--- a/src/tools/moc/main.cpp
++++ b/src/tools/moc/main.cpp
+@@ -15,6 +15,7 @@
+ #include <stdlib.h>
+ #include <ctype.h>
+ #include <errno.h>
++#include <clocale>
+ 
+ #include <qcoreapplication.h>
+ #include <qcommandlineoption.h>
+@@ -646,5 +647,6 @@ QT_END_NAMESPACE
+ 
+ int main(int _argc, char **_argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
+     return QT_PREPEND_NAMESPACE(runMoc)(_argc, _argv);
+ }
+diff --git a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
+index 6a9ea0c81e..31e2194b0e 100644
+--- a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
++++ b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
+@@ -423,6 +423,8 @@ static void parseCmdLine(QStringList &arguments)
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QStringList args;
+     args.reserve(argc - 1);
+     for (int n = 1; n < argc; ++n)
+diff --git a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
+index 7033529326..b9d5909237 100644
+--- a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
++++ b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
+@@ -1086,6 +1086,8 @@ static void writeAdaptor(const QString &filename, const QDBusIntrospection::Inte
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QCoreApplication app(argc, argv);
+     QCoreApplication::setApplicationName(QStringLiteral(PROGRAMNAME));
+     QCoreApplication::setApplicationVersion(QStringLiteral(PROGRAMVERSION));
+diff --git a/src/tools/qlalr/main.cpp b/src/tools/qlalr/main.cpp
+index 8d339173ec..ae5c3f0d87 100644
+--- a/src/tools/qlalr/main.cpp
++++ b/src/tools/qlalr/main.cpp
+@@ -35,6 +35,8 @@ static void help_me ()
+ 
+ int main (int argc, char *argv[])
+ {
++  std::setlocale(LC_ALL, "en_US.UTF-8");
++
+   QCoreApplication app (argc, argv);
+ 
+   bool generate_dot = false;
+diff --git a/src/tools/qtpaths/qtpaths.cpp b/src/tools/qtpaths/qtpaths.cpp
+index b4e2d749aa..273806b477 100644
+--- a/src/tools/qtpaths/qtpaths.cpp
++++ b/src/tools/qtpaths/qtpaths.cpp
+@@ -10,6 +10,7 @@
+ #include <algorithm>
+ 
+ #include <stdio.h>
++#include <clocale>
+ 
+ #if QT_CONFIG(settings)
+ #    include <private/qlibraryinfo_p.h>
+@@ -123,6 +124,8 @@ static QString searchStringOrError(QCommandLineParser *parser)
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QString qtconfManualPath;
+     QCoreApplication app(argc, argv);
+     app.setApplicationVersion(QTPATHS_VERSION_STR);
+diff --git a/src/tools/qvkgen/qvkgen.cpp b/src/tools/qvkgen/qvkgen.cpp
+index e2c25deb5f..7f49a95b41 100644
+--- a/src/tools/qvkgen/qvkgen.cpp
++++ b/src/tools/qvkgen/qvkgen.cpp
+@@ -586,6 +586,8 @@ bool genVulkanFunctionsPC(const QList<VkSpecParser::Command> &commands,
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QCoreApplication app(argc, argv);
+     VkSpecParser parser;
+ 
 diff --git a/src/tools/rcc/main.cpp b/src/tools/rcc/main.cpp
-index 2751bc39d6..8e44999f52 100644
+index 2751bc39d6..3449e6bb09 100644
 --- a/src/tools/rcc/main.cpp
 +++ b/src/tools/rcc/main.cpp
 @@ -34,9 +34,7 @@ void dumpRecursive(const QDir &dir, QTextStream &out)
@@ -11514,6 +11346,15 @@ index 2751bc39d6..8e44999f52 100644
             "<qresource>\n"_L1;
  
      // use "." as dir to get relative file paths
+@@ -418,6 +417,8 @@ QT_END_NAMESPACE
+ 
+ int main(int argc, char *argv[])
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     // rcc uses a QHash to store files in the resource system.
+     // we must force a certain hash order when testing or tst_rcc will fail, see QTBUG-25078
+     // similar requirements exist for reproducibly builds.
 diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
 index db2a821b95..a2ed6ef3a5 100644
 --- a/src/tools/rcc/rcc.cpp
@@ -11563,31 +11404,75 @@ index db2a821b95..a2ed6ef3a5 100644
          break;
      case Python_Code:
          writeString("qt_resource_struct = b\"\\\n");
+diff --git a/src/tools/tracegen/tracegen.cpp b/src/tools/tracegen/tracegen.cpp
+index 6a5f3286a9..688fd0b31d 100644
+--- a/src/tools/tracegen/tracegen.cpp
++++ b/src/tools/tracegen/tracegen.cpp
+@@ -8,6 +8,7 @@
+ 
+ #include <qstring.h>
+ #include <qfile.h>
++#include <clocale>
+ 
+ enum class Target
+ {
+@@ -45,6 +46,8 @@ static void parseArgs(int argc, char *argv[], Target *target, QString *inFile, Q
+ 
+ int main(int argc, char *argv[])
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     Target target = Target::LTTNG;
+     QString inFile;
+     QString outFile;
+diff --git a/src/tools/uic/main.cpp b/src/tools/uic/main.cpp
+index c2f117ec21..6a12ab715c 100644
+--- a/src/tools/uic/main.cpp
++++ b/src/tools/uic/main.cpp
+@@ -172,5 +172,6 @@ QT_END_NAMESPACE
+ 
+ int main(int argc, char *argv[])
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
+     return QT_PREPEND_NAMESPACE(runUic)(argc, argv);
+ }
+diff --git a/src/tools/windeployqt/main.cpp b/src/tools/windeployqt/main.cpp
+index 132b3d5d25..14d95a42fb 100644
+--- a/src/tools/windeployqt/main.cpp
++++ b/src/tools/windeployqt/main.cpp
+@@ -1620,6 +1620,8 @@ QT_USE_NAMESPACE
+ 
+ int main(int argc, char **argv)
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     QCoreApplication a(argc, argv);
+     QCoreApplication::setApplicationVersion(QT_VERSION_STR ""_L1);
+ 
 diff --git a/src/widgets/dialogs/qwizard_win.cpp b/src/widgets/dialogs/qwizard_win.cpp
-index e95f0e3b7b..bf61f97cdc 100644
+index e95f0e3b7b..9c79b56a67 100644
 --- a/src/widgets/dialogs/qwizard_win.cpp
 +++ b/src/widgets/dialogs/qwizard_win.cpp
-@@ -152,7 +152,11 @@ void QVistaHelper::updateCustomMargins(bool vistaMargins)
+@@ -152,7 +152,10 @@ void QVistaHelper::updateCustomMargins(bool vistaMargins)
  
  bool QVistaHelper::isCompositionEnabled()
  {
 -    return true;
-+    static const bool isWin8OrGreater = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows8;
-+    if (isWin8OrGreater)
++    if (QOperatingSystemVersion::isWin8OrGreater())
 +        return true;
 +    BOOL enabled = FALSE;
 +    return SUCCEEDED(DwmIsCompositionEnabled(&enabled)) && enabled != FALSE;
  }
  
  bool QVistaHelper::isThemeActive()
-@@ -663,7 +667,9 @@ int QVistaHelper::topOffset(const QPaintDevice *device)
+@@ -663,7 +666,9 @@ int QVistaHelper::topOffset(const QPaintDevice *device)
  {
      if (vistaState() != VistaAero)
          return titleBarSize() + 3;
 -    static const int aeroOffset = QStyleHelper::dpiScaled(13, device);
 +    static const int aeroOffset =
-+        QOperatingSystemVersion::current() < QOperatingSystemVersion::Windows8 ?
-+        QStyleHelper::dpiScaled(4, device) : QStyleHelper::dpiScaled(13, device);
++        QOperatingSystemVersion::isWin8OrGreater() ?
++        QStyleHelper::dpiScaled(13, device) : QStyleHelper::dpiScaled(4, device);
      return aeroOffset + titleBarSize();
  }
  
