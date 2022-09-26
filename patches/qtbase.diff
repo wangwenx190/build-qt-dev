@@ -18,6 +18,7 @@
  src/corelib/global/qsysinfo.cpp                    |   44 +-
  src/corelib/io/qstandardpaths_win.cpp              |   34 +-
  src/corelib/kernel/qcoreapplication.cpp            |   34 +-
+ src/corelib/kernel/qeventdispatcher_win.cpp        |   13 +-
  src/corelib/kernel/qfunctions_win.cpp              |   15 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
@@ -117,7 +118,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 119 files changed, 1390 insertions(+), 7806 deletions(-)
+ 120 files changed, 1401 insertions(+), 7808 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -1083,6 +1084,37 @@ index 4d69ca9a17..22ae7bf069 100644
      }
  #endif
  #endif
+diff --git a/src/corelib/kernel/qeventdispatcher_win.cpp b/src/corelib/kernel/qeventdispatcher_win.cpp
+index 04e1abf16a..a6376f9b78 100644
+--- a/src/corelib/kernel/qeventdispatcher_win.cpp
++++ b/src/corelib/kernel/qeventdispatcher_win.cpp
+@@ -18,6 +18,8 @@
+ 
+ QT_BEGIN_NAMESPACE
+ 
++using namespace Qt::StringLiterals;
++
+ #ifndef TIME_KILL_SYNCHRONOUS
+ #  define TIME_KILL_SYNCHRONOUS 0x0100
+ #endif
+@@ -355,8 +357,15 @@ void QEventDispatcherWin32Private::registerTimer(WinTimerInfo *t)
+     }
+ 
+     if (!ok) {
+-        // user normal timers for (Very)CoarseTimers, or if no more multimedia timers available
+-        ok = SetCoalescableTimer(internalHwnd, t->timerId, interval, nullptr, tolerance);
++        if (QOperatingSystemVersion::isWin8OrGreater()) {
++            static const auto pSetCoalescableTimer =
++                reinterpret_cast<decltype(&::SetCoalescableTimer)>(
++                    QSystemLibrary::resolve(u"user32"_s, "SetCoalescableTimer"));
++            if (pSetCoalescableTimer) {
++                // user normal timers for (Very)CoarseTimers, or if no more multimedia timers available
++                ok = pSetCoalescableTimer(internalHwnd, t->timerId, interval, nullptr, tolerance);
++            }
++        }
+     }
+     if (!ok)
+         ok = SetTimer(internalHwnd, t->timerId, interval, nullptr);
 diff --git a/src/corelib/kernel/qfunctions_win.cpp b/src/corelib/kernel/qfunctions_win.cpp
 index ed0e25467c..c964cd5141 100644
 --- a/src/corelib/kernel/qfunctions_win.cpp
