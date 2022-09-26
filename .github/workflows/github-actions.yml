@@ -8,31 +8,42 @@ jobs:
 
     steps:
     - name: Check out the repository code
-      uses: actions/checkout@v3
+      run: |
+          cd /d C:
+          md GitHub_Actions
+          cd GitHub_Actions
+          git clone --recurse-submodules --depth 1 --shallow-submodules --branch main --single-branch --no-tags https://github.com/wangwenx190/build-qt-dev.git
+      shell: cmd
 
     - name: Set up GIT
-      run: call windows-git.bat
+      working-directory: C:/GitHub_Actions/build-qt-dev
+      run: call C:/GitHub_Actions/build-qt-dev/windows-git.bat
       shell: cmd
 
     - name: Set up Vulkan SDK (QtGui)
+      working-directory: C:/GitHub_Actions/build-qt-dev
       uses: humbletim/setup-vulkan-sdk@v1.2.0
       with:
         vulkan-query-version: 1.3.224.1 # Current latest version.
         vulkan-components: Vulkan-Headers
 
     - name: Set up VCPKG (QtBase)
-      run: call windows-vcpkg.bat
+      working-directory: C:/GitHub_Actions/build-qt-dev
+      run: call C:/GitHub_Actions/build-qt-dev/windows-vcpkg.bat
       shell: cmd
 
     - name: Build the Qt Toolkit
-      run: call windows-build.bat
+      working-directory: C:/GitHub_Actions/build-qt-dev
+      run: call C:/GitHub_Actions/build-qt-dev/windows-build.bat
       shell: cmd
 
     - name: Pack the installed artifacts
-      run: call windows-pack.bat
+      working-directory: C:/GitHub_Actions/build-qt-dev
+      run: call C:/GitHub_Actions/build-qt-dev/windows-pack.bat
       shell: cmd
 
     - name: Upload the final packages
+      working-directory: C:/GitHub_Actions/build-qt-dev
       uses: actions/upload-artifact@v3
       with:
         name: Qt SDK
