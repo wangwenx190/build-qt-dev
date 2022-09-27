@@ -3,7 +3,7 @@
  cmake/QtInternalTargets.cmake                      |   79 +-
  cmake/QtQmakeHelpers.cmake                         |   13 +
  config_help.txt                                    |    2 +
- configure.cmake                                    |   12 +-
+ configure.cmake                                    |   10 +
  qmake/main.cpp                                     |    1 +
  qt_cmdline.cmake                                   |    2 +
  src/corelib/Qt6CoreMacros.cmake                    |   14 +-
@@ -22,7 +22,7 @@
  src/corelib/kernel/qfunctions_win.cpp              |   15 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
- src/entrypoint/qtentrypoint_win.cpp                |   38 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   42 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -98,7 +98,7 @@
  src/plugins/platforms/windows/qwindowswindow.cpp   |   88 +-
  .../uiautomation/qwindowsuiaaccessibility.cpp      |    9 +-
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
- .../uiautomation/qwindowsuiamainprovider.cpp       |   32 +-
+ .../uiautomation/qwindowsuiamainprovider.cpp       |   53 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   15 +
  src/plugins/tls/schannel/qtls_schannel.cpp         |    2 +-
@@ -118,7 +118,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 120 files changed, 1401 insertions(+), 7808 deletions(-)
+ 120 files changed, 1421 insertions(+), 7811 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -336,19 +336,10 @@ index a02d60e5ce..7ff296931b 100644
                           Force use of the GNU ld, GNU gold, LLVM/LLD or mold
                           linker instead of default one (GCC and clang only)
 diff --git a/configure.cmake b/configure.cmake
-index 5d3d1e139f..bcb391968e 100644
+index 30b99d4998..822ba4dc34 100644
 --- a/configure.cmake
 +++ b/configure.cmake
-@@ -643,7 +643,7 @@ else()
-     unset(__qt_uc_config)
- endif()
- qt_feature("ltcg"
--    LABEL "Using Link Time Optimization (LTO/LTCG)"
-+    LABEL "Using Link Time Optimization"
-     AUTODETECT ON
-     CONDITION __qt_ltcg_detected
- )
-@@ -990,6 +990,14 @@ qt_feature("intelcet" PRIVATE
+@@ -1105,6 +1105,14 @@ qt_feature("intelcet" PRIVATE
      LABEL "Using Intel CET"
      CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
  )
@@ -363,7 +354,7 @@ index 5d3d1e139f..bcb391968e 100644
  qt_configure_add_summary_build_type_and_config()
  qt_configure_add_summary_section(NAME "Build options")
  qt_configure_add_summary_build_mode(Mode)
-@@ -1040,6 +1048,8 @@ qt_configure_add_summary_entry(ARGS "relocatable")
+@@ -1155,6 +1163,8 @@ qt_configure_add_summary_entry(ARGS "relocatable")
  qt_configure_add_summary_entry(ARGS "precompile_header")
  qt_configure_add_summary_entry(ARGS "ltcg")
  qt_configure_add_summary_entry(ARGS "intelcet")
@@ -385,10 +376,10 @@ index 9b96ab7338..301cd9f231 100644
      QT_PREPEND_NAMESPACE(QCoreApplication) app(argc, argv);
      return QT_PREPEND_NAMESPACE(runQMake)(argc, argv);
 diff --git a/qt_cmdline.cmake b/qt_cmdline.cmake
-index ca0f2b1a60..4cf733b463 100644
+index 5450b2562c..0bfc75636b 100644
 --- a/qt_cmdline.cmake
 +++ b/qt_cmdline.cmake
-@@ -71,6 +71,8 @@ qt_commandline_option(libudev TYPE boolean)
+@@ -74,6 +74,8 @@ qt_commandline_option(openssl-runtime TYPE void NAME openssl VALUE runtime)
  qt_commandline_option(linker TYPE optionalString VALUES bfd gold lld mold)
  qt_commandline_option(ltcg TYPE boolean)
  qt_commandline_option(intelcet TYPE boolean)
@@ -577,10 +568,10 @@ index 71d9a01308..2c6e61152a 100644
          PrefixPath = 0,
          DocumentationPath,
 diff --git a/src/corelib/global/qoperatingsystemversion.cpp b/src/corelib/global/qoperatingsystemversion.cpp
-index a89cfa88d2..fbb4393b48 100644
+index bb29a6b1a0..dc04c3eec5 100644
 --- a/src/corelib/global/qoperatingsystemversion.cpp
 +++ b/src/corelib/global/qoperatingsystemversion.cpp
-@@ -388,6 +388,47 @@ const QOperatingSystemVersion QOperatingSystemVersion::Windows8_1 =
+@@ -391,6 +391,47 @@ const QOperatingSystemVersion QOperatingSystemVersion::Windows8_1 =
  const QOperatingSystemVersion QOperatingSystemVersion::Windows10 =
      QOperatingSystemVersion(QOperatingSystemVersion::Windows, 10);
  
@@ -629,11 +620,11 @@ index a89cfa88d2..fbb4393b48 100644
      \variable QOperatingSystemVersion::Windows10_1809
      \brief a version corresponding to Windows 10 October 2018 Update
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index 5fcc3411de..29ecce1ed1 100644
+index d6fee2980c..95ff8326a3 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
-@@ -188,6 +188,12 @@ public:
-     static constexpr QOperatingSystemVersionBase Android11 { QOperatingSystemVersionBase::Android, 11, 0 };
+@@ -194,6 +194,12 @@ public:
+     static constexpr QOperatingSystemVersionBase Android13 { QOperatingSystemVersionBase::Android, 13, 0 };
  #endif // New (static constexpr) entries go here, only cherry-pick as far back as 6.3 (QTBUG-97808):
  
 +    static constexpr QOperatingSystemVersionBase Windows10_1507 { QOperatingSystemVersionBase::Windows, 10, 0, 10240 }; // TH1
@@ -645,7 +636,7 @@ index 5fcc3411de..29ecce1ed1 100644
      static constexpr QOperatingSystemVersionBase Windows10_1809 { QOperatingSystemVersionBase::Windows, 10, 0, 17763 }; // RS5
      static constexpr QOperatingSystemVersionBase Windows10_1903 { QOperatingSystemVersionBase::Windows, 10, 0, 18362 }; // 19H1
      static constexpr QOperatingSystemVersionBase Windows10_1909 { QOperatingSystemVersionBase::Windows, 10, 0, 18363 }; // 19H2
-@@ -199,6 +205,36 @@ public:
+@@ -205,6 +211,36 @@ public:
      static constexpr QOperatingSystemVersionBase Windows11_21H2 = Windows11;
      static constexpr QOperatingSystemVersionBase Windows11_22H2 { QOperatingSystemVersionBase::Windows, 10, 0, 22621 };
  
@@ -801,10 +792,10 @@ index 92fc0e12f3..a0b10a3643 100644
  QT_END_NAMESPACE
  
 diff --git a/src/corelib/global/qsysinfo.cpp b/src/corelib/global/qsysinfo.cpp
-index 6e9f8a0eea..6d8df852a4 100644
+index a06a85b641..5b2de66e0c 100644
 --- a/src/corelib/global/qsysinfo.cpp
 +++ b/src/corelib/global/qsysinfo.cpp
-@@ -87,7 +87,7 @@ using namespace Qt::StringLiterals;
+@@ -88,7 +88,7 @@ using namespace Qt::StringLiterals;
  
  #if defined(Q_OS_DARWIN)
  
@@ -813,7 +804,7 @@ index 6e9f8a0eea..6d8df852a4 100644
  {
  #ifdef Q_OS_MACOS
      if (version.majorVersion() == 12)
-@@ -152,23 +152,28 @@ QWindowsSockInit::~QWindowsSockInit()
+@@ -153,23 +153,28 @@ QWindowsSockInit::~QWindowsSockInit()
  Q_GLOBAL_STATIC(QWindowsSockInit, winsockInit)
  #  endif // QT_BOOTSTRAPPED
  
@@ -846,7 +837,7 @@ index 6e9f8a0eea..6d8df852a4 100644
  {
      const auto osv = qWindowsVersionInfo();
      const qint16 major = osv.wServicePackMajor;
-@@ -183,14 +188,20 @@ static QString winSp_helper()
+@@ -184,14 +189,20 @@ static QString winSp_helper()
      return QString();
  }
  
@@ -869,7 +860,7 @@ index 6e9f8a0eea..6d8df852a4 100644
      case Q_WINVER(10, 0):
          if (workstation) {
              if (osver.dwBuildNumber >= 22000)
-@@ -882,10 +893,21 @@ QString QSysInfo::prettyProductName()
+@@ -883,10 +894,21 @@ QString QSysInfo::prettyProductName()
      return result + " ("_L1 + versionString + u')';
  #  else
      // (resembling winver.exe): Windows 10 "Windows 10 Version 1809"
@@ -1307,7 +1298,7 @@ index 9363cc02de..ff81407ed9 100644
  QT_END_NAMESPACE
  #else
 diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..bdbd9206b2 100644
+index 6ecb814948..972f08dc7c 100644
 --- a/src/entrypoint/qtentrypoint_win.cpp
 +++ b/src/entrypoint/qtentrypoint_win.cpp
 @@ -3,6 +3,7 @@
@@ -1327,7 +1318,7 @@ index 6ecb814948..bdbd9206b2 100644
  #define main qMain
  #else
  extern "C" int main(int, char **);
-@@ -28,28 +29,47 @@ extern "C" int main(int, char **);
+@@ -28,28 +29,51 @@ extern "C" int main(int, char **);
  
  // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
  // when passed CP_ACP.
@@ -1369,20 +1360,24 @@ index 6ecb814948..bdbd9206b2 100644
      return exitCode;
  }
 +
++#if 0 // ### FIXME: Commented out temporarily.
 +extern "C" int WINAPI wmain(int, wchar_t **)
 +{
 +    return qtEntryPoint();
 +}
++#endif
 +
 +extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 +{
 +    return qtEntryPoint();
 +}
 +
++#if 0 // ### FIXME: Commented out temporarily.
 +extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 +{
 +    return qtEntryPoint();
 +}
++#endif
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index f6c2b2979a..cc7deddab1 100644
 --- a/src/gui/CMakeLists.txt
@@ -11028,10 +11023,28 @@ index c899b4096e..2bc549f548 100644
  QT_BEGIN_NAMESPACE
  
 diff --git a/src/plugins/platforms/windows/uiautomation/qwindowsuiamainprovider.cpp b/src/plugins/platforms/windows/uiautomation/qwindowsuiamainprovider.cpp
-index 03cac60e08..977cbcc895 100644
+index 03cac60e08..077919e523 100644
 --- a/src/plugins/platforms/windows/uiautomation/qwindowsuiamainprovider.cpp
 +++ b/src/plugins/platforms/windows/uiautomation/qwindowsuiamainprovider.cpp
-@@ -76,7 +76,7 @@ void QWindowsUiaMainProvider::notifyFocusChange(QAccessibleEvent *event)
+@@ -24,6 +24,8 @@
+ #include "qwindowsuiaprovidercache.h"
+ 
+ #include <QtCore/qloggingcategory.h>
++#include <QtCore/qoperatingsystemversion.h>
++#include <QtCore/private/qsystemlibrary_p.h>
+ #include <QtGui/qaccessible.h>
+ #include <QtGui/qguiapplication.h>
+ #include <QtGui/qwindow.h>
+@@ -36,6 +38,8 @@
+ 
+ QT_BEGIN_NAMESPACE
+ 
++using namespace Qt::StringLiterals;
++
+ using namespace QWindowsUiAutomation;
+ 
+ 
+@@ -76,7 +80,7 @@ void QWindowsUiaMainProvider::notifyFocusChange(QAccessibleEvent *event)
              if (QAccessibleInterface *child = accessible->focusChild())
                  accessible = child;
          if (QWindowsUiaMainProvider *provider = providerForAccessible(accessible))
@@ -11040,7 +11053,7 @@ index 03cac60e08..977cbcc895 100644
      }
  }
  
-@@ -93,7 +93,7 @@ void QWindowsUiaMainProvider::notifyStateChange(QAccessibleStateChangeEvent *eve
+@@ -93,7 +97,7 @@ void QWindowsUiaMainProvider::notifyStateChange(QAccessibleStateChangeEvent *eve
                      if (accessible->state().checked)
                          toggleState = accessible->state().checkStateMixed ? ToggleState_Indeterminate : ToggleState_On;
                      setVariantI4(toggleState, &newVal);
@@ -11049,7 +11062,7 @@ index 03cac60e08..977cbcc895 100644
                  }
              }
          }
-@@ -102,13 +102,13 @@ void QWindowsUiaMainProvider::notifyStateChange(QAccessibleStateChangeEvent *eve
+@@ -102,13 +106,13 @@ void QWindowsUiaMainProvider::notifyStateChange(QAccessibleStateChangeEvent *eve
                  // Notifies window opened/closed.
                  if (QWindowsUiaMainProvider *provider = providerForAccessible(accessible)) {
                      if (accessible->state().active) {
@@ -11066,20 +11079,37 @@ index 03cac60e08..977cbcc895 100644
                      }
                  }
              }
-@@ -144,9 +144,9 @@ void QWindowsUiaMainProvider::notifyValueChange(QAccessibleValueChangeEvent *eve
-                 BSTR displayString = bStrFromQString(event->value().toString());
-                 BSTR activityId = bStrFromQString(QString());
+@@ -141,21 +145,30 @@ void QWindowsUiaMainProvider::notifyValueChange(QAccessibleValueChangeEvent *eve
+                 // Tries to notify the change using UiaRaiseNotificationEvent(), which is only available on
+                 // Windows 10 version 1709 or newer. Otherwise uses UiaRaiseAutomationPropertyChangedEvent().
+ 
+-                BSTR displayString = bStrFromQString(event->value().toString());
+-                BSTR activityId = bStrFromQString(QString());
++                auto hr = HRESULT(UIA_E_NOTSUPPORTED);
++
++                if (QOperatingSystemVersion::isWin10RS3OrGreater()) {
++                    static const auto pUiaRaiseNotificationEvent =
++                        reinterpret_cast<decltype(&::UiaRaiseNotificationEvent)>(
++                            QSystemLibrary::resolve(u"uiautomationcore"_s, "UiaRaiseNotificationEvent"));
++                    if (pUiaRaiseNotificationEvent) {
++                        BSTR displayString = bStrFromQString(event->value().toString());
++                        BSTR activityId = bStrFromQString(QString());
  
 -                HRESULT hr = QWindowsUiaWrapper::instance()->raiseNotificationEvent(provider, NotificationKind_Other,
 -                                                                                    NotificationProcessing_ImportantMostRecent,
 -                                                                                    displayString, activityId);
-+                HRESULT hr = UiaRaiseNotificationEvent(provider, NotificationKind_Other,
-+                                                       NotificationProcessing_ImportantMostRecent,
-+                                                       displayString, activityId);
++                        hr = pUiaRaiseNotificationEvent(provider, NotificationKind_Other,
++                                                        NotificationProcessing_ImportantMostRecent,
++                                                        displayString, activityId);
  
-                 ::SysFreeString(displayString);
-                 ::SysFreeString(activityId);
-@@ -155,7 +155,7 @@ void QWindowsUiaMainProvider::notifyValueChange(QAccessibleValueChangeEvent *eve
+-                ::SysFreeString(displayString);
+-                ::SysFreeString(activityId);
++                        ::SysFreeString(displayString);
++                        ::SysFreeString(activityId);
++                    }
++                }
+ 
+                 if (hr == static_cast<HRESULT>(UIA_E_NOTSUPPORTED)) {
                      VARIANT oldVal, newVal;
                      clearVariant(&oldVal);
                      setVariantString(event->value().toString(), &newVal);
@@ -11088,7 +11118,7 @@ index 03cac60e08..977cbcc895 100644
                      ::SysFreeString(newVal.bstrVal);
                  }
              }
-@@ -165,7 +165,7 @@ void QWindowsUiaMainProvider::notifyValueChange(QAccessibleValueChangeEvent *eve
+@@ -165,7 +178,7 @@ void QWindowsUiaMainProvider::notifyValueChange(QAccessibleValueChangeEvent *eve
                  VARIANT oldVal, newVal;
                  clearVariant(&oldVal);
                  setVariantDouble(valueInterface->currentValue().toDouble(), &newVal);
@@ -11097,7 +11127,7 @@ index 03cac60e08..977cbcc895 100644
              }
          }
      }
-@@ -181,7 +181,7 @@ void QWindowsUiaMainProvider::notifyNameChange(QAccessibleEvent *event)
+@@ -181,7 +194,7 @@ void QWindowsUiaMainProvider::notifyNameChange(QAccessibleEvent *event)
                  VARIANT oldVal, newVal;
                  clearVariant(&oldVal);
                  setVariantString(accessible->text(QAccessible::Name), &newVal);
@@ -11106,7 +11136,7 @@ index 03cac60e08..977cbcc895 100644
                  ::SysFreeString(newVal.bstrVal);
              }
          }
-@@ -192,7 +192,7 @@ void QWindowsUiaMainProvider::notifySelectionChange(QAccessibleEvent *event)
+@@ -192,7 +205,7 @@ void QWindowsUiaMainProvider::notifySelectionChange(QAccessibleEvent *event)
  {
      if (QAccessibleInterface *accessible = event->accessibleInterface()) {
          if (QWindowsUiaMainProvider *provider = providerForAccessible(accessible)) {
@@ -11115,7 +11145,7 @@ index 03cac60e08..977cbcc895 100644
          }
      }
  }
-@@ -204,13 +204,13 @@ void QWindowsUiaMainProvider::notifyTextChange(QAccessibleEvent *event)
+@@ -204,13 +217,13 @@ void QWindowsUiaMainProvider::notifyTextChange(QAccessibleEvent *event)
          if (accessible->textInterface()) {
              if (QWindowsUiaMainProvider *provider = providerForAccessible(accessible)) {
                  if (event->type() == QAccessible::TextSelectionChanged) {
@@ -11132,7 +11162,7 @@ index 03cac60e08..977cbcc895 100644
                  }
              }
          }
-@@ -513,7 +513,7 @@ HRESULT QWindowsUiaMainProvider::get_HostRawElementProvider(IRawElementProviderS
+@@ -513,7 +526,7 @@ HRESULT QWindowsUiaMainProvider::get_HostRawElementProvider(IRawElementProviderS
      // Returns a host provider only for controls associated with a native window handle. Others should return NULL.
      if (QAccessibleInterface *accessible = accessibleInterface()) {
          if (HWND hwnd = hwndForAccessible(accessible)) {
@@ -11194,7 +11224,7 @@ index ba14e61b57..2ee5c12f5f 100644
          // 20221 just happens to be the preview version I run on my laptop where I tested TLS 1.3.
          const auto minimum =
 diff --git a/src/tools/androiddeployqt/main.cpp b/src/tools/androiddeployqt/main.cpp
-index f9ba885a33..80d4dedf9a 100644
+index 29df1ba2b1..f56edfbcec 100644
 --- a/src/tools/androiddeployqt/main.cpp
 +++ b/src/tools/androiddeployqt/main.cpp
 @@ -3098,6 +3098,8 @@ bool writeDependencyFile(const Options &options)
