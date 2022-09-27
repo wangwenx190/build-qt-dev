@@ -34,11 +34,11 @@ set __git_clone_url=https://github.com/microsoft/vcpkg.git
 set __git_clone_branch=master
 :: Use shallow clone to reduce the download size and time.
 :: We don't need the commit history after all.
-set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
-set __git_fetch_params=fetch --depth=1 --no-tags
+set __git_clone_params=clone --depth 1 --branch %__git_clone_branch% --single-branch --no-tags --progress --verbose %__git_clone_url%
+set __git_fetch_params=fetch --depth=1 --no-tags --verbose
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 set __git_clean_params=clean -fdx
-set __git_pull_params=pull
+set __git_pull_params=pull --verbose
 set __git_apply_params=apply --ignore-whitespace --verbose
 if /i "%GITHUB_ACTIONS%" == "true" (
     :: Update local VCPKG ports to the latest upstream version.

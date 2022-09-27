@@ -96,11 +96,11 @@ set __git_clone_branch=dev
 :: be incorrect (such as packages packed by GitHub, which will lead to compilation
 :: failures) and most importantly, we can still update the local source code through
 :: the git tool conveniently.
-set __git_clone_params=clone --recurse-submodules --depth 1 --shallow-submodules --branch %__git_clone_branch% --single-branch --no-tags %__git_clone_url%
+set __git_clone_params=clone --recurse-submodules --depth 1 --shallow-submodules --branch %__git_clone_branch% --single-branch --no-tags --progress --verbose %__git_clone_url%
 :: We still need to limit the depth to 1 while fetching, otherwise git will
 :: fetch all the commit history again and that's obviously not what we would
 :: want to see.
-set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand
+set __git_fetch_params=fetch --depth=1 --no-tags --recurse-submodules=on-demand --verbose
 :: To be able to update a shallow clone, we need to reset once after fetching from remote.
 :: For more details, please refer to: https://stackoverflow.com/questions/41075972/how-to-update-a-git-shallow-clone
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
