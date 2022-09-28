@@ -22,7 +22,7 @@
  src/corelib/kernel/qfunctions_win.cpp              |   15 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
- src/entrypoint/qtentrypoint_win.cpp                |   42 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   38 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -114,11 +114,12 @@
  src/tools/qvkgen/qvkgen.cpp                        |    2 +
  src/tools/rcc/main.cpp                             |    9 +-
  src/tools/rcc/rcc.cpp                              |   10 +-
+ src/tools/syncqt/main.cpp                          |    3 +
  src/tools/tracegen/tracegen.cpp                    |    3 +
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 120 files changed, 1421 insertions(+), 7811 deletions(-)
+ 121 files changed, 1420 insertions(+), 7811 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -336,7 +337,7 @@ index a02d60e5ce..7ff296931b 100644
                           Force use of the GNU ld, GNU gold, LLVM/LLD or mold
                           linker instead of default one (GCC and clang only)
 diff --git a/configure.cmake b/configure.cmake
-index 30b99d4998..822ba4dc34 100644
+index 91a3df5f33..bce900e5c7 100644
 --- a/configure.cmake
 +++ b/configure.cmake
 @@ -1105,6 +1105,14 @@ qt_feature("intelcet" PRIVATE
@@ -1298,7 +1299,7 @@ index 9363cc02de..ff81407ed9 100644
  QT_END_NAMESPACE
  #else
 diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..972f08dc7c 100644
+index 6ecb814948..bdbd9206b2 100644
 --- a/src/entrypoint/qtentrypoint_win.cpp
 +++ b/src/entrypoint/qtentrypoint_win.cpp
 @@ -3,6 +3,7 @@
@@ -1318,7 +1319,7 @@ index 6ecb814948..972f08dc7c 100644
  #define main qMain
  #else
  extern "C" int main(int, char **);
-@@ -28,28 +29,51 @@ extern "C" int main(int, char **);
+@@ -28,28 +29,47 @@ extern "C" int main(int, char **);
  
  // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
  // when passed CP_ACP.
@@ -1360,26 +1361,22 @@ index 6ecb814948..972f08dc7c 100644
      return exitCode;
  }
 +
-+#if 0 // ### FIXME: Commented out temporarily.
 +extern "C" int WINAPI wmain(int, wchar_t **)
 +{
 +    return qtEntryPoint();
 +}
-+#endif
 +
 +extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 +{
 +    return qtEntryPoint();
 +}
 +
-+#if 0 // ### FIXME: Commented out temporarily.
 +extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
 +{
 +    return qtEntryPoint();
 +}
-+#endif
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
-index f6c2b2979a..cc7deddab1 100644
+index b611724835..c4ef162f84 100644
 --- a/src/gui/CMakeLists.txt
 +++ b/src/gui/CMakeLists.txt
 @@ -430,7 +430,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
@@ -11463,6 +11460,27 @@ index db2a821b95..a2ed6ef3a5 100644
          break;
      case Python_Code:
          writeString("qt_resource_struct = b\"\\\n");
+diff --git a/src/tools/syncqt/main.cpp b/src/tools/syncqt/main.cpp
+index 03a80ef973..50df5a32f4 100644
+--- a/src/tools/syncqt/main.cpp
++++ b/src/tools/syncqt/main.cpp
+@@ -27,6 +27,7 @@
+ #include <map>
+ #include <set>
+ #include <array>
++#include <clocale>
+ 
+ enum ErrorCodes {
+     NoError = 0,
+@@ -1553,6 +1554,8 @@ bool SyncScanner::writeIfDifferent(const std::string &outputFile, const std::str
+ 
+ int main(int argc, char *argv[])
+ {
++    std::setlocale(LC_ALL, "en_US.UTF-8");
++
+     CommandLineOptions options(argc, argv);
+     if (!options.isValid())
+         return InvalidArguments;
 diff --git a/src/tools/tracegen/tracegen.cpp b/src/tools/tracegen/tracegen.cpp
 index 6a5f3286a9..688fd0b31d 100644
 --- a/src/tools/tracegen/tracegen.cpp
