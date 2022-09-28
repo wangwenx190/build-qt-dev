@@ -12,7 +12,7 @@ jobs:
           cd /d C:
           md GitHub_Actions
           cd GitHub_Actions
-          git clone --recurse-submodules --depth 1 --shallow-submodules --branch main --single-branch --no-tags https://github.com/wangwenx190/build-qt-dev.git
+          git clone --recurse-submodules --depth 1 --shallow-submodules --branch main --single-branch --no-tags --progress --verbose https://github.com/wangwenx190/build-qt-dev.git
       shell: cmd
 
     - name: Set up GIT
