@@ -6,6 +6,7 @@
  configure.cmake                                    |   10 +
  qmake/main.cpp                                     |    1 +
  qt_cmdline.cmake                                   |    2 +
+ src/corelib/CMakeLists.txt                         |    2 -
  src/corelib/Qt6CoreMacros.cmake                    |   14 +-
  src/corelib/global/qconfig.cpp.in                  |   15 +-
  src/corelib/global/qlibraryinfo.cpp                |   53 +-
@@ -119,7 +120,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 121 files changed, 1420 insertions(+), 7811 deletions(-)
+ 122 files changed, 1420 insertions(+), 7813 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -179,7 +180,7 @@ index 8715f7f84b..858e473e9a 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 13da9775f0..5df7f8dede 100644
+index 13da9775f0..e50d0a0541 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -242,26 +242,33 @@ if (MSVC)
@@ -249,7 +250,7 @@ index 13da9775f0..5df7f8dede 100644
  endif()
  
 +# Mitigate for Intel Jump Conditional Code (JCC)
-+if(MSVC AND NOT CLANG)
++#[[if(MSVC AND NOT CLANG)
 +    target_compile_options(PlatformCommonInternal INTERFACE
 +        $<$<NOT:$<CONFIG:Debug>>:-QIntel-jcc-erratum>
 +    )
@@ -257,10 +258,10 @@ index 13da9775f0..5df7f8dede 100644
 +    target_compile_options(PlatformCommonInternal INTERFACE
 +        $<$<NOT:$<CONFIG:Debug>>:-Wa,-mno-branches-within-32B-boundaries>
 +    )
-+endif()
++endif()]]
 +
 +# Mitigate for Spectre security vulnerabilities
-+if(QT_FEATURE_spectre)
++#[[if(QT_FEATURE_spectre)
 +    if(CLANG)
 +        target_compile_options(PlatformCommonInternal INTERFACE
 +            -mretpoline
@@ -280,7 +281,7 @@ index 13da9775f0..5df7f8dede 100644
 +            -Qspectre-load
 +        )
 +    endif()
-+endif()
++endif()]]
 +
 +# EH Continuation Metadata Guard
 +if(QT_FEATURE_ehcont)
@@ -300,7 +301,7 @@ index 13da9775f0..5df7f8dede 100644
      target_compile_definitions(PlatformCommonInternal INTERFACE QT_FORCE_ASSERTS)
  endif()
 diff --git a/cmake/QtQmakeHelpers.cmake b/cmake/QtQmakeHelpers.cmake
-index f1de0987af..249c6eb62a 100644
+index 1720772bf2..4bfacc72e4 100644
 --- a/cmake/QtQmakeHelpers.cmake
 +++ b/cmake/QtQmakeHelpers.cmake
 @@ -74,6 +74,19 @@ function(qt_generate_qconfig_cpp in_file out_file)
@@ -389,6 +390,19 @@ index 5450b2562c..0bfc75636b 100644
  # special case begin
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
+diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
+index ba81624c63..32e8456136 100644
+--- a/src/corelib/CMakeLists.txt
++++ b/src/corelib/CMakeLists.txt
+@@ -837,8 +837,6 @@ qt_internal_extend_target(Core CONDITION QT_FEATURE_regularexpression
+ qt_internal_extend_target(Core CONDITION QT_FEATURE_openssl_linked AND QT_FEATURE_opensslv30
+     LIBRARIES
+         WrapOpenSSL::WrapOpenSSL
+-    PRIVATE_MODULE_INTERFACE
+-        WrapOpenSSL::WrapOpenSSL
+ )
+ 
+ qt_internal_extend_target(Core CONDITION QT_FEATURE_hijricalendar
 diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
 index dfd37c43af..e5a9b74701 100644
 --- a/src/corelib/Qt6CoreMacros.cmake
@@ -11412,7 +11426,7 @@ index 2751bc39d6..3449e6bb09 100644
      // we must force a certain hash order when testing or tst_rcc will fail, see QTBUG-25078
      // similar requirements exist for reproducibly builds.
 diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
-index db2a821b95..a2ed6ef3a5 100644
+index a96b45e293..4e87353aff 100644
 --- a/src/tools/rcc/rcc.cpp
 +++ b/src/tools/rcc/rcc.cpp
 @@ -957,7 +957,7 @@ void RCCResourceLibrary::writeDecimal(int value)
@@ -11461,10 +11475,10 @@ index db2a821b95..a2ed6ef3a5 100644
      case Python_Code:
          writeString("qt_resource_struct = b\"\\\n");
 diff --git a/src/tools/syncqt/main.cpp b/src/tools/syncqt/main.cpp
-index 03a80ef973..50df5a32f4 100644
+index 8a1692e5d4..35beae2844 100644
 --- a/src/tools/syncqt/main.cpp
 +++ b/src/tools/syncqt/main.cpp
-@@ -27,6 +27,7 @@
+@@ -28,6 +28,7 @@
  #include <map>
  #include <set>
  #include <array>
@@ -11472,7 +11486,7 @@ index 03a80ef973..50df5a32f4 100644
  
  enum ErrorCodes {
      NoError = 0,
-@@ -1553,6 +1554,8 @@ bool SyncScanner::writeIfDifferent(const std::string &outputFile, const std::str
+@@ -1554,6 +1555,8 @@ bool SyncScanner::writeIfDifferent(const std::string &outputFile, const std::str
  
  int main(int argc, char *argv[])
  {
@@ -11514,10 +11528,10 @@ index c2f117ec21..6a12ab715c 100644
      return QT_PREPEND_NAMESPACE(runUic)(argc, argv);
  }
 diff --git a/src/tools/windeployqt/main.cpp b/src/tools/windeployqt/main.cpp
-index 132b3d5d25..14d95a42fb 100644
+index ecd25ab81d..e7d5036b95 100644
 --- a/src/tools/windeployqt/main.cpp
 +++ b/src/tools/windeployqt/main.cpp
-@@ -1620,6 +1620,8 @@ QT_USE_NAMESPACE
+@@ -1621,6 +1621,8 @@ QT_USE_NAMESPACE
  
  int main(int argc, char **argv)
  {
