@@ -2871,7 +2871,7 @@ index 465bd07a07..0000000000
 -
 -#endif
 diff --git a/src/gui/opengl/qopengl.cpp b/src/gui/opengl/qopengl.cpp
-index edb359f686..ffc55dec1c 100644
+index edb359f686..d52d23ebe1 100644
 --- a/src/gui/opengl/qopengl.cpp
 +++ b/src/gui/opengl/qopengl.cpp
 @@ -200,8 +200,20 @@ struct OsTypeTerm
@@ -2889,7 +2889,7 @@ index edb359f686..ffc55dec1c 100644
 +            break;
          case Q_WINVER(10, 0):
 -            ver = QStringLiteral("10");
-+            if (osver.minorVersion() >= 22000)
++            if (osver.microVersion() >= 22000)
 +                ver = QStringLiteral("11");
 +            else
 +                ver = QStringLiteral("10");
