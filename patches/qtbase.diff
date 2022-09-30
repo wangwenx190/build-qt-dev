@@ -180,7 +180,7 @@ index 8715f7f84b..858e473e9a 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 13da9775f0..e50d0a0541 100644
+index 13da9775f0..7a97172138 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -242,26 +242,33 @@ if (MSVC)
@@ -207,7 +207,7 @@ index 13da9775f0..e50d0a0541 100644
  
      target_compile_options(PlatformCommonInternal INTERFACE
 -        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -Gw>
-+        $<$<NOT:$<CONFIG:Debug>>:-GT -Gw -Gy>
++        $<$<NOT:$<CONFIG:Debug>>:-Gw -Gy> # -GT
 +        # TODO: Add "-GA" for executables.
      )
  
@@ -250,7 +250,7 @@ index 13da9775f0..e50d0a0541 100644
  endif()
  
 +# Mitigate for Intel Jump Conditional Code (JCC)
-+#[[if(MSVC AND NOT CLANG)
++if(MSVC AND NOT CLANG)
 +    target_compile_options(PlatformCommonInternal INTERFACE
 +        $<$<NOT:$<CONFIG:Debug>>:-QIntel-jcc-erratum>
 +    )
@@ -258,7 +258,7 @@ index 13da9775f0..e50d0a0541 100644
 +    target_compile_options(PlatformCommonInternal INTERFACE
 +        $<$<NOT:$<CONFIG:Debug>>:-Wa,-mno-branches-within-32B-boundaries>
 +    )
-+endif()]]
++endif()
 +
 +# Mitigate for Spectre security vulnerabilities
 +#[[if(QT_FEATURE_spectre)
@@ -301,7 +301,7 @@ index 13da9775f0..e50d0a0541 100644
      target_compile_definitions(PlatformCommonInternal INTERFACE QT_FORCE_ASSERTS)
  endif()
 diff --git a/cmake/QtQmakeHelpers.cmake b/cmake/QtQmakeHelpers.cmake
-index 1720772bf2..4bfacc72e4 100644
+index 2d26d27386..0a5e239980 100644
 --- a/cmake/QtQmakeHelpers.cmake
 +++ b/cmake/QtQmakeHelpers.cmake
 @@ -74,6 +74,19 @@ function(qt_generate_qconfig_cpp in_file out_file)
@@ -1390,10 +1390,10 @@ index 6ecb814948..bdbd9206b2 100644
 +    return qtEntryPoint();
 +}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
-index b611724835..c4ef162f84 100644
+index 1dd7bb3c30..1644381ad8 100644
 --- a/src/gui/CMakeLists.txt
 +++ b/src/gui/CMakeLists.txt
-@@ -430,7 +430,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
+@@ -432,7 +432,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
          d3d11
          dxgi
          dxguid
@@ -1401,7 +1401,7 @@ index b611724835..c4ef162f84 100644
  )
  
  #### Keys ignored in scope 7:.:.:gui.pro:WIN32:
-@@ -506,21 +505,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
+@@ -508,21 +507,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
          ${FWFoundation}
  )
  
