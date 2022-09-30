@@ -37,7 +37,7 @@
  .../windows/apisupport/uiapropertyids_p.h          |  188 --
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
- src/gui/opengl/qopengl.cpp                         |    5 +-
+ src/gui/opengl/qopengl.cpp                         |   14 +-
  src/gui/rhi/cs_tdr_p.h                             |    2 +-
  src/gui/rhi/qrhid3d11.cpp                          |  334 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
@@ -92,7 +92,7 @@
  src/plugins/platforms/windows/qwindowscontext.cpp  |  168 +-
  src/plugins/platforms/windows/qwindowscontext.h    |   98 ++
  .../platforms/windows/qwindowsintegration.cpp      |  143 +-
- .../platforms/windows/qwindowskeymapper.cpp        |   24 +-
+ .../platforms/windows/qwindowskeymapper.cpp        |   22 +-
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
  src/plugins/platforms/windows/qwindowsscreen.cpp   |   65 +-
  src/plugins/platforms/windows/qwindowstheme.cpp    |  133 +-
@@ -120,7 +120,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 122 files changed, 1420 insertions(+), 7813 deletions(-)
+ 122 files changed, 1428 insertions(+), 7812 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -2871,12 +2871,22 @@ index 465bd07a07..0000000000
 -
 -#endif
 diff --git a/src/gui/opengl/qopengl.cpp b/src/gui/opengl/qopengl.cpp
-index d8b22050c1..ffc55dec1c 100644
+index edb359f686..ffc55dec1c 100644
 --- a/src/gui/opengl/qopengl.cpp
 +++ b/src/gui/opengl/qopengl.cpp
-@@ -210,7 +210,10 @@ struct OsTypeTerm
-             ver = QStringLiteral("8.1");
-             break;
+@@ -200,8 +200,20 @@ struct OsTypeTerm
+         const auto osver = QOperatingSystemVersion::current();
+ #define Q_WINVER(major, minor) (major << 8 | minor)
+         switch (Q_WINVER(osver.majorVersion(), osver.minorVersion())) {
++        case Q_WINVER(6, 1):
++            ver = QStringLiteral("7");
++            break;
++        case Q_WINVER(6, 2):
++            ver = QStringLiteral("8");
++            break;
++        case Q_WINVER(6, 3):
++            ver = QStringLiteral("8.1");
++            break;
          case Q_WINVER(10, 0):
 -            ver = QStringLiteral("10");
 +            if (osver.minorVersion() >= 22000)
@@ -10323,7 +10333,7 @@ index 2faeb7456b..8e4a38d630 100644
                      qCDebug(lcQpaWindow, "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2");
                      dpiAwarenessSet = true;
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
-index 6a6d8ac5a9..22d2ad280d 100644
+index 5aa13168bd..5c8355e9f2 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
 +++ b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 @@ -749,21 +749,10 @@ static inline QString messageKeyText(const MSG &msg)
@@ -10361,16 +10371,7 @@ index 6a6d8ac5a9..22d2ad280d 100644
  
      EnableMenuItem(menu, SC_MINIMIZE, (topLevel->flags() & Qt::WindowMinimizeButtonHint) ? enabled : disabled);
      const bool maximized = IsZoomed(topLevelHwnd);
-@@ -798,7 +787,7 @@ static void showSystemMenu(QWindow* w)
-     SecureZeroMemory(&restoreItem, sizeof(restoreItem));
-     restoreItem.cbSize = sizeof(restoreItem);
-     restoreItem.fMask = MIIM_STATE;
--    restoreItem.fState = MFS_HILITE | (maximized ? MFS_ENABLED : MFS_GRAYED);
-+    restoreItem.fState = MFS_HILITE | (maximized ? MFS_ENABLED : MFS_DISABLED);
-     SetMenuItemInfoW(menu, SC_RESTORE, FALSE, &restoreItem);
- 
-     // Set bold on close menu item
-@@ -812,7 +801,8 @@ static void showSystemMenu(QWindow* w)
+@@ -808,7 +797,8 @@ static void showSystemMenu(QWindow* w)
  #undef disabled
  
      const QPoint pos = QHighDpi::toNativePixels(topLevel->geometry().topLeft(), topLevel);
