@@ -179,7 +179,7 @@ index 8715f7f84b..858e473e9a 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 13da9775f0..7a97172138 100644
+index 13da9775f0..830e12bc50 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -242,26 +242,33 @@ if (MSVC)
@@ -260,7 +260,7 @@ index 13da9775f0..7a97172138 100644
 +endif()
 +
 +# Mitigate for Spectre security vulnerabilities
-+#[[if(QT_FEATURE_spectre)
++if(QT_FEATURE_spectre)
 +    if(CLANG)
 +        target_compile_options(PlatformCommonInternal INTERFACE
 +            -mretpoline
@@ -280,7 +280,7 @@ index 13da9775f0..7a97172138 100644
 +            -Qspectre-load
 +        )
 +    endif()
-+endif()]]
++endif()
 +
 +# EH Continuation Metadata Guard
 +if(QT_FEATURE_ehcont)
