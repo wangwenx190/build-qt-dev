@@ -6,7 +6,6 @@
  configure.cmake                                    |   10 +
  qmake/main.cpp                                     |    1 +
  qt_cmdline.cmake                                   |    2 +
- src/corelib/CMakeLists.txt                         |    2 -
  src/corelib/Qt6CoreMacros.cmake                    |   14 +-
  src/corelib/global/qconfig.cpp.in                  |   15 +-
  src/corelib/global/qlibraryinfo.cpp                |   53 +-
@@ -120,7 +119,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 122 files changed, 1428 insertions(+), 7812 deletions(-)
+ 121 files changed, 1428 insertions(+), 7810 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -366,7 +365,7 @@ index 91a3df5f33..bce900e5c7 100644
  qt_configure_add_summary_entry(
      TYPE "featureList"
 diff --git a/qmake/main.cpp b/qmake/main.cpp
-index 9b96ab7338..301cd9f231 100644
+index 4d5f6a7d84..e7bdd246ef 100644
 --- a/qmake/main.cpp
 +++ b/qmake/main.cpp
 @@ -573,6 +573,7 @@ QT_END_NAMESPACE
@@ -390,19 +389,6 @@ index 5450b2562c..0bfc75636b 100644
  # special case begin
  qt_commandline_option(make TYPE addString VALUES examples libs tests tools
                        benchmarks manual-tests minimal-static-tests)
-diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
-index ba81624c63..32e8456136 100644
---- a/src/corelib/CMakeLists.txt
-+++ b/src/corelib/CMakeLists.txt
-@@ -837,8 +837,6 @@ qt_internal_extend_target(Core CONDITION QT_FEATURE_regularexpression
- qt_internal_extend_target(Core CONDITION QT_FEATURE_openssl_linked AND QT_FEATURE_opensslv30
-     LIBRARIES
-         WrapOpenSSL::WrapOpenSSL
--    PRIVATE_MODULE_INTERFACE
--        WrapOpenSSL::WrapOpenSSL
- )
- 
- qt_internal_extend_target(Core CONDITION QT_FEATURE_hijricalendar
 diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
 index dfd37c43af..e5a9b74701 100644
 --- a/src/corelib/Qt6CoreMacros.cmake
@@ -481,7 +467,7 @@ index 016bdf40d1..f11831f178 100644
 +static constexpr const char qt_commit_str[] = "@QT_QTBASE_COMMIT_STR@";
 +static constexpr const char qt_build_date_time_str[] = "@QT_QTBASE_BUILD_DATE_TIME_STR@";
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
-index f88f72e64c..eceaf011c6 100644
+index 64fc9fff01..c1411fb8c8 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
 +++ b/src/corelib/global/qlibraryinfo.cpp
 @@ -202,9 +202,11 @@ QLibraryInfo::QLibraryInfo()
@@ -807,7 +793,7 @@ index 92fc0e12f3..a0b10a3643 100644
  QT_END_NAMESPACE
  
 diff --git a/src/corelib/global/qsysinfo.cpp b/src/corelib/global/qsysinfo.cpp
-index a06a85b641..5b2de66e0c 100644
+index 8ddcbb0409..bed34c1c14 100644
 --- a/src/corelib/global/qsysinfo.cpp
 +++ b/src/corelib/global/qsysinfo.cpp
 @@ -88,7 +88,7 @@ using namespace Qt::StringLiterals;
@@ -1011,7 +997,7 @@ index 13b8fe224a..2997bb091a 100644
  
      case TempLocation:
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 4d69ca9a17..22ae7bf069 100644
+index 798ac8fdd7..00cd92ff20 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
 @@ -67,15 +67,14 @@
@@ -7681,7 +7667,7 @@ index 21377fb466..0000000000
 -# PLUGIN_EXTENDS = "-"
 diff --git a/src/plugins/platforms/minimal/main.cpp b/src/plugins/platforms/minimal/main.cpp
 deleted file mode 100644
-index 426ca2ad11..0000000000
+index 03cb3ca588..0000000000
 --- a/src/plugins/platforms/minimal/main.cpp
 +++ /dev/null
 @@ -1,30 +0,0 @@
@@ -7709,7 +7695,7 @@ index 426ca2ad11..0000000000
 -    if (!system.compare("minimal"_L1, Qt::CaseInsensitive))
 -        return new QMinimalIntegration(paramList);
 -
--    return 0;
+-    return nullptr;
 -}
 -
 -QT_END_NAMESPACE
@@ -7825,7 +7811,7 @@ index 4bd58fd23d..0000000000
 -#endif
 diff --git a/src/plugins/platforms/minimal/qminimalintegration.cpp b/src/plugins/platforms/minimal/qminimalintegration.cpp
 deleted file mode 100644
-index a145093872..0000000000
+index 240d943f4d..0000000000
 --- a/src/plugins/platforms/minimal/qminimalintegration.cpp
 +++ /dev/null
 @@ -1,173 +0,0 @@
@@ -7889,7 +7875,7 @@ index a145093872..0000000000
 -}
 -
 -QMinimalIntegration::QMinimalIntegration(const QStringList &parameters)
--    : m_fontDatabase(0)
+-    : m_fontDatabase(nullptr)
 -    , m_options(parseOptions(parameters))
 -{
 -    if (qEnvironmentVariableIsSet(debugBackingStoreEnvironmentVariable)
@@ -8169,7 +8155,7 @@ index 6e87744de0..0000000000
 -}
 diff --git a/src/plugins/platforms/offscreen/qoffscreencommon.cpp b/src/plugins/platforms/offscreen/qoffscreencommon.cpp
 deleted file mode 100644
-index 6e063a2b56..0000000000
+index 9152795e9f..0000000000
 --- a/src/plugins/platforms/offscreen/qoffscreencommon.cpp
 +++ /dev/null
 @@ -1,241 +0,0 @@
@@ -8364,7 +8350,7 @@ index 6e063a2b56..0000000000
 -
 -QOffscreenBackingStore *QOffscreenBackingStore::backingStoreForWinId(WId id)
 -{
--    return m_backingStoreForWinIdHash.value(id, 0);
+-    return m_backingStoreForWinIdHash.value(id, nullptr);
 -}
 -
 -void QOffscreenBackingStore::clearHash()
@@ -8524,7 +8510,7 @@ index a3d6227168..0000000000
 -#endif
 diff --git a/src/plugins/platforms/offscreen/qoffscreenintegration.cpp b/src/plugins/platforms/offscreen/qoffscreenintegration.cpp
 deleted file mode 100644
-index 4cd58422c6..0000000000
+index ea8042928a..0000000000
 --- a/src/plugins/platforms/offscreen/qoffscreenintegration.cpp
 +++ /dev/null
 @@ -1,443 +0,0 @@
@@ -8675,7 +8661,7 @@ index 4cd58422c6..0000000000
 -        QString configPrefix("configfile="_L1);
 -        if (param.startsWith(configPrefix)) {
 -            hasConfigFile = true;
--            configFilePath = param.mid(configPrefix.length());
+-            configFilePath = param.mid(configPrefix.size());
 -        }
 -    }
 -    if (!hasConfigFile)
@@ -9461,7 +9447,7 @@ index d7b5120332..0000000000
 -#endif
 diff --git a/src/plugins/platforms/offscreen/qoffscreenwindow.cpp b/src/plugins/platforms/offscreen/qoffscreenwindow.cpp
 deleted file mode 100644
-index 6f61d72ed3..0000000000
+index 20ed0ed91b..0000000000
 --- a/src/plugins/platforms/offscreen/qoffscreenwindow.cpp
 +++ /dev/null
 @@ -1,173 +0,0 @@
@@ -9632,7 +9618,7 @@ index 6f61d72ed3..0000000000
 -
 -QOffscreenWindow *QOffscreenWindow::windowForWinId(WId id)
 -{
--    return m_windowForWinIdHash.value(id, 0);
+-    return m_windowForWinIdHash.value(id, nullptr);
 -}
 -
 -Q_CONSTINIT QHash<WId, QOffscreenWindow *> QOffscreenWindow::m_windowForWinIdHash;
@@ -11236,7 +11222,7 @@ index ba14e61b57..2ee5c12f5f 100644
          // 20221 just happens to be the preview version I run on my laptop where I tested TLS 1.3.
          const auto minimum =
 diff --git a/src/tools/androiddeployqt/main.cpp b/src/tools/androiddeployqt/main.cpp
-index 29df1ba2b1..f56edfbcec 100644
+index 46f5c76ed9..d29150fd70 100644
 --- a/src/tools/androiddeployqt/main.cpp
 +++ b/src/tools/androiddeployqt/main.cpp
 @@ -3098,6 +3098,8 @@ bool writeDependencyFile(const Options &options)
@@ -11320,7 +11306,7 @@ index 71b9757ebc..337d2e7980 100644
      return QT_PREPEND_NAMESPACE(runMoc)(_argc, _argv);
  }
 diff --git a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
-index 6a9ea0c81e..31e2194b0e 100644
+index c5511af734..fed5fc1d6e 100644
 --- a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
 +++ b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
 @@ -423,6 +423,8 @@ static void parseCmdLine(QStringList &arguments)
@@ -11333,7 +11319,7 @@ index 6a9ea0c81e..31e2194b0e 100644
      args.reserve(argc - 1);
      for (int n = 1; n < argc; ++n)
 diff --git a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
-index 7033529326..b9d5909237 100644
+index 5479d7425a..42e71851a2 100644
 --- a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
 +++ b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
 @@ -1086,6 +1086,8 @@ static void writeAdaptor(const QString &filename, const QDBusIntrospection::Inte
@@ -11380,7 +11366,7 @@ index b4e2d749aa..273806b477 100644
      QCoreApplication app(argc, argv);
      app.setApplicationVersion(QTPATHS_VERSION_STR);
 diff --git a/src/tools/qvkgen/qvkgen.cpp b/src/tools/qvkgen/qvkgen.cpp
-index e2c25deb5f..7f49a95b41 100644
+index 924f400510..3a33c064c4 100644
 --- a/src/tools/qvkgen/qvkgen.cpp
 +++ b/src/tools/qvkgen/qvkgen.cpp
 @@ -586,6 +586,8 @@ bool genVulkanFunctionsPC(const QList<VkSpecParser::Command> &commands,
@@ -11427,7 +11413,7 @@ index 2751bc39d6..3449e6bb09 100644
      // we must force a certain hash order when testing or tst_rcc will fail, see QTBUG-25078
      // similar requirements exist for reproducibly builds.
 diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
-index a96b45e293..4e87353aff 100644
+index f9d9ec4ba2..8e43befe8b 100644
 --- a/src/tools/rcc/rcc.cpp
 +++ b/src/tools/rcc/rcc.cpp
 @@ -957,7 +957,7 @@ void RCCResourceLibrary::writeDecimal(int value)
@@ -11476,7 +11462,7 @@ index a96b45e293..4e87353aff 100644
      case Python_Code:
          writeString("qt_resource_struct = b\"\\\n");
 diff --git a/src/tools/syncqt/main.cpp b/src/tools/syncqt/main.cpp
-index 8a1692e5d4..35beae2844 100644
+index b4c37ec626..175f01fe70 100644
 --- a/src/tools/syncqt/main.cpp
 +++ b/src/tools/syncqt/main.cpp
 @@ -28,6 +28,7 @@
@@ -11487,7 +11473,7 @@ index 8a1692e5d4..35beae2844 100644
  
  enum ErrorCodes {
      NoError = 0,
-@@ -1554,6 +1555,8 @@ bool SyncScanner::writeIfDifferent(const std::string &outputFile, const std::str
+@@ -1565,6 +1566,8 @@ bool SyncScanner::writeIfDifferent(const std::string &outputFile, const std::str
  
  int main(int argc, char *argv[])
  {
@@ -11529,10 +11515,10 @@ index c2f117ec21..6a12ab715c 100644
      return QT_PREPEND_NAMESPACE(runUic)(argc, argv);
  }
 diff --git a/src/tools/windeployqt/main.cpp b/src/tools/windeployqt/main.cpp
-index ecd25ab81d..e7d5036b95 100644
+index 5af83975b0..f8be85b869 100644
 --- a/src/tools/windeployqt/main.cpp
 +++ b/src/tools/windeployqt/main.cpp
-@@ -1621,6 +1621,8 @@ QT_USE_NAMESPACE
+@@ -1622,6 +1622,8 @@ QT_USE_NAMESPACE
  
  int main(int argc, char **argv)
  {

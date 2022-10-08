@@ -20,7 +20,7 @@
  19 files changed, 62 insertions(+), 2 deletions(-)
 
 diff --git a/src/assistant/assistant/main.cpp b/src/assistant/assistant/main.cpp
-index 5f253c15..63f77a3a 100644
+index b104d759a..9b7765915 100644
 --- a/src/assistant/assistant/main.cpp
 +++ b/src/assistant/assistant/main.cpp
 @@ -24,6 +24,8 @@
@@ -42,7 +42,7 @@ index 5f253c15..63f77a3a 100644
      QScopedPointer<QCoreApplication> a(createApplication(argc, argv));
  #if QT_CONFIG(library)
 diff --git a/src/designer/src/designer/main.cpp b/src/designer/src/designer/main.cpp
-index e34693d8..e32fac28 100644
+index e34693d89..e32fac287 100644
 --- a/src/designer/src/designer/main.cpp
 +++ b/src/designer/src/designer/main.cpp
 @@ -7,6 +7,7 @@
@@ -63,7 +63,7 @@ index e34693d8..e32fac28 100644
  
      // Enable the QWebEngineView, QQuickWidget plugins on Windows.
 diff --git a/src/distancefieldgenerator/main.cpp b/src/distancefieldgenerator/main.cpp
-index bb852c9c..9ccfb7e5 100644
+index bb852c9cb..9ccfb7e54 100644
 --- a/src/distancefieldgenerator/main.cpp
 +++ b/src/distancefieldgenerator/main.cpp
 @@ -6,10 +6,14 @@
@@ -82,7 +82,7 @@ index bb852c9c..9ccfb7e5 100644
      app.setOrganizationName(QStringLiteral("QtProject"));
      app.setApplicationName(QStringLiteral("Qt Distance Field Generator"));
 diff --git a/src/kmap2qmap/main.cpp b/src/kmap2qmap/main.cpp
-index 79e54d19..9a41080e 100644
+index a38e903b7..b48553bee 100644
 --- a/src/kmap2qmap/main.cpp
 +++ b/src/kmap2qmap/main.cpp
 @@ -2,6 +2,7 @@
@@ -108,7 +108,7 @@ index 79e54d19..9a41080e 100644
  }
 -
 diff --git a/src/linguist/lconvert/main.cpp b/src/linguist/lconvert/main.cpp
-index 72ee551d..c06b811e 100644
+index da2868ee8..6174ca342 100644
 --- a/src/linguist/lconvert/main.cpp
 +++ b/src/linguist/lconvert/main.cpp
 @@ -11,6 +11,7 @@
@@ -129,7 +129,7 @@ index 72ee551d..c06b811e 100644
  #ifndef QT_BOOTSTRAPPED
  #ifndef Q_OS_WIN32
 diff --git a/src/linguist/linguist/main.cpp b/src/linguist/linguist/main.cpp
-index 4c60e848..51a3f6ca 100644
+index 39535c3b3..7c1611d78 100644
 --- a/src/linguist/linguist/main.cpp
 +++ b/src/linguist/linguist/main.cpp
 @@ -17,6 +17,8 @@
@@ -151,7 +151,7 @@ index 4c60e848..51a3f6ca 100644
  
      QApplication app(argc, argv);
 diff --git a/src/linguist/lprodump/main.cpp b/src/linguist/lprodump/main.cpp
-index 83ad442d..5d579973 100644
+index 354f67daf..be08585d6 100644
 --- a/src/linguist/lprodump/main.cpp
 +++ b/src/linguist/lprodump/main.cpp
 @@ -23,6 +23,7 @@
@@ -172,7 +172,7 @@ index 83ad442d..5d579973 100644
      QStringList args = app.arguments();
      QStringList proFiles;
 diff --git a/src/linguist/lrelease-pro/main.cpp b/src/linguist/lrelease-pro/main.cpp
-index b9d48bf0..bd9fd0c6 100644
+index b9d48bf0a..bd9fd0c68 100644
 --- a/src/linguist/lrelease-pro/main.cpp
 +++ b/src/linguist/lrelease-pro/main.cpp
 @@ -10,6 +10,7 @@
@@ -193,7 +193,7 @@ index b9d48bf0..bd9fd0c6 100644
  #ifndef QT_BOOTSTRAPPED
  #ifndef Q_OS_WIN32
 diff --git a/src/linguist/lrelease/main.cpp b/src/linguist/lrelease/main.cpp
-index ed0dbef5..5dbcdc97 100644
+index 86fc7066d..9d752c340 100644
 --- a/src/linguist/lrelease/main.cpp
 +++ b/src/linguist/lrelease/main.cpp
 @@ -20,6 +20,8 @@
@@ -215,7 +215,7 @@ index ed0dbef5..5dbcdc97 100644
  
      ConversionData cd;
 diff --git a/src/linguist/lupdate-pro/main.cpp b/src/linguist/lupdate-pro/main.cpp
-index b33d7015..143547b6 100644
+index b33d7015a..143547b6f 100644
 --- a/src/linguist/lupdate-pro/main.cpp
 +++ b/src/linguist/lupdate-pro/main.cpp
 @@ -16,6 +16,7 @@
@@ -236,7 +236,7 @@ index b33d7015..143547b6 100644
  #ifndef QT_BOOTSTRAPPED
  #ifndef Q_OS_WIN32
 diff --git a/src/linguist/lupdate/main.cpp b/src/linguist/lupdate/main.cpp
-index 09794c8f..0cfd028c 100644
+index 740d5f406..661b5df9f 100644
 --- a/src/linguist/lupdate/main.cpp
 +++ b/src/linguist/lupdate/main.cpp
 @@ -23,6 +23,7 @@
@@ -257,7 +257,7 @@ index 09794c8f..0cfd028c 100644
  #ifndef QT_BOOTSTRAPPED
  #ifndef Q_OS_WIN32
 diff --git a/src/pixeltool/main.cpp b/src/pixeltool/main.cpp
-index 50ce7be5..f3d8a78c 100644
+index 50ce7be5d..f3d8a78c3 100644
 --- a/src/pixeltool/main.cpp
 +++ b/src/pixeltool/main.cpp
 @@ -8,10 +8,14 @@
@@ -276,7 +276,7 @@ index 50ce7be5..f3d8a78c 100644
      QCoreApplication::setApplicationName(QLatin1String("PixelTool"));
      QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
 diff --git a/src/qdbus/qdbus/qdbus.cpp b/src/qdbus/qdbus/qdbus.cpp
-index 251fa733..622c359e 100644
+index 89be6c101..787a996c6 100644
 --- a/src/qdbus/qdbus/qdbus.cpp
 +++ b/src/qdbus/qdbus/qdbus.cpp
 @@ -3,6 +3,7 @@
@@ -302,7 +302,7 @@ index 251fa733..622c359e 100644
  }
 -
 diff --git a/src/qdbus/qdbusviewer/main.cpp b/src/qdbus/qdbusviewer/main.cpp
-index 0681d9ff..5d58ac9c 100644
+index 05a82c652..f5812a3bb 100644
 --- a/src/qdbus/qdbusviewer/main.cpp
 +++ b/src/qdbus/qdbusviewer/main.cpp
 @@ -6,9 +6,12 @@
@@ -319,7 +319,7 @@ index 0681d9ff..5d58ac9c 100644
  
      QCoreApplication::setOrganizationName(QStringLiteral("QtProject"));
 diff --git a/src/qdoc/main.cpp b/src/qdoc/main.cpp
-index c750ddeb..ea3f8be3 100644
+index 51ff61946..95974e5df 100644
 --- a/src/qdoc/main.cpp
 +++ b/src/qdoc/main.cpp
 @@ -34,6 +34,7 @@
@@ -340,7 +340,7 @@ index c750ddeb..ea3f8be3 100644
  #ifndef QT_BOOTSTRAPPED
      // use deterministic hash seed
 diff --git a/src/qev/qev.cpp b/src/qev/qev.cpp
-index ca30c117..e978635e 100644
+index ca30c1173..e978635ee 100644
 --- a/src/qev/qev.cpp
 +++ b/src/qev/qev.cpp
 @@ -6,6 +6,7 @@
@@ -361,7 +361,7 @@ index ca30c117..e978635e 100644
  
      QFile fout;
 diff --git a/src/qtattributionsscanner/main.cpp b/src/qtattributionsscanner/main.cpp
-index 6b9c909a..fb96d07f 100644
+index 6b9c909a9..fb96d07fe 100644
 --- a/src/qtattributionsscanner/main.cpp
 +++ b/src/qtattributionsscanner/main.cpp
 @@ -13,10 +13,13 @@
@@ -379,7 +379,7 @@ index 6b9c909a..fb96d07f 100644
      a.setApplicationName(QStringLiteral("Qt Attributions Scanner"));
      a.setApplicationVersion(QStringLiteral("1.1"));
 diff --git a/src/qtdiag/main.cpp b/src/qtdiag/main.cpp
-index e52f336f..2631d2dc 100644
+index e52f336f7..2631d2dc9 100644
 --- a/src/qtdiag/main.cpp
 +++ b/src/qtdiag/main.cpp
 @@ -8,11 +8,14 @@
@@ -398,7 +398,7 @@ index e52f336f..2631d2dc 100644
  
      QCoreApplication::setApplicationName(QStringLiteral("qtdiag"));
 diff --git a/src/qtplugininfo/qtplugininfo.cpp b/src/qtplugininfo/qtplugininfo.cpp
-index ababb8ec..672e2866 100644
+index ababb8ec3..672e28661 100644
 --- a/src/qtplugininfo/qtplugininfo.cpp
 +++ b/src/qtplugininfo/qtplugininfo.cpp
 @@ -13,6 +13,7 @@
