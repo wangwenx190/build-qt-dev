@@ -1,6 +1,6 @@
  cmake/QtCompilerFlags.cmake                        |    4 +-
  cmake/QtCompilerOptimization.cmake                 |   14 +-
- cmake/QtInternalTargets.cmake                      |   79 +-
+ cmake/QtInternalTargets.cmake                      |   81 +-
  cmake/QtQmakeHelpers.cmake                         |   13 +
  config_help.txt                                    |    2 +
  configure.cmake                                    |   10 +
@@ -91,7 +91,7 @@
  src/plugins/platforms/windows/qwindowscontext.cpp  |  168 +-
  src/plugins/platforms/windows/qwindowscontext.h    |   98 ++
  .../platforms/windows/qwindowsintegration.cpp      |  143 +-
- .../platforms/windows/qwindowskeymapper.cpp        |   22 +-
+ .../platforms/windows/qwindowskeymapper.cpp        |   18 +-
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
  src/plugins/platforms/windows/qwindowsscreen.cpp   |   65 +-
  src/plugins/platforms/windows/qwindowstheme.cpp    |  133 +-
@@ -119,7 +119,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 121 files changed, 1428 insertions(+), 7810 deletions(-)
+ 121 files changed, 1427 insertions(+), 7809 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -179,7 +179,7 @@ index 8715f7f84b..858e473e9a 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 13da9775f0..830e12bc50 100644
+index 13da9775f0..1e20b2eb22 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -242,26 +242,33 @@ if (MSVC)
@@ -206,7 +206,7 @@ index 13da9775f0..830e12bc50 100644
  
      target_compile_options(PlatformCommonInternal INTERFACE
 -        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -Gw>
-+        $<$<NOT:$<CONFIG:Debug>>:-Gw -Gy> # -GT
++        $<$<NOT:$<CONFIG:Debug>>:-GT -Gw -Gy>
 +        # TODO: Add "-GA" for executables.
      )
  
@@ -219,10 +219,11 @@ index 13da9775f0..830e12bc50 100644
      )
  endif()
  
-@@ -273,6 +280,24 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+@@ -273,7 +280,25 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
      target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
  endif()
  
+-if(QT_FEATURE_intelcet)
 +# Control Flow Guard
 +if(MSVC) # Including Clang-CL.
 +    target_compile_options(PlatformCommonInternal INTERFACE
@@ -241,13 +242,16 @@ index 13da9775f0..830e12bc50 100644
 +endif()
 +
 +# Intel Control-flow Enforcement Technology (CET)
- if(QT_FEATURE_intelcet)
++#[[if(QT_FEATURE_intelcet)
      if(MSVC)
          target_link_options(PlatformCommonInternal INTERFACE
-@@ -285,6 +310,54 @@ if(QT_FEATURE_intelcet)
+             -CETCOMPAT
+@@ -283,6 +308,54 @@ if(QT_FEATURE_intelcet)
+             -fcf-protection=full
+         )
      endif()
- endif()
- 
++endif()]]
++
 +# Mitigate for Intel Jump Conditional Code (JCC)
 +if(MSVC AND NOT CLANG)
 +    target_compile_options(PlatformCommonInternal INTERFACE
@@ -294,11 +298,9 @@ index 13da9775f0..830e12bc50 100644
 +    else()
 +        # Is there such feature for the non-MSVC compilers?
 +    endif()
-+endif()
-+
- if(QT_FEATURE_force_asserts)
-     target_compile_definitions(PlatformCommonInternal INTERFACE QT_FORCE_ASSERTS)
  endif()
+ 
+ if(QT_FEATURE_force_asserts)
 diff --git a/cmake/QtQmakeHelpers.cmake b/cmake/QtQmakeHelpers.cmake
 index 2d26d27386..0a5e239980 100644
 --- a/cmake/QtQmakeHelpers.cmake
@@ -2883,7 +2885,7 @@ index edb359f686..d52d23ebe1 100644
          default:
              break;
 diff --git a/src/gui/rhi/cs_tdr_p.h b/src/gui/rhi/cs_tdr_p.h
-index 3e442de39c..8f06781944 100644
+index 3e442de39c..de444200a0 100644
 --- a/src/gui/rhi/cs_tdr_p.h
 +++ b/src/gui/rhi/cs_tdr_p.h
 @@ -70,7 +70,7 @@ ret
@@ -2891,7 +2893,7 @@ index 3e442de39c..8f06781944 100644
  #endif
  
 -const BYTE g_killDeviceByTimingOut[] =
-+static constexpr BYTE g_killDeviceByTimingOut[] =
++inline constexpr BYTE g_killDeviceByTimingOut[] =
  {
       68,  88,  66,  67, 217,  62,
      220,  38, 136,  51,  86, 245,
@@ -3368,7 +3370,7 @@ index 96c7818ee9..f204d7b427 100644
      bool forceFlipDiscard = false;
      bool deviceLost = false;
 diff --git a/src/gui/rhi/vs_test_p.h b/src/gui/rhi/vs_test_p.h
-index e24472cd95..0405e9a630 100644
+index e24472cd95..5feaef7d38 100644
 --- a/src/gui/rhi/vs_test_p.h
 +++ b/src/gui/rhi/vs_test_p.h
 @@ -76,7 +76,7 @@ ret
@@ -3376,7 +3378,7 @@ index e24472cd95..0405e9a630 100644
  #endif
  
 -const BYTE g_testVertexShader[] =
-+static constexpr BYTE g_testVertexShader[] =
++inline constexpr BYTE g_testVertexShader[] =
  {
       68,  88,  66,  67,  75, 198,
       18, 149, 172, 244, 247, 123,
@@ -10319,7 +10321,7 @@ index 2faeb7456b..8e4a38d630 100644
                      qCDebug(lcQpaWindow, "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2");
                      dpiAwarenessSet = true;
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
-index 5aa13168bd..5c8355e9f2 100644
+index 947fbf3f37..697348949d 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
 +++ b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 @@ -749,21 +749,10 @@ static inline QString messageKeyText(const MSG &msg)
@@ -10346,18 +10348,7 @@ index 5aa13168bd..5c8355e9f2 100644
      static constexpr const Qt::WindowFlags titleBarHints =
          Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint | Qt::WindowContextHelpButtonHint;
      return (flags & Qt::WindowSystemMenuHint) && (flags & Qt::WindowTitleHint) && !(flags & titleBarHints)
-@@ -778,8 +767,8 @@ static void showSystemMenu(QWindow* w)
-     if (!menu)
-         return; // no menu for this window
- 
--#define enabled (MF_BYCOMMAND | MF_ENABLED)
--#define disabled (MF_BYCOMMAND | MF_GRAYED)
-+#define enabled (MF_BYCOMMAND | MFS_ENABLED)
-+#define disabled (MF_BYCOMMAND | MFS_DISABLED)
- 
-     EnableMenuItem(menu, SC_MINIMIZE, (topLevel->flags() & Qt::WindowMinimizeButtonHint) ? enabled : disabled);
-     const bool maximized = IsZoomed(topLevelHwnd);
-@@ -808,7 +797,8 @@ static void showSystemMenu(QWindow* w)
+@@ -804,7 +793,8 @@ static void showSystemMenu(QWindow* w)
  #undef disabled
  
      const QPoint pos = QHighDpi::toNativePixels(topLevel->geometry().topLeft(), topLevel);
