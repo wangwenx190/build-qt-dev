@@ -164,18 +164,14 @@ if /i "%__lib_type%" == "static" (
 )
 if /i "%__build_type%" == "debug" (
     set __should_enable_ltcg=false
-    set __ninja_multi_config=false
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Debug -DFEATURE_separate_debug_info=ON -GNinja
 ) else if /i "%__build_type%" == "minsizerel" (
-    set __ninja_multi_config=false
     :: We still set the configuration type to "Release", Qt's own scripts will
     :: modify the compiler flags to match the MinSizeRel mode.
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Release -DFEATURE_optimize_size=ON -GNinja
 ) else if /i "%__build_type%" == "release" (
-    set __ninja_multi_config=false
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Release -GNinja
 ) else if /i "%__build_type%" == "relwithdebinfo" (
-    set __ninja_multi_config=false
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFEATURE_separate_debug_info=ON -GNinja
 ) else (
     set __ninja_multi_config=true
@@ -225,7 +221,7 @@ if /i "%__ninja_multi_config%" == "false" (
 :: Enforcement Technology (CET) to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DFEATURE_icu=ON -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend
@@ -349,7 +345,9 @@ if %errorlevel% neq 0 goto fail
 if %errorlevel% neq 0 goto fail
 :: Copy 3rd party binary files and import libraries from VCPKG.
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.dll" "%__module_install_dir%\bin"
+copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.pdb" "%__module_install_dir%\bin"
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.lib" "%__module_install_dir%\lib"
+copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.pdb" "%__module_install_dir%\lib"
 cd /d "%__repo_root_dir%"
 :: Cleanup. GitHub Actions's machine complains about no enough disk space.
 rd /s /q "%__module_source_dir%"

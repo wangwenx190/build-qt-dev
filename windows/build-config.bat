@@ -26,7 +26,7 @@
 :: qtbase should always be the first one to build.
 :: We need the QtTools module for its linguist tools,
 :: they are necessary for applications that support i18n.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qthttpserver,qtvirtualkeyboard,qtdatavis3d,qtcharts,qtlottie,qtquicktimeline,qtactiveqt,qtremoteobjects,qt3d,qtquick3d,qtmultimedia,qtspeech,qtwebengine
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qthttpserver,qtvirtualkeyboard,qtdatavis3d,qtcharts,qtlottie,qtquicktimeline,qtactiveqt,qtremoteobjects,qt3d,qtquick3d,qtmultimedia,qtspeech,qtwebengine,qttranslations
 :: Supported values: clang-cl, mingw and msvc
 set __compiler=msvc
 :: Supported values: x64, x86 and arm64
@@ -34,5 +34,5 @@ set __arch=x64
 :: Supported values: shared and static
 set __lib_type=shared
 :: Supported values: debug, minsizerel, release, relwithdebinfo and debugandrelease
-set __build_type=release
+set __build_type=relwithdebinfo
 exit /b 0
