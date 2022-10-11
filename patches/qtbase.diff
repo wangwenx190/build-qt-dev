@@ -37,10 +37,8 @@
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
  src/gui/opengl/qopengl.cpp                         |   14 +-
- src/gui/rhi/cs_tdr_p.h                             |    2 +-
  src/gui/rhi/qrhid3d11.cpp                          |  334 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
- src/gui/rhi/vs_test_p.h                            |    2 +-
  .../qnetworklistmanagerevents.cpp                  |   51 +-
  .../networklistmanager/qnetworklistmanagerevents.h |    2 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
@@ -119,7 +117,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 121 files changed, 1426 insertions(+), 7808 deletions(-)
+ 119 files changed, 1424 insertions(+), 7806 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -2882,19 +2880,6 @@ index edb359f686..d52d23ebe1 100644
              break;
          default:
              break;
-diff --git a/src/gui/rhi/cs_tdr_p.h b/src/gui/rhi/cs_tdr_p.h
-index 3e442de39c..de444200a0 100644
---- a/src/gui/rhi/cs_tdr_p.h
-+++ b/src/gui/rhi/cs_tdr_p.h
-@@ -70,7 +70,7 @@ ret
- // Approximately 5 instruction slots used
- #endif
- 
--const BYTE g_killDeviceByTimingOut[] =
-+inline constexpr BYTE g_killDeviceByTimingOut[] =
- {
-      68,  88,  66,  67, 217,  62,
-     220,  38, 136,  51,  86, 245,
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
 index 2a69474433..e47c053969 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
@@ -3367,19 +3352,6 @@ index 96c7818ee9..f204d7b427 100644
      bool supportsAllowTearing = false;
      bool forceFlipDiscard = false;
      bool deviceLost = false;
-diff --git a/src/gui/rhi/vs_test_p.h b/src/gui/rhi/vs_test_p.h
-index e24472cd95..5feaef7d38 100644
---- a/src/gui/rhi/vs_test_p.h
-+++ b/src/gui/rhi/vs_test_p.h
-@@ -76,7 +76,7 @@ ret
- // Approximately 6 instruction slots used
- #endif
- 
--const BYTE g_testVertexShader[] =
-+inline constexpr BYTE g_testVertexShader[] =
- {
-      68,  88,  66,  67,  75, 198,
-      18, 149, 172, 244, 247, 123,
 diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 index 8d4411c10b..0e5f1cc5b8 100644
 --- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
@@ -10319,7 +10291,7 @@ index 2faeb7456b..8e4a38d630 100644
                      qCDebug(lcQpaWindow, "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2");
                      dpiAwarenessSet = true;
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
-index 947fbf3f37..697348949d 100644
+index 044de5f3ea..4d55581596 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
 +++ b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 @@ -749,21 +749,10 @@ static inline QString messageKeyText(const MSG &msg)

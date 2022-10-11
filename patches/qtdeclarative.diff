@@ -19,7 +19,7 @@
  18 files changed, 57 insertions(+)
 
 diff --git a/tools/qml/main.cpp b/tools/qml/main.cpp
-index 51adb49aa8..80bd2ab672 100644
+index 9ad2abe781..7afd42058d 100644
 --- a/tools/qml/main.cpp
 +++ b/tools/qml/main.cpp
 @@ -45,6 +45,7 @@
@@ -40,7 +40,7 @@ index 51adb49aa8..80bd2ab672 100644
  
      if (glShareContexts)
 diff --git a/tools/qmlcachegen/qmlcachegen.cpp b/tools/qmlcachegen/qmlcachegen.cpp
-index e5af2f8bae..77cae582a5 100644
+index 1294a26603..6ebd5e266b 100644
 --- a/tools/qmlcachegen/qmlcachegen.cpp
 +++ b/tools/qmlcachegen/qmlcachegen.cpp
 @@ -23,6 +23,7 @@
@@ -61,7 +61,7 @@ index e5af2f8bae..77cae582a5 100644
      QHashSeed::setDeterministicGlobalSeed();
  
 diff --git a/tools/qmldom/qmldomtool.cpp b/tools/qmldom/qmldomtool.cpp
-index 998f55d21f..56eb711218 100644
+index 30eeda3792..b00b370c60 100644
 --- a/tools/qmldom/qmldomtool.cpp
 +++ b/tools/qmldom/qmldomtool.cpp
 @@ -18,6 +18,7 @@
@@ -121,7 +121,7 @@ index 3aa452c21c..887911e8ca 100644
      QCoreApplication::setApplicationName("qmlformat");
      QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 diff --git a/tools/qmlimportscanner/main.cpp b/tools/qmlimportscanner/main.cpp
-index 1b2dbf285c..ff27ca67d8 100644
+index b36591d1fd..3ce95b3c2e 100644
 --- a/tools/qmlimportscanner/main.cpp
 +++ b/tools/qmlimportscanner/main.cpp
 @@ -32,6 +32,7 @@
@@ -142,7 +142,7 @@ index 1b2dbf285c..ff27ca67d8 100644
      QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
      QStringList args;
 diff --git a/tools/qmljs/qmljs.cpp b/tools/qmljs/qmljs.cpp
-index fd06f974b6..b7bdf3a66b 100644
+index ae01e7560f..95e2b1c29a 100644
 --- a/tools/qmljs/qmljs.cpp
 +++ b/tools/qmljs/qmljs.cpp
 @@ -25,6 +25,7 @@
@@ -163,7 +163,7 @@ index fd06f974b6..b7bdf3a66b 100644
      QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
      QStringList args = app.arguments();
 diff --git a/tools/qmljsrootgen/main.cpp b/tools/qmljsrootgen/main.cpp
-index 553b507664..ad57daad6b 100644
+index 77abd1be54..8e786d20bd 100644
 --- a/tools/qmljsrootgen/main.cpp
 +++ b/tools/qmljsrootgen/main.cpp
 @@ -15,6 +15,8 @@
@@ -206,7 +206,7 @@ index 95cd2ec29c..13dd131555 100644
      QList<QQmlJSLogger::Category> categories;
  
 diff --git a/tools/qmlls/qmllanguageservertool.cpp b/tools/qmlls/qmllanguageservertool.cpp
-index 04714ff02a..9f1d38e026 100644
+index ee49706adc..30d330585f 100644
 --- a/tools/qmlls/qmllanguageservertool.cpp
 +++ b/tools/qmlls/qmllanguageservertool.cpp
 @@ -34,6 +34,7 @@
@@ -227,7 +227,7 @@ index 04714ff02a..9f1d38e026 100644
      // windows does not open stdin/stdout in binary mode by default
      int err = _setmode(_fileno(stdout), _O_BINARY);
 diff --git a/tools/qmlplugindump/main.cpp b/tools/qmlplugindump/main.cpp
-index 95dda5d612..0b01f95c99 100644
+index 0b61a8bb75..de5648adbd 100644
 --- a/tools/qmlplugindump/main.cpp
 +++ b/tools/qmlplugindump/main.cpp
 @@ -34,6 +34,7 @@
@@ -281,7 +281,7 @@ index e89eecbef2..7973c0fb0a 100644
  
      app.parseArguments();
 diff --git a/tools/qmlscene/main.cpp b/tools/qmlscene/main.cpp
-index f4d11caca4..74169db0a9 100644
+index 891b7534bd..18496d65a7 100644
 --- a/tools/qmlscene/main.cpp
 +++ b/tools/qmlscene/main.cpp
 @@ -34,6 +34,8 @@

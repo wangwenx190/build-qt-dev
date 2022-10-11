@@ -21,13 +21,11 @@
 :: SOFTWARE.
 
 @echo off
-:: Build these libraries as static libraries so that we don't have to
-:: distribute a lot of separate dlls along side with Qt.
-:: Feel free to change them if you are worried about license issues.
-set __vcpkg_triplets=x64-windows-static-md
+set __vcpkg_triplets=x64-windows
+:: ZLIB: needed by QtCore
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore & QtWebEngine
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
 :: FFmpeg: needed by QtMultimedia (the FFmpeg backend)
-set __qt_deps=zstd icu openssl ffmpeg
+set __qt_deps=double-conversion pcre2 zlib zstd freetype harfbuzz sqlite3 openssl icu ffmpeg
 exit /b 0

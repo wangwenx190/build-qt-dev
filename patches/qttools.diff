@@ -276,7 +276,7 @@ index 50ce7be5d..f3d8a78c3 100644
      QCoreApplication::setApplicationName(QLatin1String("PixelTool"));
      QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
 diff --git a/src/qdbus/qdbus/qdbus.cpp b/src/qdbus/qdbus/qdbus.cpp
-index 89be6c101..787a996c6 100644
+index f18fdca3a..8f5ae0612 100644
 --- a/src/qdbus/qdbus/qdbus.cpp
 +++ b/src/qdbus/qdbus/qdbus.cpp
 @@ -3,6 +3,7 @@
