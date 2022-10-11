@@ -21,11 +21,10 @@
 :: SOFTWARE.
 
 @echo off
-set __vcpkg_triplets=x64-windows
-:: ZLIB: needed by QtCore
+set __vcpkg_triplets=x64-windows-static-md
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore & QtWebEngine
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
 :: FFmpeg: needed by QtMultimedia (the FFmpeg backend)
-set __qt_deps=double-conversion pcre2 zlib zstd freetype harfbuzz sqlite3 openssl icu ffmpeg
+set __qt_deps=zstd openssl ffmpeg
 exit /b 0

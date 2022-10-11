@@ -34,5 +34,5 @@ set __arch=x64
 :: Supported values: shared and static
 set __lib_type=shared
 :: Supported values: debug, minsizerel, release, relwithdebinfo and debugandrelease
-set __build_type=relwithdebinfo
+set __build_type=release
 exit /b 0
