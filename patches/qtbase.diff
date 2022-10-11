@@ -1,6 +1,6 @@
  cmake/QtCompilerFlags.cmake                        |    4 +-
  cmake/QtCompilerOptimization.cmake                 |   14 +-
- cmake/QtInternalTargets.cmake                      |   79 +-
+ cmake/QtInternalTargets.cmake                      |   80 +-
  cmake/QtQmakeHelpers.cmake                         |   13 +
  config_help.txt                                    |    2 +
  configure.cmake                                    |   10 +
@@ -117,7 +117,7 @@
  src/tools/uic/main.cpp                             |    1 +
  src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 119 files changed, 1424 insertions(+), 7806 deletions(-)
+ 119 files changed, 1425 insertions(+), 7806 deletions(-)
 
 diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
 index 62bd63bd22..5db56ee857 100644
@@ -177,10 +177,10 @@ index 8715f7f84b..858e473e9a 100644
  
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 13da9775f0..5df7f8dede 100644
+index 13da9775f0..8a70aa0e99 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -242,26 +242,33 @@ if (MSVC)
+@@ -242,26 +242,34 @@ if (MSVC)
      if (MSVC_VERSION GREATER_EQUAL 1909 AND NOT CLANG)
          target_compile_options(PlatformCommonInternal INTERFACE
              -Zc:referenceBinding
@@ -204,6 +204,7 @@ index 13da9775f0..5df7f8dede 100644
  
      target_compile_options(PlatformCommonInternal INTERFACE
 -        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -Gw>
++        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:-JMC>
 +        $<$<NOT:$<CONFIG:Debug>>:-GT -Gw -Gy>
 +        # TODO: Add "-GA" for executables.
      )
@@ -217,7 +218,7 @@ index 13da9775f0..5df7f8dede 100644
      )
  endif()
  
-@@ -273,6 +280,24 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
+@@ -273,6 +281,24 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
      target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
  endif()
  
@@ -242,7 +243,7 @@ index 13da9775f0..5df7f8dede 100644
  if(QT_FEATURE_intelcet)
      if(MSVC)
          target_link_options(PlatformCommonInternal INTERFACE
-@@ -285,6 +310,54 @@ if(QT_FEATURE_intelcet)
+@@ -285,6 +311,54 @@ if(QT_FEATURE_intelcet)
      endif()
  endif()
  
