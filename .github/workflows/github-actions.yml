@@ -27,12 +27,12 @@ jobs:
         path: |
           C:/Program Files/LLVM
           ./llvm
-        key: llvm-15.0.2
+        key: llvm-15.0.1
 
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
       with:
-        version: "15.0.2"
+        version: "15.0.1"
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
     - name: Set up Node.js
