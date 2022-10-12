@@ -20,14 +20,35 @@ jobs:
       run: call C:/GitHub_Actions/build-qt-dev/windows-git.bat
       shell: cmd
 
-    - name: Set up Vulkan SDK (QtGui)
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
+    - name: Cache LLVM and Clang
+      id: cache-llvm
+      uses: actions/cache@v3
+      with:
+        path: |
+          C:/Program Files/LLVM
+          ./llvm
+        key: llvm-15.0.2
+
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "15.0.2"
+        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: latest
+        cache: 'npm'
+
+    - name: Set up Vulkan SDK
+      uses: humbletim/setup-vulkan-sdk@v1
       with:
         vulkan-query-version: 1.3.224.1 # Current latest version.
         vulkan-components: Vulkan-Headers, Vulkan-Loader
         vulkan-use-cache: true
 
-    - name: Set up VCPKG (QtBase)
+    - name: Set up VCPKG
       working-directory: C:/GitHub_Actions/build-qt-dev
       run: call C:/GitHub_Actions/build-qt-dev/windows-vcpkg.bat
       shell: cmd
