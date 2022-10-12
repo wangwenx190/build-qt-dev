@@ -364,7 +364,7 @@ index 91a3df5f33..bce900e5c7 100644
  qt_configure_add_summary_entry(
      TYPE "featureList"
 diff --git a/qmake/main.cpp b/qmake/main.cpp
-index 4d5f6a7d84..e7bdd246ef 100644
+index da2bd9eefb..74a486aa84 100644
 --- a/qmake/main.cpp
 +++ b/qmake/main.cpp
 @@ -573,6 +573,7 @@ QT_END_NAMESPACE
@@ -996,7 +996,7 @@ index 13b8fe224a..2997bb091a 100644
  
      case TempLocation:
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 798ac8fdd7..00cd92ff20 100644
+index fda283b9ef..657337d82b 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
 @@ -67,15 +67,14 @@
@@ -1076,7 +1076,7 @@ index 798ac8fdd7..00cd92ff20 100644
  #endif
  #endif
 diff --git a/src/corelib/kernel/qeventdispatcher_win.cpp b/src/corelib/kernel/qeventdispatcher_win.cpp
-index 04e1abf16a..a6376f9b78 100644
+index 1c54c97514..3577cb5f52 100644
 --- a/src/corelib/kernel/qeventdispatcher_win.cpp
 +++ b/src/corelib/kernel/qeventdispatcher_win.cpp
 @@ -18,6 +18,8 @@
@@ -2882,7 +2882,7 @@ index edb359f686..d52d23ebe1 100644
          default:
              break;
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index 2a69474433..e47c053969 100644
+index 3ef1fa394e..88eaddffc5 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
 +++ b/src/gui/rhi/qrhid3d11.cpp
 @@ -9,6 +9,8 @@
@@ -5064,7 +5064,7 @@ index e22727f37f..0000000000
 -#endif // QWINDOWSDIRECT2DPAINTDEVICE_H
 diff --git a/src/plugins/platforms/direct2d/qwindowsdirect2dpaintengine.cpp b/src/plugins/platforms/direct2d/qwindowsdirect2dpaintengine.cpp
 deleted file mode 100644
-index bed06dc62d..0000000000
+index bc304f78be..0000000000
 --- a/src/plugins/platforms/direct2d/qwindowsdirect2dpaintengine.cpp
 +++ /dev/null
 @@ -1,1814 +0,0 @@
@@ -6721,7 +6721,7 @@ index bed06dc62d..0000000000
 -        p.setPen(state()->pen);
 -
 -        auto *extended = static_cast<QPaintEngineEx *>(engine);
--        for (const QPainterClipInfo &info : qAsConst(state()->clipInfo)) {
+-        for (const QPainterClipInfo &info : std::as_const(state()->clipInfo)) {
 -            extended->state()->matrix = info.matrix;
 -            extended->transformChanged();
 -
@@ -8128,7 +8128,7 @@ index 6e87744de0..0000000000
 -}
 diff --git a/src/plugins/platforms/offscreen/qoffscreencommon.cpp b/src/plugins/platforms/offscreen/qoffscreencommon.cpp
 deleted file mode 100644
-index 9152795e9f..0000000000
+index 923fffb29c..0000000000
 --- a/src/plugins/platforms/offscreen/qoffscreencommon.cpp
 +++ /dev/null
 @@ -1,241 +0,0 @@
@@ -8329,7 +8329,7 @@ index 9152795e9f..0000000000
 -void QOffscreenBackingStore::clearHash()
 -{
 -    for (auto it = m_windowAreaHash.cbegin(), end = m_windowAreaHash.cend(); it != end; ++it) {
--        const auto it2 = qAsConst(m_backingStoreForWinIdHash).find(it.key());
+-        const auto it2 = std::as_const(m_backingStoreForWinIdHash).find(it.key());
 -        if (it2.value() == this)
 -            m_backingStoreForWinIdHash.erase(it2);
 -    }
@@ -9738,7 +9738,7 @@ index 026e81cb0c..1fabf7a261 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index c95f2ef272..f8668fb949 100644
+index fd3cd94a13..9d9d68ead5 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -119,15 +119,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -10330,7 +10330,7 @@ index 044de5f3ea..4d55581596 100644
                                 TPM_LEFTALIGN | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 pos.x(), pos.y() + titleBarOffset,
 diff --git a/src/plugins/platforms/windows/qwindowspointerhandler.cpp b/src/plugins/platforms/windows/qwindowspointerhandler.cpp
-index 4aa5246a00..7cd885cc24 100644
+index 488d5f89b5..e422244d2a 100644
 --- a/src/plugins/platforms/windows/qwindowspointerhandler.cpp
 +++ b/src/plugins/platforms/windows/qwindowspointerhandler.cpp
 @@ -47,10 +47,13 @@ QWindowsPointerHandler::~QWindowsPointerHandler()
@@ -11184,7 +11184,7 @@ index ba14e61b57..2ee5c12f5f 100644
          // 20221 just happens to be the preview version I run on my laptop where I tested TLS 1.3.
          const auto minimum =
 diff --git a/src/tools/androiddeployqt/main.cpp b/src/tools/androiddeployqt/main.cpp
-index 46f5c76ed9..d29150fd70 100644
+index 61d58704fc..29ae471197 100644
 --- a/src/tools/androiddeployqt/main.cpp
 +++ b/src/tools/androiddeployqt/main.cpp
 @@ -3098,6 +3098,8 @@ bool writeDependencyFile(const Options &options)
@@ -11268,7 +11268,7 @@ index 71b9757ebc..337d2e7980 100644
      return QT_PREPEND_NAMESPACE(runMoc)(_argc, _argv);
  }
 diff --git a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
-index c5511af734..fed5fc1d6e 100644
+index 08e3fcf066..8893c87ea0 100644
 --- a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
 +++ b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
 @@ -423,6 +423,8 @@ static void parseCmdLine(QStringList &arguments)
@@ -11281,7 +11281,7 @@ index c5511af734..fed5fc1d6e 100644
      args.reserve(argc - 1);
      for (int n = 1; n < argc; ++n)
 diff --git a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
-index 5479d7425a..42e71851a2 100644
+index 4f23b8604d..c80e6bc821 100644
 --- a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
 +++ b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
 @@ -1086,6 +1086,8 @@ static void writeAdaptor(const QString &filename, const QDBusIntrospection::Inte
@@ -11375,7 +11375,7 @@ index 2751bc39d6..3449e6bb09 100644
      // we must force a certain hash order when testing or tst_rcc will fail, see QTBUG-25078
      // similar requirements exist for reproducibly builds.
 diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
-index f9d9ec4ba2..8e43befe8b 100644
+index a87f15de33..26fe095ec0 100644
 --- a/src/tools/rcc/rcc.cpp
 +++ b/src/tools/rcc/rcc.cpp
 @@ -957,7 +957,7 @@ void RCCResourceLibrary::writeDecimal(int value)
@@ -11477,7 +11477,7 @@ index c2f117ec21..6a12ab715c 100644
      return QT_PREPEND_NAMESPACE(runUic)(argc, argv);
  }
 diff --git a/src/tools/windeployqt/main.cpp b/src/tools/windeployqt/main.cpp
-index 5af83975b0..f8be85b869 100644
+index a41ef6cac1..2309368d56 100644
 --- a/src/tools/windeployqt/main.cpp
 +++ b/src/tools/windeployqt/main.cpp
 @@ -1622,6 +1622,8 @@ QT_USE_NAMESPACE

@@ -227,7 +227,7 @@ index ee49706adc..30d330585f 100644
      // windows does not open stdin/stdout in binary mode by default
      int err = _setmode(_fileno(stdout), _O_BINARY);
 diff --git a/tools/qmlplugindump/main.cpp b/tools/qmlplugindump/main.cpp
-index 0b61a8bb75..de5648adbd 100644
+index dac28320f6..59fcee9319 100644
 --- a/tools/qmlplugindump/main.cpp
 +++ b/tools/qmlplugindump/main.cpp
 @@ -34,6 +34,7 @@
