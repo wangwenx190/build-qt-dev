@@ -20,12 +20,6 @@ jobs:
       run: call C:/GitHub_Actions/build-qt-dev/windows-git.bat
       shell: cmd
 
-    - name: Install LLVM SDK
-      uses: KyleMayes/install-llvm-action@v1
-      with:
-        version: "15.0.1"
-        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
-
     - name: Cache LLVM SDK
       id: cache-llvm
       uses: actions/cache@v3
@@ -35,11 +29,11 @@ jobs:
           ./llvm
         key: llvm-15.0.1
 
-#    - name: Set up Node.js
-#      uses: actions/setup-node@v3
-#      with:
-#        node-version: latest
-#        cache: 'npm'
+    - name: Install LLVM SDK
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "15.0.1"
+        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
     - name: Install Vulkan SDK
       uses: humbletim/install-vulkan-sdk@v1
