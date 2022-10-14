@@ -219,20 +219,13 @@ if /i "%__compiler%" == "msvc" (
 )
 :: The "relocatable" feature will be disabled for static builds automatically, so here
 :: we explicitly enable it unconditionally.
-:: The official Qt packages always use the bundled 3rd-party libraries, but we don't
-:: because there may be multiple libraries/applications depend on them and link against
-:: them statically all the time doesn't seem to be an ideal action.
-:: And we also enable the ICU feature here, without it Qt's codec handling will be quite
-:: limited, and QtWebEngine can make use of it as well.
 :: "INPUT_openssl" controls how Qt links against the OpenSSL libraries. By default Qt will
-:: try to load OpenSSL libraries dynamically at runtime, if they can't be found or loaded,
+:: try to load OpenSSL libraries dynamically at runtime, if they can't be loaded successfully,
 :: Qt will then try to use the fallback implementation. QtNetwork will have some limitations
 :: if the OpenSSL libraries are not available.
-:: We also enable the mitigation for the Spectre security vulnerabilities and the Control-flow
-:: Enforcement Technology (CET) to make our applications and libraries extra safe.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_icu=OFF -DFEATURE_system_doubleconversion=OFF -DFEATURE_system_pcre2=OFF -DFEATURE_system_zlib=OFF -DFEATURE_system_freetype=OFF -DFEATURE_system_harfbuzz=OFF -DFEATURE_system_sqlite=OFF -DINPUT_openssl=linked -DINPUT_intelcet=yes -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_icu=OFF -DFEATURE_system_doubleconversion=OFF -DFEATURE_system_pcre2=OFF -DFEATURE_system_zlib=OFF -DFEATURE_system_freetype=OFF -DFEATURE_system_harfbuzz=OFF -DFEATURE_system_sqlite=OFF -DINPUT_openssl=linked
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend

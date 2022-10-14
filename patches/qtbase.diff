@@ -1,28 +1,11 @@
- cmake/QtCompilerFlags.cmake                        |    4 +-
- cmake/QtCompilerOptimization.cmake                 |   14 +-
- cmake/QtInternalTargets.cmake                      |   80 +-
- cmake/QtQmakeHelpers.cmake                         |   13 +
- config_help.txt                                    |    2 +
- configure.cmake                                    |   10 +
- qmake/main.cpp                                     |    1 +
- qt_cmdline.cmake                                   |    2 +
- src/corelib/Qt6CoreMacros.cmake                    |   14 +-
- src/corelib/global/qconfig.cpp.in                  |   15 +-
- src/corelib/global/qlibraryinfo.cpp                |   53 +-
- src/corelib/global/qlibraryinfo.h                  |    5 +
- src/corelib/global/qoperatingsystemversion.cpp     |   41 +
+ src/corelib/global/qlibraryinfo.cpp                |    9 +-
  src/corelib/global/qoperatingsystemversion.h       |   36 +
- .../global/qoperatingsystemversion_darwin.mm       |    2 +-
- src/corelib/global/qoperatingsystemversion_win.cpp |   36 +-
- src/corelib/global/qoperatingsystemversion_win_p.h |    2 +-
- src/corelib/global/qsysinfo.cpp                    |   44 +-
- src/corelib/io/qstandardpaths_win.cpp              |   34 +-
- src/corelib/kernel/qcoreapplication.cpp            |   34 +-
+ src/corelib/global/qoperatingsystemversion_win.cpp |   17 +-
+ src/corelib/global/qsysinfo.cpp                    |   32 +-
  src/corelib/kernel/qeventdispatcher_win.cpp        |   13 +-
- src/corelib/kernel/qfunctions_win.cpp              |   15 +-
+ src/corelib/kernel/qfunctions_win.cpp              |   13 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
- src/entrypoint/qtentrypoint_win.cpp                |   38 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -37,10 +20,9 @@
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
  src/gui/opengl/qopengl.cpp                         |   14 +-
- src/gui/rhi/qrhid3d11.cpp                          |  334 ++--
+ src/gui/rhi/qrhid3d11.cpp                          |  322 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
- .../qnetworklistmanagerevents.cpp                  |   51 +-
- .../networklistmanager/qnetworklistmanagerevents.h |    2 +-
+ .../qnetworklistmanagerevents.cpp                  |   39 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
  src/plugins/platforms/direct2d/CMakeLists.txt      |  224 ---
  src/plugins/platforms/direct2d/direct2d.json       |    3 -
@@ -86,447 +68,27 @@
  src/plugins/platforms/offscreen/qoffscreenwindow.h |   49 -
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
  src/plugins/platforms/windows/qwin10helpers.cpp    |   39 +-
- src/plugins/platforms/windows/qwindowscontext.cpp  |  168 +-
+ src/plugins/platforms/windows/qwindowscontext.cpp  |  166 +-
  src/plugins/platforms/windows/qwindowscontext.h    |   98 ++
- .../platforms/windows/qwindowsintegration.cpp      |  143 +-
+ .../platforms/windows/qwindowsintegration.cpp      |    8 +-
  .../platforms/windows/qwindowskeymapper.cpp        |   18 +-
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
- src/plugins/platforms/windows/qwindowsscreen.cpp   |   65 +-
+ src/plugins/platforms/windows/qwindowsscreen.cpp   |   45 +-
  src/plugins/platforms/windows/qwindowstheme.cpp    |  133 +-
- src/plugins/platforms/windows/qwindowswindow.cpp   |   88 +-
+ src/plugins/platforms/windows/qwindowswindow.cpp   |   77 +-
  .../uiautomation/qwindowsuiaaccessibility.cpp      |    9 +-
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   53 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   15 +
- src/plugins/tls/schannel/qtls_schannel.cpp         |    2 +-
- src/tools/androiddeployqt/main.cpp                 |    2 +
- src/tools/androidtestrunner/main.cpp               |    2 +
- src/tools/cmake_automoc_parser/main.cpp            |    2 +
- src/tools/macdeployqt/macdeployqt/main.cpp         |    3 +
- src/tools/moc/main.cpp                             |    2 +
- src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp            |    2 +
- src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp            |    2 +
- src/tools/qlalr/main.cpp                           |    2 +
- src/tools/qtpaths/qtpaths.cpp                      |    3 +
- src/tools/qvkgen/qvkgen.cpp                        |    2 +
- src/tools/rcc/main.cpp                             |    9 +-
- src/tools/rcc/rcc.cpp                              |   10 +-
- src/tools/syncqt/main.cpp                          |    3 +
- src/tools/tracegen/tracegen.cpp                    |    3 +
- src/tools/uic/main.cpp                             |    1 +
- src/tools/windeployqt/main.cpp                     |    2 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 119 files changed, 1425 insertions(+), 7806 deletions(-)
+ 84 files changed, 941 insertions(+), 7656 deletions(-)
 
-diff --git a/cmake/QtCompilerFlags.cmake b/cmake/QtCompilerFlags.cmake
-index 62bd63bd22..5db56ee857 100644
---- a/cmake/QtCompilerFlags.cmake
-+++ b/cmake/QtCompilerFlags.cmake
-@@ -8,18 +8,16 @@
- # property checked below, and is equivalent to qmake's CONFIG += warn_off.
- 
- set(_qt_compiler_warning_flags_on "")
--set(_qt_compiler_warning_flags_off "")
-+set(_qt_compiler_warning_flags_off "-w")
- 
- if (MSVC)
-     list(APPEND _qt_compiler_warning_flags_on /W3)
--    list(APPEND _qt_compiler_warning_flags_off -W0)
- else()
-     if(CMAKE_CXX_COMPILER_ID STREQUAL "GHS") # There is no -Wextra flag for GHS compiler.
-         list(APPEND _qt_compiler_warning_flags_on -Wall)
-     else()
-         list(APPEND _qt_compiler_warning_flags_on -Wall -Wextra)
-     endif()
--    list(APPEND _qt_compiler_warning_flags_off -w)
- endif()
- 
- set(_qt_compiler_warning_flags_condition
-diff --git a/cmake/QtCompilerOptimization.cmake b/cmake/QtCompilerOptimization.cmake
-index 8715f7f84b..858e473e9a 100644
---- a/cmake/QtCompilerOptimization.cmake
-+++ b/cmake/QtCompilerOptimization.cmake
-@@ -92,14 +92,14 @@ endif()
- 
- # Windows MSVC
- if(MSVC)
--    set(QT_CFLAGS_OPTIMIZE "-O2")
--    set(QT_CFLAGS_OPTIMIZE_DEBUG "-Od")
--    set(QT_CFLAGS_OPTIMIZE_SIZE "-O1")
--    set(QT_CFLAGS_OPTIMIZE_VALID_VALUES "/O2" "/O1" "/Od" "/Ob0" "/Ob1" "/Ob2" "/O0" "-O0")
-+    set(QT_CFLAGS_OPTIMIZE "-O2 -Ob3 -Oi -Oy")
-+    set(QT_CFLAGS_OPTIMIZE_DEBUG "-Od -Ob0")
-+    set(QT_CFLAGS_OPTIMIZE_SIZE "-O1 -Ob2")
-+    set(QT_CFLAGS_OPTIMIZE_VALID_VALUES "/O2" "/O1" "/Od" "/Ob0" "/Ob1" "/Ob2" "/Ob3" "/O0" "-O0")
- 
-     if(CLANG)
--        set(QT_CFLAGS_OPTIMIZE_FULL "/clang:-O3")
--        set(QT_CFLAGS_OPTIMIZE_SIZE "/clang:-Oz")
-+        set(QT_CFLAGS_OPTIMIZE_FULL "/clang:-O3 -Ob2 -Oi -Oy")
-+        set(QT_CFLAGS_OPTIMIZE_SIZE "/clang:-Oz -Ob1")
-     endif()
- endif()
- 
-@@ -127,6 +127,6 @@ if(WASM)
-     set(QT_CFLAGS_OPTIMIZE_SIZE "-Os")
-     set(QT_CFLAGS_OPTIMIZE_DEBUG "-g2")
- 
--    set(QT_CFLAGS_SSE2 -O2 -msimd128 -msse -msse2)
-+    set(QT_CFLAGS_SSE2 "-O2 -msimd128 -msse -msse2")
- 
- endif()
-diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 13da9775f0..8a70aa0e99 100644
---- a/cmake/QtInternalTargets.cmake
-+++ b/cmake/QtInternalTargets.cmake
-@@ -242,26 +242,34 @@ if (MSVC)
-     if (MSVC_VERSION GREATER_EQUAL 1909 AND NOT CLANG)
-         target_compile_options(PlatformCommonInternal INTERFACE
-             -Zc:referenceBinding
-+            -Zc:ternary
-         )
-     endif()
-     if (MSVC_VERSION GREATER_EQUAL 1919 AND NOT CLANG)
-         target_compile_options(PlatformCommonInternal INTERFACE
-             -Zc:externConstexpr
-+            -Zc:lambda
-+            -Zc:preprocessor
-+            -Zc:char8_t
-         )
-     endif()
- 
-     target_compile_options(PlatformCommonInternal INTERFACE
-         -Zc:wchar_t
-         -bigobj
-+        -await:strict
-     )
- 
-     target_compile_options(PlatformCommonInternal INTERFACE
--        $<$<NOT:$<CONFIG:Debug>>:-guard:cf -Gw>
-+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:-JMC>
-+        $<$<NOT:$<CONFIG:Debug>>:-GT -Gw -Gy>
-+        # TODO: Add "-GA" for executables.
-     )
- 
-     target_link_options(PlatformCommonInternal INTERFACE
--        -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE
--        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF -GUARD:CF>
-+        -DYNAMICBASE -NXCOMPAT -LARGEADDRESSAWARE -HIGHENTROPYVA
-+        $<$<NOT:$<CONFIG:Debug>>:-OPT:REF -OPT:ICF>
-+        # TODO: Add "-TSAWARE" for executables.
-     )
- endif()
- 
-@@ -273,6 +281,24 @@ if (GCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "9.2")
-     target_compile_options(PlatformCommonInternal INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wsuggest-override>)
- endif()
- 
-+# Control Flow Guard
-+if(MSVC) # Including Clang-CL.
-+    target_compile_options(PlatformCommonInternal INTERFACE
-+        $<$<NOT:$<CONFIG:Debug>>:-guard:cf>
-+    )
-+    target_link_options(PlatformCommonInternal INTERFACE
-+        $<$<NOT:$<CONFIG:Debug>>:-GUARD:CF>
-+    )
-+elseif(CLANG)
-+    target_compile_options(PlatformCommonInternal INTERFACE
-+        $<$<NOT:$<CONFIG:Debug>>:-Xclang -cfguard>
-+    )
-+    target_link_options(PlatformCommonInternal INTERFACE
-+        $<$<NOT:$<CONFIG:Debug>>:-Wl,-Xlink,-guard:cf>
-+    )
-+endif()
-+
-+# Intel Control-flow Enforcement Technology (CET)
- if(QT_FEATURE_intelcet)
-     if(MSVC)
-         target_link_options(PlatformCommonInternal INTERFACE
-@@ -285,6 +311,54 @@ if(QT_FEATURE_intelcet)
-     endif()
- endif()
- 
-+# Mitigate for Intel Jump Conditional Code (JCC)
-+if(MSVC AND NOT CLANG)
-+    target_compile_options(PlatformCommonInternal INTERFACE
-+        $<$<NOT:$<CONFIG:Debug>>:-QIntel-jcc-erratum>
-+    )
-+else()
-+    target_compile_options(PlatformCommonInternal INTERFACE
-+        $<$<NOT:$<CONFIG:Debug>>:-Wa,-mno-branches-within-32B-boundaries>
-+    )
-+endif()
-+
-+# Mitigate for Spectre security vulnerabilities
-+if(QT_FEATURE_spectre)
-+    if(CLANG)
-+        target_compile_options(PlatformCommonInternal INTERFACE
-+            -mretpoline
-+        )
-+        target_link_options(PlatformCommonInternal INTERFACE
-+            -z retpolineplt -z now
-+        )
-+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-+        target_compile_options(PlatformCommonInternal INTERFACE
-+            -mindirect-branch=thunk
-+            -mfunction-return=thunk
-+            -mindirect-branch-register
-+            -mindirect-branch-cs-prefix
-+        )
-+    elseif(MSVC)
-+        target_compile_options(PlatformCommonInternal INTERFACE
-+            -Qspectre-load
-+        )
-+    endif()
-+endif()
-+
-+# EH Continuation Metadata Guard
-+if(QT_FEATURE_ehcont)
-+    if(MSVC)
-+        target_compile_options(PlatformCommonInternal INTERFACE
-+            -guard:ehcont
-+        )
-+        target_link_options(PlatformCommonInternal INTERFACE
-+            -GUARD:EHCONT
-+        )
-+    else()
-+        # Is there such feature for the non-MSVC compilers?
-+    endif()
-+endif()
-+
- if(QT_FEATURE_force_asserts)
-     target_compile_definitions(PlatformCommonInternal INTERFACE QT_FORCE_ASSERTS)
- endif()
-diff --git a/cmake/QtQmakeHelpers.cmake b/cmake/QtQmakeHelpers.cmake
-index 2d26d27386..0a5e239980 100644
---- a/cmake/QtQmakeHelpers.cmake
-+++ b/cmake/QtQmakeHelpers.cmake
-@@ -74,6 +74,19 @@ function(qt_generate_qconfig_cpp in_file out_file)
-         endif()
-     endif()
- 
-+    set(QT_QTBASE_COMMIT_STR "UNKNOWN")
-+    find_program(GIT_EXECUTABLE_PATH git)
-+    if(GIT_EXECUTABLE_PATH AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-+        execute_process(
-+            COMMAND ${GIT_EXECUTABLE_PATH} rev-parse HEAD
-+            OUTPUT_VARIABLE QT_QTBASE_COMMIT_STR
-+            OUTPUT_STRIP_TRAILING_WHITESPACE
-+            WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
-+    endif()
-+
-+    set(QT_QTBASE_BUILD_DATE_TIME_STR "UNKNOWN")
-+    string(TIMESTAMP QT_QTBASE_BUILD_DATE_TIME_STR UTC)
-+
-     configure_file(${in_file} ${out_file} @ONLY)
- endfunction()
- 
-diff --git a/config_help.txt b/config_help.txt
-index a02d60e5ce..7ff296931b 100644
---- a/config_help.txt
-+++ b/config_help.txt
-@@ -134,6 +134,8 @@ Build options:
-   -pch ................. Use precompiled headers [auto]
-   -ltcg ................ Use Link Time Code Generation [no]
-   -intelcet ............ Use Intel Control-flow Enforcement Technology [no]
-+  -spectre ............. Mitigate Spectre security vulnerabilities [no]
-+  -ehcont .............. Enable the EH continuation metadata guard [no]
-   -linker [bfd,gold,lld,mold]
-                          Force use of the GNU ld, GNU gold, LLVM/LLD or mold
-                          linker instead of default one (GCC and clang only)
-diff --git a/configure.cmake b/configure.cmake
-index 91a3df5f33..bce900e5c7 100644
---- a/configure.cmake
-+++ b/configure.cmake
-@@ -1105,6 +1105,14 @@ qt_feature("intelcet" PRIVATE
-     LABEL "Using Intel CET"
-     CONDITION ( INPUT_intelcet STREQUAL yes ) OR TEST_intelcet
- )
-+qt_feature("spectre" PRIVATE
-+    LABEL "Spectre"
-+    CONDITION ( INPUT_spectre STREQUAL yes )
-+)
-+qt_feature("ehcont" PRIVATE
-+    LABEL "EH continuation metadata guard"
-+    CONDITION ( INPUT_ehcont STREQUAL yes )
-+)
- qt_configure_add_summary_build_type_and_config()
- qt_configure_add_summary_section(NAME "Build options")
- qt_configure_add_summary_build_mode(Mode)
-@@ -1155,6 +1163,8 @@ qt_configure_add_summary_entry(ARGS "relocatable")
- qt_configure_add_summary_entry(ARGS "precompile_header")
- qt_configure_add_summary_entry(ARGS "ltcg")
- qt_configure_add_summary_entry(ARGS "intelcet")
-+qt_configure_add_summary_entry(ARGS "spectre")
-+qt_configure_add_summary_entry(ARGS "ehcont")
- qt_configure_add_summary_section(NAME "Target compiler supports")
- qt_configure_add_summary_entry(
-     TYPE "featureList"
-diff --git a/qmake/main.cpp b/qmake/main.cpp
-index da2bd9eefb..74a486aa84 100644
---- a/qmake/main.cpp
-+++ b/qmake/main.cpp
-@@ -573,6 +573,7 @@ QT_END_NAMESPACE
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-     // Set name of the qmake application in QCoreApplication instance
-     QT_PREPEND_NAMESPACE(QCoreApplication) app(argc, argv);
-     return QT_PREPEND_NAMESPACE(runQMake)(argc, argv);
-diff --git a/qt_cmdline.cmake b/qt_cmdline.cmake
-index 5450b2562c..0bfc75636b 100644
---- a/qt_cmdline.cmake
-+++ b/qt_cmdline.cmake
-@@ -74,6 +74,8 @@ qt_commandline_option(openssl-runtime TYPE void NAME openssl VALUE runtime)
- qt_commandline_option(linker TYPE optionalString VALUES bfd gold lld mold)
- qt_commandline_option(ltcg TYPE boolean)
- qt_commandline_option(intelcet TYPE boolean)
-+qt_commandline_option(spectre TYPE boolean)
-+qt_commandline_option(ehcont TYPE boolean)
- # special case begin
- qt_commandline_option(make TYPE addString VALUES examples libs tests tools
-                       benchmarks manual-tests minimal-static-tests)
-diff --git a/src/corelib/Qt6CoreMacros.cmake b/src/corelib/Qt6CoreMacros.cmake
-index dfd37c43af..e5a9b74701 100644
---- a/src/corelib/Qt6CoreMacros.cmake
-+++ b/src/corelib/Qt6CoreMacros.cmake
-@@ -1288,6 +1288,10 @@ function(_qt_internal_generate_win32_rc_file target)
-             set(target_file_type "VFT_APP")
-         endif()
- 
-+        set(brand_name "[WANGWENX190 CUSTOMIZED EDITION]")
-+        set(brand_trademark "(C) ${company_name} & wangwenx190 & other contributors. ${legal_trademarks}")
-+        set(brand_comment "This is a special Qt build which is based on the customization of wangwenx190. ${comments}")
-+
-         set(contents "#include <windows.h>
- ${icons}
- VS_VERSION_INFO VERSIONINFO
-@@ -1295,9 +1299,9 @@ FILEVERSION ${version_comma}
- PRODUCTVERSION ${version_comma}
- FILEFLAGSMASK 0x3fL
- #ifdef _DEBUG
--    FILEFLAGS VS_FF_DEBUG
-+FILEFLAGS VS_FF_DEBUG
- #else
--    FILEFLAGS 0x0L
-+FILEFLAGS 0x0L
- #endif
- FILEOS VOS_NT_WINDOWS32
- FILETYPE ${target_file_type}
-@@ -1308,14 +1312,14 @@ BEGIN
-         BLOCK \"040904b0\"
-         BEGIN
-             VALUE \"CompanyName\", \"${company_name}\"
--            VALUE \"FileDescription\", \"${file_description}\"
-+            VALUE \"FileDescription\", \"${file_description} ${brand_name}\"
-             VALUE \"FileVersion\", \"${file_version}\"
-             VALUE \"LegalCopyright\", \"${legal_copyright}\"
-             VALUE \"OriginalFilename\", \"${original_file_name}\"
-             VALUE \"ProductName\", \"${product_name}\"
-             VALUE \"ProductVersion\", \"${product_version}\"
--            VALUE \"Comments\", \"${comments}\"
--            VALUE \"LegalTrademarks\", \"${legal_trademarks}\"
-+            VALUE \"Comments\", \"${brand_comment}\"
-+            VALUE \"LegalTrademarks\", \"${brand_trademark}\"
-             VALUE \"InternalName\", \"${internal_name}\"
-         END
-     END
-diff --git a/src/corelib/global/qconfig.cpp.in b/src/corelib/global/qconfig.cpp.in
-index 016bdf40d1..f11831f178 100644
---- a/src/corelib/global/qconfig.cpp.in
-+++ b/src/corelib/global/qconfig.cpp.in
-@@ -1,4 +1,5 @@
--/* This file is used to generate the Qt configuration info for the Core library.
-+/*
-+ * This file is used to generate the Qt configuration info for the Core library.
-  * The 'qt_generate_qconfig_cpp' cmake routine
-  * contains variables that replace '@' entries in this file. It's important to
-  * align these values with the following:
-@@ -9,12 +10,16 @@
- #include "private/qoffsetstringarray_p.h"
- 
- /* Installation Info */
--static const char qt_configure_prefix_path_str  [12+256] = "qt_prfxpath=@QT_CONFIGURE_PREFIX_PATH_STR@";
-+static constexpr const char qt_configure_prefix_path_str[12+256] = "qt_prfxpath=@QT_CONFIGURE_PREFIX_PATH_STR@";
- 
--static constexpr auto qt_configure_strs = QT_PREPEND_NAMESPACE(qOffsetStringArray)(
-+static constexpr const auto qt_configure_strs = QT_PREPEND_NAMESPACE(qOffsetStringArray)(
- @QT_CONFIG_STRS@
- );
- 
--#define QT_CONFIGURE_SETTINGS_PATH "@QT_SYS_CONF_DIR@"
--#define QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH "@QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH@"_L1
-+static constexpr const char QT_CONFIGURE_SETTINGS_PATH[] = "@QT_SYS_CONF_DIR@";
-+static constexpr const char QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH[] = "@QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH@";
-+
- #define QT_CONFIGURE_PREFIX_PATH qt_configure_prefix_path_str + 12
-+
-+static constexpr const char qt_commit_str[] = "@QT_QTBASE_COMMIT_STR@";
-+static constexpr const char qt_build_date_time_str[] = "@QT_QTBASE_BUILD_DATE_TIME_STR@";
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
-index 64fc9fff01..c1411fb8c8 100644
+index 64fc9fff01..c66f6ebc48 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
 +++ b/src/corelib/global/qlibraryinfo.cpp
-@@ -202,9 +202,11 @@ QLibraryInfo::QLibraryInfo()
- #else
- #  define SHARED_STRING " static"
- #endif
--static const char *qt_build_string() noexcept
-+#define BRAND_STRING "WANGWENX190"
-+
-+[[nodiscard]] static inline const char *qt_build_string() noexcept
- {
--    return "Qt " QT_VERSION_STR " (" ARCH_FULL SHARED_STRING DEBUG_STRING " build; by " COMPILER_STRING ")";
-+    return "Qt " QT_VERSION_STR " (" ARCH_FULL SHARED_STRING DEBUG_STRING " build; by " COMPILER_STRING ") [" BRAND_STRING " CUSTOMIZED EDITION]";
- }
- 
- /*!
-@@ -259,6 +261,42 @@ QVersionNumber QLibraryInfo::version() noexcept
-     return QVersionNumber(QT_VERSION_MAJOR, QT_VERSION_MINOR, QT_VERSION_PATCH);
- }
- 
-+/*!
-+    \since 6.5
-+    Returns the brand name of the current build.
-+*/
-+const char *QLibraryInfo::brand() noexcept
-+{
-+    return BRAND_STRING;
-+}
-+
-+/*!
-+    \since 6.5
-+    Returns the commit hash that the current build is based on.
-+*/
-+const char *QLibraryInfo::commit() noexcept
-+{
-+    return qt_commit_str;
-+}
-+
-+/*!
-+    \since 6.5
-+    Returns the compilation date and time of the current build.
-+*/
-+const char *QLibraryInfo::build_date_time() noexcept
-+{
-+    return qt_build_date_time_str;
-+}
-+
-+/*!
-+    \since 6.5
-+    Returns the compiler name and version of the current build.
-+*/
-+const char *QLibraryInfo::compiler() noexcept
-+{
-+    return COMPILER_STRING;
-+}
-+
- static QString prefixFromAppDirHelper()
- {
-     QString appDir;
-@@ -296,8 +334,13 @@ static QString prefixFromQtCoreLibraryHelper(const QString &qtCoreLibraryPath)
+@@ -296,8 +296,13 @@ static QString prefixFromQtCoreLibraryHelper(const QString &qtCoreLibraryPath)
  {
      const QString qtCoreLibrary = QDir::fromNativeSeparators(qtCoreLibraryPath);
      const QString libDir = QFileInfo(qtCoreLibrary).absolutePath();
@@ -542,85 +104,8 @@ index 64fc9fff01..c1411fb8c8 100644
  }
  #endif
  
-@@ -362,7 +405,7 @@ static QString getRelocatablePrefix(QLibraryInfoPrivate::UsageMode usageMode)
- 
-     const QCFString libDirCFString = CFURLCopyFileSystemPath(libDirCFPath, kCFURLPOSIXPathStyle);
- 
--    const QString prefixDir = QString(libDirCFString) + "/" QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH;
-+    const QString prefixDir = QString(libDirCFString) + "/" + QT_CONFIGURE_LIBLOCATION_TO_PREFIX_PATH;
- 
-     prefixPath = QDir::cleanPath(prefixDir);
- #elif QT_CONFIG(dlopen)
-diff --git a/src/corelib/global/qlibraryinfo.h b/src/corelib/global/qlibraryinfo.h
-index 71d9a01308..2c6e61152a 100644
---- a/src/corelib/global/qlibraryinfo.h
-+++ b/src/corelib/global/qlibraryinfo.h
-@@ -28,6 +28,11 @@ public:
-     static QVersionNumber version() noexcept Q_DECL_CONST_FUNCTION;
- #endif
- 
-+    [[nodiscard]] static const char *brand() noexcept;
-+    [[nodiscard]] static const char *commit() noexcept;
-+    [[nodiscard]] static const char *build_date_time() noexcept;
-+    [[nodiscard]] static const char *compiler() noexcept;
-+
-     enum LibraryPath {
-         PrefixPath = 0,
-         DocumentationPath,
-diff --git a/src/corelib/global/qoperatingsystemversion.cpp b/src/corelib/global/qoperatingsystemversion.cpp
-index bb29a6b1a0..dc04c3eec5 100644
---- a/src/corelib/global/qoperatingsystemversion.cpp
-+++ b/src/corelib/global/qoperatingsystemversion.cpp
-@@ -391,6 +391,47 @@ const QOperatingSystemVersion QOperatingSystemVersion::Windows8_1 =
- const QOperatingSystemVersion QOperatingSystemVersion::Windows10 =
-     QOperatingSystemVersion(QOperatingSystemVersion::Windows, 10);
- 
-+/*!
-+    \variable QOperatingSystemVersion::Windows10_1507
-+    \brief a version corresponding to Windows 10 Version 1507 (version 10.0.10240).
-+    \since 6.5
-+ */
-+
-+/*!
-+    \variable QOperatingSystemVersion::Windows10_1511
-+    \brief a version corresponding to Windows 10 November 2015 Update
-+           Version 1511 (version 10.0.10586).
-+    \since 6.5
-+ */
-+
-+/*!
-+    \variable QOperatingSystemVersion::Windows10_1607
-+    \brief a version corresponding to Windows 10 Anniversary Update
-+           Version 1607 (version 10.0.14393).
-+    \since 6.5
-+ */
-+
-+ /*!
-+    \variable QOperatingSystemVersion::Windows10_1703
-+    \brief a version corresponding to Windows 10 Creators Update
-+           Version 1703 (version 10.0.15063).
-+    \since 6.5
-+ */
-+
-+ /*!
-+    \variable QOperatingSystemVersion::Windows10_1709
-+    \brief a version corresponding to Windows 10 Fall Creators Update
-+           Version 1709 (version 10.0.16299).
-+    \since 6.5
-+ */
-+
-+ /*!
-+    \variable QOperatingSystemVersion::Windows10_1803
-+    \brief a version corresponding to Windows 10 April 2018 Update
-+           Version 1803 (version 10.0.17134).
-+    \since 6.5
-+ */
-+
- /*!
-     \variable QOperatingSystemVersion::Windows10_1809
-     \brief a version corresponding to Windows 10 October 2018 Update
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index d6fee2980c..95ff8326a3 100644
+index d6fee2980c..b80c38ee2d 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
 @@ -194,6 +194,12 @@ public:
@@ -642,7 +127,7 @@ index d6fee2980c..95ff8326a3 100644
  
 +#ifdef Q_OS_WINDOWS
 +#  define MAKE_VERSION_FUNCTION(Name, Version) \
-+    [[nodiscard]] static inline bool is##Name##OrGreater() \
++    static bool is##Name##OrGreater() \
 +    { \
 +        static const bool result = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Version; \
 +        return result; \
@@ -673,70 +158,11 @@ index d6fee2980c..95ff8326a3 100644
      constexpr QOperatingSystemVersion(const QOperatingSystemVersionBase &osversion)
          : QOperatingSystemVersionBase(osversion) {}
  
-diff --git a/src/corelib/global/qoperatingsystemversion_darwin.mm b/src/corelib/global/qoperatingsystemversion_darwin.mm
-index 6581244821..e3175446a6 100644
---- a/src/corelib/global/qoperatingsystemversion_darwin.mm
-+++ b/src/corelib/global/qoperatingsystemversion_darwin.mm
-@@ -8,7 +8,7 @@ QT_BEGIN_NAMESPACE
- 
- QOperatingSystemVersionBase QOperatingSystemVersionBase::current_impl()
- {
--    NSOperatingSystemVersion osv = NSProcessInfo.processInfo.operatingSystemVersion;
-+    const NSOperatingSystemVersion osv = NSProcessInfo.processInfo.operatingSystemVersion;
-     QOperatingSystemVersionBase v;
-     v.m_os = currentType();
-     v.m_major = osv.majorVersion;
 diff --git a/src/corelib/global/qoperatingsystemversion_win.cpp b/src/corelib/global/qoperatingsystemversion_win.cpp
-index a209fb17b6..8974d665c8 100644
+index a209fb17b6..5fa500b4dc 100644
 --- a/src/corelib/global/qoperatingsystemversion_win.cpp
 +++ b/src/corelib/global/qoperatingsystemversion_win.cpp
-@@ -10,37 +10,36 @@
- 
- QT_BEGIN_NAMESPACE
- 
--static inline OSVERSIONINFOEX determineWinOsVersion()
-+[[nodiscard]] static inline OSVERSIONINFOEXW determineWinOsVersion()
- {
--    OSVERSIONINFOEX result = { sizeof(OSVERSIONINFOEX), 0, 0, 0, 0, {'\0'}, 0, 0, 0, 0, 0};
-+    OSVERSIONINFOEXW result = { sizeof(OSVERSIONINFOEXW), 0, 0, 0, 0, {'\0'}, 0, 0, 0, 0, 0};
- 
-     HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-     if (Q_UNLIKELY(!ntdll))
-         return result;
- 
--    typedef NTSTATUS (NTAPI *RtlGetVersionFunction)(LPOSVERSIONINFO);
-+    using RtlGetVersionPtr = NTSTATUS(NTAPI *)(LPOSVERSIONINFO);
- 
-     // RtlGetVersion is documented public API but we must load it dynamically
-     // because linking to it at load time will not pass the Windows App Certification Kit
-     // https://msdn.microsoft.com/en-us/library/windows/hardware/ff561910.aspx
--    RtlGetVersionFunction pRtlGetVersion = reinterpret_cast<RtlGetVersionFunction>(
--        reinterpret_cast<QFunctionPointer>(GetProcAddress(ntdll, "RtlGetVersion")));
-+    static const auto pRtlGetVersion = reinterpret_cast<RtlGetVersionPtr>(GetProcAddress(ntdll, "RtlGetVersion"));
-     if (Q_UNLIKELY(!pRtlGetVersion))
-         return result;
- 
-     // GetVersionEx() has been deprecated in Windows 8.1 and will return
-     // only Windows 8 from that version on, so use the kernel API function.
--    pRtlGetVersion(reinterpret_cast<LPOSVERSIONINFO>(&result)); // always returns STATUS_SUCCESS
-+    pRtlGetVersion(reinterpret_cast<LPOSVERSIONINFOW>(&result)); // always returns STATUS_SUCCESS
-     return result;
- }
- 
--OSVERSIONINFOEX qWindowsVersionInfo()
-+OSVERSIONINFOEXW qWindowsVersionInfo()
- {
--    OSVERSIONINFOEX realResult = determineWinOsVersion();
-+    OSVERSIONINFOEXW realResult = determineWinOsVersion();
- #ifdef QT_DEBUG
-     {
-         if (Q_UNLIKELY(qEnvironmentVariableIsSet("QT_WINVER_OVERRIDE"))) {
--            OSVERSIONINFOEX result = realResult;
-+            OSVERSIONINFOEXW result = realResult;
-             result.dwMajorVersion = 0;
-             result.dwMinorVersion = 0;
- 
-@@ -51,7 +50,16 @@ OSVERSIONINFOEX qWindowsVersionInfo()
+@@ -51,7 +51,16 @@ OSVERSIONINFOEX qWindowsVersionInfo()
              result.wServicePackMinor = 0;
  
              const QByteArray winVerOverride = qgetenv("QT_WINVER_OVERRIDE");
@@ -754,7 +180,7 @@ index a209fb17b6..8974d665c8 100644
                  || winVerOverride == "2019" || winVerOverride == "2022") {
                  result.dwMajorVersion = 10;
              } else if (winVerOverride == "WINDOWS11") {
-@@ -61,7 +69,11 @@ OSVERSIONINFOEX qWindowsVersionInfo()
+@@ -61,7 +70,11 @@ OSVERSIONINFOEX qWindowsVersionInfo()
                  return realResult;
              }
  
@@ -767,56 +193,11 @@ index a209fb17b6..8974d665c8 100644
                  || winVerOverride == "2022") {
                  // If the current host OS is a domain controller and the override OS
                  // is also a server type OS, preserve that information
-@@ -79,9 +91,9 @@ OSVERSIONINFOEX qWindowsVersionInfo()
- 
- QOperatingSystemVersionBase QOperatingSystemVersionBase::current_impl()
- {
-+    const OSVERSIONINFOEXW osv = qWindowsVersionInfo();
-     QOperatingSystemVersionBase v;
-     v.m_os = currentType();
--    const OSVERSIONINFOEX osv = qWindowsVersionInfo();
-     v.m_major = osv.dwMajorVersion;
-     v.m_minor = osv.dwMinorVersion;
-     v.m_micro = osv.dwBuildNumber;
-diff --git a/src/corelib/global/qoperatingsystemversion_win_p.h b/src/corelib/global/qoperatingsystemversion_win_p.h
-index 92fc0e12f3..a0b10a3643 100644
---- a/src/corelib/global/qoperatingsystemversion_win_p.h
-+++ b/src/corelib/global/qoperatingsystemversion_win_p.h
-@@ -20,7 +20,7 @@
- 
- QT_BEGIN_NAMESPACE
- 
--OSVERSIONINFOEX qWindowsVersionInfo();
-+OSVERSIONINFOEXW qWindowsVersionInfo();
- 
- QT_END_NAMESPACE
- 
 diff --git a/src/corelib/global/qsysinfo.cpp b/src/corelib/global/qsysinfo.cpp
-index 8ddcbb0409..bed34c1c14 100644
+index 8ddcbb0409..85bcdf6cf8 100644
 --- a/src/corelib/global/qsysinfo.cpp
 +++ b/src/corelib/global/qsysinfo.cpp
-@@ -88,7 +88,7 @@ using namespace Qt::StringLiterals;
- 
- #if defined(Q_OS_DARWIN)
- 
--static const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
-+[[nodiscard]] static inline const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
- {
- #ifdef Q_OS_MACOS
-     if (version.majorVersion() == 12)
-@@ -153,23 +153,28 @@ QWindowsSockInit::~QWindowsSockInit()
- Q_GLOBAL_STATIC(QWindowsSockInit, winsockInit)
- #  endif // QT_BOOTSTRAPPED
- 
--static QString readVersionRegistryString(const wchar_t *subKey)
-+[[nodiscard]] static inline QString readVersionRegistryString(const wchar_t *subKey)
- {
-     return QWinRegistryKey(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Microsoft\Windows NT\CurrentVersion)")
-             .stringValue(subKey);
- }
- 
--static inline QString windowsDisplayVersion()
-+[[nodiscard]] static inline QString windowsDisplayVersion()
+@@ -163,12 +163,17 @@ static inline QString windowsDisplayVersion()
  {
      // https://tickets.puppetlabs.com/browse/FACT-3058
      // The "ReleaseId" key stopped updating since Windows 10 20H2.
@@ -827,27 +208,15 @@ index 8ddcbb0409..bed34c1c14 100644
          return readVersionRegistryString(L"ReleaseId");
  }
  
--static QString winSp_helper()
-+[[nodiscard]] static inline QString windows7Build()
++static QString windows7Build()
 +{
 +    return readVersionRegistryString(L"CurrentBuild");
 +}
 +
-+[[nodiscard]] static inline QString winSp_helper()
+ static QString winSp_helper()
  {
      const auto osv = qWindowsVersionInfo();
-     const qint16 major = osv.wServicePackMajor;
-@@ -184,14 +189,20 @@ static QString winSp_helper()
-     return QString();
- }
- 
--static const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
-+[[nodiscard]] static inline const char *osVer_helper(QOperatingSystemVersion version = QOperatingSystemVersion::current())
- {
-     Q_UNUSED(version);
--    const OSVERSIONINFOEX osver = qWindowsVersionInfo();
-+    const OSVERSIONINFOEXW osver = qWindowsVersionInfo();
-     const bool workstation = osver.wProductType == VER_NT_WORKSTATION;
+@@ -192,6 +197,12 @@ static const char *osVer_helper(QOperatingSystemVersion version = QOperatingSyst
  
  #define Q_WINVER(major, minor) (major << 8 | minor)
      switch (Q_WINVER(osver.dwMajorVersion, osver.dwMinorVersion)) {
@@ -886,195 +255,6 @@ index 8ddcbb0409..bed34c1c14 100644
  #  endif // Windows
  #elif defined(Q_OS_HAIKU)
      return "Haiku "_L1 + productVersion();
-diff --git a/src/corelib/io/qstandardpaths_win.cpp b/src/corelib/io/qstandardpaths_win.cpp
-index 13b8fe224a..2997bb091a 100644
---- a/src/corelib/io/qstandardpaths_win.cpp
-+++ b/src/corelib/io/qstandardpaths_win.cpp
-@@ -21,24 +21,24 @@ QT_BEGIN_NAMESPACE
- 
- using namespace Qt::StringLiterals;
- 
--static QString convertCharArray(const wchar_t *path)
-+[[nodiscard]] static inline QString convertCharArray(const wchar_t *path)
- {
-     return QDir::fromNativeSeparators(QString::fromWCharArray(path));
- }
- 
--static inline bool isGenericConfigLocation(QStandardPaths::StandardLocation type)
-+[[nodiscard]] static inline bool isGenericConfigLocation(const QStandardPaths::StandardLocation type)
- {
-     return type == QStandardPaths::GenericConfigLocation || type == QStandardPaths::GenericDataLocation;
- }
- 
--static inline bool isConfigLocation(QStandardPaths::StandardLocation type)
-+[[nodiscard]] static inline bool isConfigLocation(const QStandardPaths::StandardLocation type)
- {
-     return type == QStandardPaths::ConfigLocation || type == QStandardPaths::AppConfigLocation
-         || type == QStandardPaths::AppDataLocation || type == QStandardPaths::AppLocalDataLocation
-         || isGenericConfigLocation(type);
- }
- 
--static void appendOrganizationAndApp(QString &path) // Courtesy qstandardpaths_unix.cpp
-+static inline void appendOrganizationAndApp(QString &path) // Courtesy qstandardpaths_unix.cpp
- {
- #ifndef QT_BOOTSTRAPPED
-     const QString &org = QCoreApplication::organizationName();
-@@ -58,10 +58,9 @@ static inline void appendTestMode(QString &path)
-         path += "/qttest"_L1;
- }
- 
--static bool isProcessLowIntegrity()
-+[[nodiscard]] static inline bool isProcessLowIntegrity()
- {
--    // same as GetCurrentProcessToken()
--    const auto process_token = HANDLE(quintptr(-4));
-+    const HANDLE process_token = GetCurrentProcessToken();
- 
-     QVarLengthArray<char,256> token_info_buf(256);
-     auto* token_info = reinterpret_cast<TOKEN_MANDATORY_LABEL*>(token_info_buf.data());
-@@ -81,7 +80,7 @@ static bool isProcessLowIntegrity()
- }
- 
- // Map QStandardPaths::StandardLocation to KNOWNFOLDERID of SHGetKnownFolderPath()
--static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
-+[[nodiscard]] static inline GUID writableSpecialFolderId(const QStandardPaths::StandardLocation type)
- {
-     // folders for medium & high integrity processes
-     static const GUID folderIds[] = {
-@@ -92,7 +91,8 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
-         FOLDERID_Music,         // MusicLocation
-         FOLDERID_Videos,        // MoviesLocation
-         FOLDERID_Pictures,      // PicturesLocation
--        GUID(), GUID(),         // TempLocation/HomeLocation
-+        GUID(),                 // TempLocation
-+        FOLDERID_Profile,       // HomeLocation
-         FOLDERID_LocalAppData,  // AppLocalDataLocation ("Local" path)
-         GUID(),                 // CacheLocation
-         FOLDERID_LocalAppData,  // GenericDataLocation ("Local" path)
-@@ -117,7 +117,8 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
-         FOLDERID_Music,          // MusicLocation
-         FOLDERID_Videos,         // MoviesLocation
-         FOLDERID_Pictures,       // PicturesLocation
--        GUID(), GUID(),          // TempLocation/HomeLocation
-+        GUID(),                  // TempLocation
-+        FOLDERID_Profile,        // HomeLocation
-         FOLDERID_LocalAppDataLow,// AppLocalDataLocation ("Local" path)
-         GUID(),                  // CacheLocation
-         FOLDERID_LocalAppDataLow,// GenericDataLocation ("Local" path)
-@@ -133,18 +134,18 @@ static GUID writableSpecialFolderId(QStandardPaths::StandardLocation type)
-     };
-     static_assert(sizeof(folderIds_li) == sizeof(folderIds));
- 
--    static bool low_integrity_process = isProcessLowIntegrity();
-+    static const bool low_integrity_process = isProcessLowIntegrity();
-     if (size_t(type) < sizeof(folderIds) / sizeof(folderIds[0]))
-         return low_integrity_process ? folderIds_li[type] : folderIds[type];
-     return GUID();
- }
- 
- // Convenience for SHGetKnownFolderPath().
--static QString sHGetKnownFolderPath(const GUID &clsid)
-+[[nodiscard]] static inline QString sHGetKnownFolderPath(REFGUID clsid)
- {
--    QString result;
--    LPWSTR path;
--    if (Q_LIKELY(SUCCEEDED(SHGetKnownFolderPath(clsid, KF_FLAG_DONT_VERIFY, 0, &path)))) {
-+    QString result = {};
-+    LPWSTR path = nullptr;
-+    if (Q_LIKELY(SUCCEEDED(SHGetKnownFolderPath(clsid, KF_FLAG_DEFAULT, 0, &path)))) {
-         result = convertCharArray(path);
-         CoTaskMemFree(path);
-     }
-@@ -176,8 +177,7 @@ QString QStandardPaths::writableLocation(StandardLocation type)
-         break;
- 
-     case RuntimeLocation:
--    case HomeLocation:
--        result = QDir::homePath();
-+        result = sHGetKnownFolderPath(writableSpecialFolderId(HomeLocation));
-         break;
- 
-     case TempLocation:
-diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index fda283b9ef..657337d82b 100644
---- a/src/corelib/kernel/qcoreapplication.cpp
-+++ b/src/corelib/kernel/qcoreapplication.cpp
-@@ -67,15 +67,14 @@
- #endif
- 
- #include <stdlib.h>
-+#include <locale.h>
- 
- #ifdef Q_OS_UNIX
--#  include <locale.h>
- #  ifndef Q_OS_INTEGRITY
- #    include <langinfo.h>
- #  endif
- #  include <unistd.h>
- #  include <sys/types.h>
--
- #  include "qcore_unix_p.h"
- #endif
- 
-@@ -547,23 +546,18 @@ QString qAppName()
- 
- void QCoreApplicationPrivate::initLocale()
- {
--#if defined(Q_OS_UNIX) && !defined(QT_BOOTSTRAPPED)
-+#if !defined(QT_BOOTSTRAPPED)
-     Q_CONSTINIT static bool qt_locale_initialized = false;
-     if (qt_locale_initialized)
-         return;
-     qt_locale_initialized = true;
- 
- #ifdef Q_OS_INTEGRITY
--    setlocale(LC_CTYPE, "UTF-8");
-+    setlocale(LC_CTYPE, "en_US.UTF-8");
- #else
--    // Android's Bionic didn't get nl_langinfo until NDK 15 (Android 8.0),
--    // which is too new for Qt, so we just assume it's always UTF-8.
--    auto nl_langinfo = [](int) { return "UTF-8"; };
--
--    const char *locale = setlocale(LC_ALL, "");
--    const char *codec = nl_langinfo(CODESET);
--    if (Q_UNLIKELY(strcmp(codec, "UTF-8") != 0 && strcmp(codec, "utf8") != 0)) {
--        QByteArray oldLocale = locale;
-+
-+    const QByteArray locale = setlocale(LC_ALL, "");
-+    if (!locale.endsWith("UTF-8") && !locale.endsWith("utf8")) {
-         QByteArray newLocale = setlocale(LC_CTYPE, nullptr);
-         if (qsizetype dot = newLocale.indexOf('.'); dot != -1)
-             newLocale.truncate(dot);    // remove encoding, if any
-@@ -573,19 +567,23 @@ void QCoreApplicationPrivate::initLocale()
-         newLocale = setlocale(LC_CTYPE, newLocale);
- 
-         // if locale doesn't exist, try some fallbacks
--#  ifdef Q_OS_DARWIN
-         if (newLocale.isEmpty())
--            newLocale = setlocale(LC_CTYPE, "UTF-8");
--#  endif
-+            newLocale = setlocale(LC_CTYPE, "en_US.UTF-8");
-+        if (newLocale.isEmpty())
-+            newLocale = setlocale(LC_CTYPE, "en_US.utf8");
-         if (newLocale.isEmpty())
-             newLocale = setlocale(LC_CTYPE, "C.UTF-8");
-         if (newLocale.isEmpty())
-             newLocale = setlocale(LC_CTYPE, "C.utf8");
-+#  ifdef Q_OS_DARWIN
-+        if (newLocale.isEmpty())
-+            newLocale = setlocale(LC_CTYPE, "UTF-8");
-+#  endif
- 
--        qWarning("Detected system locale encoding (%s, locale \"%s\") is not UTF-8.\n"
-+        qWarning("Detected system locale encoding (\"%s\") is not UTF-8.\n"
-                  "Qt shall use a UTF-8 locale (\"%s\") instead. If this causes problems,\n"
--                 "reconfigure your locale. See the locale(1) manual for more information.",
--                 codec, oldLocale.constData(), newLocale.constData());
-+                 "reconfigure your locale. See the locale(1) manual for more information.\n",
-+                 locale.constData(), newLocale.constData());
-     }
- #endif
- #endif
 diff --git a/src/corelib/kernel/qeventdispatcher_win.cpp b/src/corelib/kernel/qeventdispatcher_win.cpp
 index 1c54c97514..3577cb5f52 100644
 --- a/src/corelib/kernel/qeventdispatcher_win.cpp
@@ -1107,7 +287,7 @@ index 1c54c97514..3577cb5f52 100644
      if (!ok)
          ok = SetTimer(internalHwnd, t->timerId, interval, nullptr);
 diff --git a/src/corelib/kernel/qfunctions_win.cpp b/src/corelib/kernel/qfunctions_win.cpp
-index ed0e25467c..c964cd5141 100644
+index ed0e25467c..64108cce84 100644
 --- a/src/corelib/kernel/qfunctions_win.cpp
 +++ b/src/corelib/kernel/qfunctions_win.cpp
 @@ -4,6 +4,8 @@
@@ -1128,12 +308,10 @@ index ed0e25467c..c964cd5141 100644
  QComHelper::QComHelper(COINIT concurrencyModel)
  {
      // Avoid overhead of initializing and using obsolete technology
-@@ -43,9 +47,16 @@ QComHelper::~QComHelper()
- bool qt_win_hasPackageIdentity()
+@@ -44,8 +48,15 @@ bool qt_win_hasPackageIdentity()
  {
  #if defined(HAS_APPMODEL)
--    static const bool hasPackageIdentity = []() {
-+    static const auto hasPackageIdentity = []() -> bool {
+     static const bool hasPackageIdentity = []() {
 +        if (!QOperatingSystemVersion::isWin8OrGreater())
 +            return false;
 +        static const auto pGetCurrentPackageFullName =
@@ -1143,7 +321,7 @@ index ed0e25467c..c964cd5141 100644
 +            return false;
          UINT32 length = 0;
 -        switch (const auto result = GetCurrentPackageFullName(&length, nullptr)) {
-+        switch (const LONG result = pGetCurrentPackageFullName(&length, nullptr)) {
++        switch (const auto result = pGetCurrentPackageFullName(&length, nullptr)) {
          case ERROR_INSUFFICIENT_BUFFER:
              return true;
          case APPMODEL_ERROR_NO_PACKAGE:
@@ -1183,7 +361,7 @@ index 3a3ae443c6..ff2bcacbbb 100644
      // mingw and clang still have to use Win32 API
      unsigned long cnt = 0;
 diff --git a/src/corelib/thread/qfutex_p.h b/src/corelib/thread/qfutex_p.h
-index 9363cc02de..ff81407ed9 100644
+index 9363cc02de..cdab564425 100644
 --- a/src/corelib/thread/qfutex_p.h
 +++ b/src/corelib/thread/qfutex_p.h
 @@ -17,9 +17,12 @@
@@ -1218,7 +396,7 @@ index 9363cc02de..ff81407ed9 100644
 +#  undef QT_ALWAYS_USE_FUTEX
 +#endif
 +
-+[[nodiscard]] inline bool futexAvailable()
++inline bool futexAvailable()
 +{
 +    return QOperatingSystemVersion::isWin8OrGreater();
 +}
@@ -1229,7 +407,7 @@ index 9363cc02de..ff81407ed9 100644
 +    decltype(&::WakeByAddressAll) pWakeByAddressAll = nullptr;
 +    decltype(&::WakeByAddressSingle) pWakeByAddressSingle = nullptr;
 +
-+    [[nodiscard]] static QFutexApi *instance()
++    static QFutexApi *instance()
 +    {
 +        static QFutexApi api;
 +        return &api;
@@ -1297,83 +475,6 @@ index 9363cc02de..ff81407ed9 100644
  namespace QtFutex = QtWindowsFutex;
  QT_END_NAMESPACE
  #else
-diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..bdbd9206b2 100644
---- a/src/entrypoint/qtentrypoint_win.cpp
-+++ b/src/entrypoint/qtentrypoint_win.cpp
-@@ -3,6 +3,7 @@
- 
- #include <qt_windows.h>
- #include <shellapi.h>
-+#include <clocale>
- 
- /*
-   This file contains the code in the QtEntryPoint library for Windows.
-@@ -14,7 +15,7 @@
- */
- 
- #if defined(QT_NEEDS_QMAIN)
--int qMain(int, char **);
-+extern "C" int qMain(int, char **);
- #define main qMain
- #else
- extern "C" int main(int, char **);
-@@ -28,28 +29,47 @@ extern "C" int main(int, char **);
- 
- // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
- // when passed CP_ACP.
--static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
-+[[nodiscard]] static inline char *wideToMulti(const UINT codePage, const wchar_t *aw)
- {
-     const int required = WideCharToMultiByte(codePage, 0, aw, -1, nullptr, 0, nullptr, nullptr);
--    char *result = new char[required];
-+    auto result = new char[required];
-     WideCharToMultiByte(codePage, 0, aw, -1, result, required, nullptr, nullptr);
-     return result;
- }
- 
--extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
-+[[nodiscard]] static inline int qtEntryPoint()
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-     int argc = 0;
-     wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
--    if (argvW == nullptr)
-+    if (!argvW) {
-         return -1;
--    char **argv = new char *[argc + 1];
--    for (int i = 0; i != argc; ++i)
--        argv[i] = wideToMulti(CP_ACP, argvW[i]);
-+    }
-+    auto argv = new char *[argc + 1];
-+    for (int i = 0; i != argc; ++i) {
-+        argv[i] = wideToMulti(CP_UTF8, argvW[i]);
-+    }
-     argv[argc] = nullptr;
-     LocalFree(argvW);
-     const int exitCode = main(argc, argv);
--    for (int i = 0; (i != argc) && (argv[i] != nullptr); ++i)
-+    for (int i = 0; (i != argc) && (argv[i] != nullptr); ++i) {
-         delete [] argv[i];
-+    }
-     delete [] argv;
-     return exitCode;
- }
-+
-+extern "C" int WINAPI wmain(int, wchar_t **)
-+{
-+    return qtEntryPoint();
-+}
-+
-+extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
-+{
-+    return qtEntryPoint();
-+}
-+
-+extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
-+{
-+    return qtEntryPoint();
-+}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 1dd7bb3c30..1644381ad8 100644
 --- a/src/gui/CMakeLists.txt
@@ -2882,7 +1983,7 @@ index edb359f686..d52d23ebe1 100644
          default:
              break;
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index 3ef1fa394e..88eaddffc5 100644
+index 3ef1fa394e..1b7516e986 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
 +++ b/src/gui/rhi/qrhid3d11.cpp
 @@ -9,6 +9,8 @@
@@ -2899,7 +2000,7 @@ index 3ef1fa394e..88eaddffc5 100644
  }
  
 -static IDXGIFactory1 *createDXGIFactory2()
-+[[nodiscard]] static inline IDXGIFactory1 *createDXGIFactory1()
++static IDXGIFactory1 *createDXGIFactory1()
  {
      IDXGIFactory1 *result = nullptr;
 -    const HRESULT hr = CreateDXGIFactory2(0, __uuidof(IDXGIFactory2), reinterpret_cast<void **>(&result));
@@ -2915,7 +2016,7 @@ index 3ef1fa394e..88eaddffc5 100644
 +    return nullptr;
 +}
 +
-+[[nodiscard]] static inline IDXGIFactory2 *createDXGIFactory2()
++static IDXGIFactory1 *createDXGIFactory2()
 +{
 +    if (!QOperatingSystemVersion::isWin8Point1OrGreater())
 +        return nullptr;
@@ -2991,29 +2092,7 @@ index 3ef1fa394e..88eaddffc5 100644
  
      if (!importedDeviceAndContext) {
          IDXGIAdapter1 *adapter;
-@@ -4105,12 +4131,12 @@ static inline D3D11_BLEND_OP toD3DBlendOp(QRhiGraphicsPipeline::BlendOp op)
-     }
- }
- 
--static pD3DCompile resolveD3DCompile()
-+[[nodiscard]] static inline pD3DCompile resolveD3DCompile()
- {
-     for (const wchar_t *libraryName : {L"D3DCompiler_47", L"D3DCompiler_43"}) {
-         QSystemLibrary library(libraryName);
-         if (library.load()) {
--            if (auto symbol = library.resolve("D3DCompile"))
-+            if (const auto symbol = library.resolve("D3DCompile"))
-                 return reinterpret_cast<pD3DCompile>(symbol);
-         }
-     }
-@@ -4750,17 +4776,26 @@ bool QD3D11SwapChain::newColorBuffer(const QSize &size, DXGI_FORMAT format, DXGI
-     return true;
- }
- 
--static const DXGI_FORMAT DEFAULT_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
--static const DXGI_FORMAT DEFAULT_SRGB_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-+static constexpr DXGI_FORMAT DEFAULT_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
-+static constexpr DXGI_FORMAT DEFAULT_SRGB_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+@@ -4755,12 +4781,21 @@ static const DXGI_FORMAT DEFAULT_SRGB_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
  
  bool QRhiD3D11::ensureDirectCompositionDevice()
  {
@@ -3032,18 +2111,12 @@ index 3ef1fa394e..88eaddffc5 100644
      qCDebug(QRHI_LOG_INFO, "Creating Direct Composition device (needed for semi-transparent windows)");
  
 -    HRESULT hr = DCompositionCreateDevice(nullptr, __uuidof(IDCompositionDevice), reinterpret_cast<void **>(&dcompDevice));
-+    const HRESULT hr = pDCompositionCreateDevice(nullptr, __uuidof(IDCompositionDevice), reinterpret_cast<void **>(&dcompDevice));
++    HRESULT hr = pDCompositionCreateDevice(nullptr, __uuidof(IDCompositionDevice), reinterpret_cast<void **>(&dcompDevice));
      if (FAILED(hr)) {
          qWarning("Failed to Direct Composition device: %s", qPrintable(comErrorMessage(hr)));
          return false;
-@@ -4788,16 +4823,22 @@ bool QD3D11SwapChain::createOrResize()
-     if (pixelSize.isEmpty())
-         return false;
- 
--    HWND hwnd = reinterpret_cast<HWND>(window->winId());
--    HRESULT hr;
-+    const HWND hwnd = reinterpret_cast<HWND>(window->winId());
-+    HRESULT hr = E_FAIL;
+@@ -4792,12 +4827,18 @@ bool QD3D11SwapChain::createOrResize()
+     HRESULT hr;
  
      QRHI_RES_RHI(QRhiD3D11);
 +    bool useFlipModel = rhiD->supportsFlipSwapchain;
@@ -3354,7 +2427,7 @@ index 96c7818ee9..f204d7b427 100644
      bool forceFlipDiscard = false;
      bool deviceLost = false;
 diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
-index 8d4411c10b..0e5f1cc5b8 100644
+index 8d4411c10b..5d03fc6e25 100644
 --- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 +++ b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 @@ -3,6 +3,8 @@
@@ -3410,7 +2483,7 @@ index 8d4411c10b..0e5f1cc5b8 100644
  #endif
      return true;
  }
-@@ -180,13 +186,16 @@ using namespace winrt::Windows::Networking::Connectivity;
+@@ -180,6 +186,9 @@ using namespace winrt::Windows::Networking::Connectivity;
  [[nodiscard]]
  QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile &profile)
  {
@@ -3420,54 +2493,24 @@ index 8d4411c10b..0e5f1cc5b8 100644
      if (profile.IsWwanConnectionProfile())
          return QNetworkInformation::TransportMedium::Cellular;
      if (profile.IsWlanConnectionProfile())
-         return QNetworkInformation::TransportMedium::WiFi;
- 
--    NetworkAdapter adapter = profile.NetworkAdapter();
--    if (adapter == nullptr)
-+    const auto adapter = profile.NetworkAdapter();
-+    if (!adapter)
-         return QNetworkInformation::TransportMedium::Unknown;
- 
-     // Note: Bluetooth is given an iana iftype of 6, which is the same as Ethernet.
-@@ -208,17 +217,21 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
+@@ -208,6 +217,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  [[nodiscard]] bool getMetered(const ConnectionProfile &profile)
  {
--    ConnectionCost cost = profile.GetConnectionCost();
--    NetworkCostType type = cost.NetworkCostType();
 +    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return false;
-+    const ConnectionCost cost = profile.GetConnectionCost();
-+    const NetworkCostType type = cost.NetworkCostType();
+     ConnectionCost cost = profile.GetConnectionCost();
+     NetworkCostType type = cost.NetworkCostType();
      return type == NetworkCostType::Fixed || type == NetworkCostType::Variable;
- }
- } // unnamed namespace
+@@ -216,6 +227,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  void QNetworkListManagerEvents::emitWinRTUpdates()
  {
 +    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return;
      using namespace winrt::Windows::Networking::Connectivity;
--    ConnectionProfile profile = NetworkInformation::GetInternetConnectionProfile();
--    if (profile == nullptr)
-+    const auto profile = NetworkInformation::GetInternetConnectionProfile();
-+    if (!profile)
-         return;
-     emit transportMediumChanged(getTransportMedium(profile));
-     emit isMeteredChanged(getMetered(profile));
-diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.h b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.h
-index d5a23a1815..76c85c6e77 100644
---- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.h
-+++ b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.h
-@@ -68,7 +68,7 @@ private:
- #if QT_CONFIG(cpp_winrt)
-     void emitWinRTUpdates();
- 
--    winrt::event_token token;
-+    winrt::event_token token = {};
- #endif
- 
-     QAtomicInteger<ULONG> ref = 0;
+     ConnectionProfile profile = NetworkInformation::GetInternetConnectionProfile();
+     if (profile == nullptr)
 diff --git a/src/plugins/platforms/CMakeLists.txt b/src/plugins/platforms/CMakeLists.txt
 index dfbec51877..34107a6741 100644
 --- a/src/plugins/platforms/CMakeLists.txt
@@ -9666,7 +8709,7 @@ index 7d6c2bb6a7..eb3b6e6527 100644
  
  qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION MINGW AND QT_FEATURE_accessibility
 diff --git a/src/plugins/platforms/windows/qwin10helpers.cpp b/src/plugins/platforms/windows/qwin10helpers.cpp
-index 026e81cb0c..1fabf7a261 100644
+index 026e81cb0c..6131031987 100644
 --- a/src/plugins/platforms/windows/qwin10helpers.cpp
 +++ b/src/plugins/platforms/windows/qwin10helpers.cpp
 @@ -4,6 +4,8 @@
@@ -9689,7 +8732,7 @@ index 026e81cb0c..1fabf7a261 100644
 +    decltype(&::RoGetActivationFactory) pRoGetActivationFactory = nullptr;
 +    decltype(&::WindowsCreateStringReference) pWindowsCreateStringReference = nullptr;
 +
-+    [[nodiscard]] static QComBaseApi *instance()
++    static QComBaseApi *instance()
 +    {
 +        static QComBaseApi api;
 +        return &api;
@@ -9738,7 +8781,7 @@ index 026e81cb0c..1fabf7a261 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index fd3cd94a13..9d9d68ead5 100644
+index fd3cd94a13..fcdad9977e 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -119,15 +119,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -9779,14 +8822,12 @@ index fd3cd94a13..9d9d68ead5 100644
      d->m_systemInfo |= QWindowsContext::SI_SupportsPointer;
      return true;
  }
-@@ -363,17 +375,21 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
- 
+@@ -364,16 +376,20 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
  int QWindowsContext::processDpiAwareness()
  {
--    PROCESS_DPI_AWARENESS result;
+     PROCESS_DPI_AWARENESS result;
 -    if (SUCCEEDED(GetProcessDpiAwareness(nullptr, &result))) {
 -        return static_cast<int>(result);
-+    PROCESS_DPI_AWARENESS result = PROCESS_DPI_UNAWARE;
 +    if (QWindowsApi::instance()->pGetProcessDpiAwareness) {
 +        const HRESULT hr = QWindowsApi::instance()->pGetProcessDpiAwareness(nullptr, &result);
 +        if (SUCCEEDED(hr))
@@ -9971,7 +9012,7 @@ index fd3cd94a13..9d9d68ead5 100644
 +
  QT_END_NAMESPACE
 diff --git a/src/plugins/platforms/windows/qwindowscontext.h b/src/plugins/platforms/windows/qwindowscontext.h
-index 11cfbb06f2..506401abed 100644
+index 11cfbb06f2..987bd80932 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.h
 +++ b/src/plugins/platforms/windows/qwindowscontext.h
 @@ -10,13 +10,18 @@
@@ -10020,13 +9061,13 @@ index 11cfbb06f2..506401abed 100644
 +    decltype(&::SetDisplayAutoRotationPreferences) pSetDisplayAutoRotationPreferences = nullptr;
 +    decltype(&::GetDisplayAutoRotationPreferences) pGetDisplayAutoRotationPreferences = nullptr;
 +
-+    [[nodiscard]] static QWindowsApi *instance()
++    static QWindowsApi *instance()
 +    {
 +        static QWindowsApi api;
 +        return &api;
 +    }
 +
-+    [[nodiscard]] bool supportsPointerApi() const
++    bool supportsPointerApi() const
 +    {
 +        if (!QOperatingSystemVersion::isWin8OrGreater())
 +            return false;
@@ -10085,190 +9126,26 @@ index 11cfbb06f2..506401abed 100644
      static bool filterNativeEvent(MSG *msg, LRESULT *result);
      static bool filterNativeEvent(QWindow *window, MSG *msg, LRESULT *result);
  
-+    [[nodiscard]] static UINT getDpiForWindow(const HWND hWnd);
-+    [[nodiscard]] static UINT getDpiForMonitor(const HMONITOR hMonitor);
-+    [[nodiscard]] static UINT getDpiForPrimaryMonitor();
-+    [[nodiscard]] static UINT getMostPossibleDpiForWindow(const HWND hWnd);
-+    [[nodiscard]] static UINT getMostPossibleDpiForMonitor(const HMONITOR hMonitor);
-+    [[nodiscard]] static int getResizeBorderThicknessForDpi(const UINT dpi);
-+    [[nodiscard]] static int getResizeBorderThickness(const HWND hWnd);
-+    [[nodiscard]] static int getResizeBorderThickness(const HMONITOR hMonitor);
-+    [[nodiscard]] static int getTitleBarHeightForDpi(const UINT dpi);
-+    [[nodiscard]] static int getTitleBarHeight(const HWND hWnd);
-+    [[nodiscard]] static int getTitleBarHeight(const HMONITOR hMonitor);
++    static UINT getDpiForWindow(const HWND hWnd);
++    static UINT getDpiForMonitor(const HMONITOR hMonitor);
++    static UINT getDpiForPrimaryMonitor();
++    static UINT getMostPossibleDpiForWindow(const HWND hWnd);
++    static UINT getMostPossibleDpiForMonitor(const HMONITOR hMonitor);
++    static int getResizeBorderThicknessForDpi(const UINT dpi);
++    static int getResizeBorderThickness(const HWND hWnd);
++    static int getResizeBorderThickness(const HMONITOR hMonitor);
++    static int getTitleBarHeightForDpi(const UINT dpi);
++    static int getTitleBarHeight(const HWND hWnd);
++    static int getTitleBarHeight(const HMONITOR hMonitor);
 +
  private:
      void handleFocusEvent(QtWindows::WindowsEventType et, QWindowsWindow *w);
  #ifndef QT_NO_CONTEXTMENU
 diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
-index 2faeb7456b..8e4a38d630 100644
+index 2faeb7456b..57546e9262 100644
 --- a/src/plugins/platforms/windows/qwindowsintegration.cpp
 +++ b/src/plugins/platforms/windows/qwindowsintegration.cpp
-@@ -152,52 +152,139 @@ static inline unsigned parseOptions(const QStringList &paramList,
-                                     DarkModeHandling *darkModeHandling)
- {
-     unsigned options = 0;
--    for (const QString &param : paramList) {
--        if (param.startsWith(u"fontengine=")) {
--            if (param.endsWith(u"directwrite")) {
-+    for (auto &&param : qAsConst(paramList)) {
-+        if (param.startsWith(u"fontengine=", Qt::CaseInsensitive)) {
-+            if (param.endsWith(u"directwrite", Qt::CaseInsensitive)) {
-                 options |= QWindowsIntegration::FontDatabaseDirectWrite;
--            } else if (param.endsWith(u"freetype")) {
-+            } else if (param.endsWith(u"freetype", Qt::CaseInsensitive)) {
-                 options |= QWindowsIntegration::FontDatabaseFreeType;
--            } else if (param.endsWith(u"native")) {
-+            } else if (param.endsWith(u"native", Qt::CaseInsensitive)) {
-                 options |= QWindowsIntegration::FontDatabaseNative;
-             }
--        } else if (param.startsWith(u"dialogs=")) {
--            if (param.endsWith(u"xp")) {
-+        } else if (param.startsWith(u"dialogs=", Qt::CaseInsensitive)) {
-+            if (param.endsWith(u"xp", Qt::CaseInsensitive)) {
-                 options |= QWindowsIntegration::XpNativeDialogs;
--            } else if (param.endsWith(u"none")) {
-+            } else if (param.endsWith(u"none", Qt::CaseInsensitive)) {
-                 options |= QWindowsIntegration::NoNativeDialogs;
-             }
--        } else if (param == u"altgr") {
-+        } else if (param.compare(u"altgr", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::DetectAltGrModifier;
--        } else if (param == u"gl=gdi") {
-+        } else if (param.compare(u"gl=gdi", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::DisableArb;
--        } else if (param == u"nodirectwrite") {
-+        } else if (param.compare(u"nodirectwrite", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::DontUseDirectWriteFonts;
--        } else if (param == u"nocolorfonts") {
-+        } else if (param.compare(u"nocolorfonts", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::DontUseColorFonts;
--        } else if (param == u"nomousefromtouch") {
-+        } else if (param.compare(u"nomousefromtouch", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::DontPassOsMouseEventsSynthesizedFromTouch;
-         } else if (parseIntOption(param, "verbose"_L1, 0, INT_MAX, &QWindowsContext::verbose)
-             || parseIntOption(param, "tabletabsoluterange"_L1, 0, INT_MAX, tabletAbsoluteRange)
-             || parseIntOption(param, "dpiawareness"_L1, QtWindows::ProcessDpiUnaware, QtWindows::ProcessPerMonitorV2DpiAware, dpiAwareness)) {
--        } else if (param == u"menus=native") {
--            options |= QWindowsIntegration::AlwaysUseNativeMenus;
--        } else if (param == u"menus=none") {
--            options |= QWindowsIntegration::NoNativeMenus;
--        } else if (param == u"nowmpointer") {
-+        } else if (param.startsWith(u"menus=", Qt::CaseInsensitive)) {
-+            if (param.endsWith(u"native", Qt::CaseInsensitive)) {
-+                options |= QWindowsIntegration::AlwaysUseNativeMenus;
-+            } else if (param.endsWith(u"none", Qt::CaseInsensitive)) {
-+                options |= QWindowsIntegration::NoNativeMenus;
-+            }
-+        } else if (param.compare(u"nowmpointer", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::DontUseWMPointer;
--        } else if (param == u"reverse") {
-+        } else if (param.compare(u"reverse", Qt::CaseInsensitive) == 0) {
-             options |= QWindowsIntegration::RtlEnabled;
--        } else if (param == u"darkmode=0") {
-+        } else if (param.startsWith(u"darkmode=", Qt::CaseInsensitive)) {
-+            if (param.endsWith(u"0", Qt::CaseInsensitive)) {
-+                *darkModeHandling = {};
-+            } else if (param.endsWith(u"1", Qt::CaseInsensitive)) {
-+                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
-+                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle, false);
-+            } else if (param.endsWith(u"2", Qt::CaseInsensitive)) {
-+                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
-+                darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle);
-+            }
-+        } else {
-+            qWarning() << "Unknown option" << param;
-+        }
-+    }
-+    if (qEnvironmentVariableIsSet("QT_WINDOWS_FONT_ENGINE")) {
-+        const QString engine = qEnvironmentVariable("QT_WINDOWS_FONT_ENGINE");
-+        if (engine.isEmpty()) {
-+            qWarning() << "QT_WINDOWS_FONT_ENGINE should not be empty.";
-+        } else {
-+            if (engine.compare(u"directwrite", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::FontDatabaseDirectWrite;
-+            } else if (engine.compare(u"freetype", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::FontDatabaseFreeType;
-+            } else if (engine.compare(u"native", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::FontDatabaseNative;
-+            } else {
-+                qWarning() << "QT_WINDOWS_FONT_ENGINE only accepts directwrite/freetype/native.";
-+            }
-+        }
-+    }
-+    if (qEnvironmentVariableIsSet("QT_WINDOWS_DIALOGS")) {
-+        const QString dialogs = qEnvironmentVariable("QT_WINDOWS_DIALOGS");
-+        if (dialogs.isEmpty()) {
-+            qWarning() << "QT_WINDOWS_DIALOGS should not be empty.";
-+        } else {
-+            if (dialogs.compare(u"xp", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::XpNativeDialogs;
-+            } else if (dialogs.compare(u"none", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::NoNativeDialogs;
-+            } else {
-+                qWarning() << "QT_WINDOWS_DIALOGS only accepts xp/none.";
-+            }
-+        }
-+    }
-+    if (qEnvironmentVariableIntValue("QT_WINDOWS_ALTGR")) {
-+        options |= QWindowsIntegration::DetectAltGrModifier;
-+    }
-+    if (qEnvironmentVariableIsSet("QT_WINDOWS_DPI_AWARENESS")) {
-+        const QString awareness = qEnvironmentVariable("QT_WINDOWS_DPI_AWARENESS");
-+        if (awareness.isEmpty()) {
-+            qWarning() << "QT_WINDOWS_DPI_AWARENESS should not be empty.";
-+        } else {
-+            if (awareness.compare(u"permonitorv2", Qt::CaseInsensitive) == 0) {
-+                *dpiAwareness = QtWindows::ProcessPerMonitorV2DpiAware;
-+            } else if (awareness.compare(u"permonitor", Qt::CaseInsensitive) == 0) {
-+                *dpiAwareness = QtWindows::ProcessPerMonitorDpiAware;
-+            } else if (awareness.compare(u"system", Qt::CaseInsensitive) == 0) {
-+                *dpiAwareness = QtWindows::ProcessSystemDpiAware;
-+            } else if (awareness.compare(u"unaware", Qt::CaseInsensitive) == 0) {
-+                *dpiAwareness = QtWindows::ProcessDpiUnaware;
-+            } else {
-+                qWarning() << "QT_WINDOWS_DPI_AWARENESS only accepts permonitorv2/permonitor/system/unaware.";
-+            }
-+        }
-+    }
-+    if (qEnvironmentVariableIsSet("QT_WINDOWS_MENUS")) {
-+        const QString menus = qEnvironmentVariable("QT_WINDOWS_MENUS");
-+        if (menus.isEmpty()) {
-+            qWarning() << "QT_WINDOWS_MENUS should not be empty.";
-+        } else {
-+            if (menus.compare(u"native", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::AlwaysUseNativeMenus;
-+            } else if (menus.compare(u"none", Qt::CaseInsensitive) == 0) {
-+                options |= QWindowsIntegration::NoNativeMenus;
-+            } else {
-+                qWarning() << "QT_WINDOWS_MENUS only accepts native/none.";
-+            }
-+        }
-+    }
-+    if (qEnvironmentVariableIsSet("QT_WINDOWS_DARK_MODE")) {
-+        switch (qEnvironmentVariableIntValue("QT_WINDOWS_DARK_MODE")) {
-+        case 0:
-             *darkModeHandling = {};
--        } else if (param == u"darkmode=1") {
-+            break;
-+        case 1: {
-             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
-             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle, false);
--        } else if (param == u"darkmode=2") {
-+        } break;
-+        case 2: {
-             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeWindowFrames);
-             darkModeHandling->setFlag(DarkModeHandlingFlag::DarkModeStyle);
--        } else {
--            qWarning() << "Unknown option" << param;
-+        } break;
-+        default:
-+            qWarning() << "QT_WINDOWS_DARK_MODE only accepts 0/1/2.";
-+            break;
-         }
-     }
-     return options;
-@@ -208,8 +295,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -208,8 +208,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
      initOpenGlBlacklistResources();
  
      static bool dpiAwarenessSet = false;
@@ -10280,7 +9157,7 @@ index 2faeb7456b..8e4a38d630 100644
  
      int tabletAbsoluteRange = -1;
      DarkModeHandling darkModeHandling = DarkModeHandlingFlag::DarkModeWindowFrames;
-@@ -226,8 +315,8 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -226,8 +228,8 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
  
      if (!dpiAwarenessSet) { // Set only once in case of repeated instantiations of QGuiApplication.
          if (!QCoreApplication::testAttribute(Qt::AA_PluginApplication)) {
@@ -10428,16 +9305,15 @@ index 488d5f89b5..e422244d2a 100644
  
      const auto systemId = (qint64)penInfo->pointerInfo.sourceDevice;
 diff --git a/src/plugins/platforms/windows/qwindowsscreen.cpp b/src/plugins/platforms/windows/qwindowsscreen.cpp
-index 6f0b949b67..da7281263d 100644
+index 6f0b949b67..507f55a5ab 100644
 --- a/src/plugins/platforms/windows/qwindowsscreen.cpp
 +++ b/src/plugins/platforms/windows/qwindowsscreen.cpp
-@@ -26,30 +26,20 @@ QT_BEGIN_NAMESPACE
+@@ -26,20 +26,6 @@ QT_BEGIN_NAMESPACE
  
  using namespace Qt::StringLiterals;
  
 -static inline QDpi deviceDPI(HDC hdc)
-+[[nodiscard]] static inline bool getPathInfo(const MONITORINFOEX &viewInfo, DISPLAYCONFIG_PATH_INFO *pathInfo)
- {
+-{
 -    return QDpi(GetDeviceCaps(hdc, LOGPIXELSX), GetDeviceCaps(hdc, LOGPIXELSY));
 -}
 -
@@ -10449,50 +9325,11 @@ index 6f0b949b67..da7281263d 100644
 -        return QDpi(dpiX, dpiY);
 -    return {0, 0};
 -}
-+    Q_ASSERT(pathInfo);
-+    if (!pathInfo)
-+        return false;
- 
--static bool getPathInfo(const MONITORINFOEX &viewInfo, DISPLAYCONFIG_PATH_INFO *pathInfo)
--{
-     // We might want to consider storing adapterId/id from DISPLAYCONFIG_PATH_TARGET_INFO.
--    std::vector<DISPLAYCONFIG_PATH_INFO> pathInfos;
--    std::vector<DISPLAYCONFIG_MODE_INFO> modeInfos;
-+    std::vector<DISPLAYCONFIG_PATH_INFO> pathInfos = {};
-+    std::vector<DISPLAYCONFIG_MODE_INFO> modeInfos = {};
- 
-     // Fetch paths
--    LONG result;
--    UINT32 numPathArrayElements;
--    UINT32 numModeInfoArrayElements;
-+    LONG result = 0;
-+    UINT32 numPathArrayElements = 0;
-+    UINT32 numModeInfoArrayElements = 0;
-     do {
-         // QueryDisplayConfig documentation doesn't say the number of needed elements is updated
-         // when the call fails with ERROR_INSUFFICIENT_BUFFER, so we need a separate call to
-@@ -68,7 +58,7 @@ static bool getPathInfo(const MONITORINFOEX &viewInfo, DISPLAYCONFIG_PATH_INFO *
-         return false;
- 
-     // Find path matching monitor name
--    for (uint32_t p = 0; p < numPathArrayElements; p++) {
-+    for (uint32_t p = 0; p != numPathArrayElements; ++p) {
-         DISPLAYCONFIG_SOURCE_DEVICE_NAME deviceName;
-         deviceName.header.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_NAME;
-         deviceName.header.size = sizeof(DISPLAYCONFIG_SOURCE_DEVICE_NAME);
-@@ -87,9 +77,9 @@ static bool getPathInfo(const MONITORINFOEX &viewInfo, DISPLAYCONFIG_PATH_INFO *
- 
- #if 0
- // Needed later for HDR support
--static float getMonitorSDRWhiteLevel(DISPLAYCONFIG_PATH_TARGET_INFO *targetInfo)
-+[[nodiscard]] static inline float getMonitorSDRWhiteLevel(DISPLAYCONFIG_PATH_TARGET_INFO *targetInfo)
+-
+ static bool getPathInfo(const MONITORINFOEX &viewInfo, DISPLAYCONFIG_PATH_INFO *pathInfo)
  {
--    const float defaultSdrWhiteLevel = 200.0;
-+    static constexpr float defaultSdrWhiteLevel = 200.0;
-     if (!targetInfo)
-         return defaultSdrWhiteLevel;
- 
-@@ -135,8 +125,8 @@ static bool monitorData(HMONITOR hMonitor, QWindowsScreenData *data)
+     // We might want to consider storing adapterId/id from DISPLAYCONFIG_PATH_TARGET_INFO.
+@@ -135,8 +121,8 @@ static bool monitorData(HMONITOR hMonitor, QWindowsScreenData *data)
          data->flags |= QWindowsScreenData::LockScreen;
      } else {
          if (const HDC hdc = CreateDC(info.szDevice, nullptr, nullptr, nullptr)) {
@@ -10503,7 +9340,7 @@ index 6f0b949b67..da7281263d 100644
              data->depth = GetDeviceCaps(hdc, BITSPIXEL);
              data->format = data->depth == 16 ? QImage::Format_RGB16 : QImage::Format_RGB32;
              data->physicalSizeMM = QSizeF(GetDeviceCaps(hdc, HORZSIZE), GetDeviceCaps(hdc, VERTSIZE));
-@@ -427,7 +417,8 @@ QRect QWindowsScreen::virtualGeometry(const QPlatformScreen *screen) // cf QScre
+@@ -427,7 +413,8 @@ QRect QWindowsScreen::virtualGeometry(const QPlatformScreen *screen) // cf QScre
  
  bool QWindowsScreen::setOrientationPreference(Qt::ScreenOrientation o)
  {
@@ -10513,7 +9350,7 @@ index 6f0b949b67..da7281263d 100644
      ORIENTATION_PREFERENCE orientationPreference = ORIENTATION_PREFERENCE_NONE;
      switch (o) {
      case Qt::PrimaryOrientation:
-@@ -445,33 +436,29 @@ bool QWindowsScreen::setOrientationPreference(Qt::ScreenOrientation o)
+@@ -445,33 +432,29 @@ bool QWindowsScreen::setOrientationPreference(Qt::ScreenOrientation o)
          orientationPreference = ORIENTATION_PREFERENCE_LANDSCAPE_FLIPPED;
          break;
      }
@@ -10558,7 +9395,7 @@ index 6f0b949b67..da7281263d 100644
  
  /*!
 diff --git a/src/plugins/platforms/windows/qwindowstheme.cpp b/src/plugins/platforms/windows/qwindowstheme.cpp
-index 3704fce15e..4d656193ae 100644
+index 3704fce15e..2c8202884e 100644
 --- a/src/plugins/platforms/windows/qwindowstheme.cpp
 +++ b/src/plugins/platforms/windows/qwindowstheme.cpp
 @@ -44,6 +44,7 @@
@@ -10583,16 +9420,16 @@ index 3704fce15e..4d656193ae 100644
  
  static void populateDarkSystemBasePalette(QPalette &result)
  {
-+    QColor foreground = {};
-+    QColor background = {};
-+    QColor accent = {};
-+    QColor accentDark = {};
-+    QColor accentDarker = {};
-+    QColor accentDarkest = {};
-+    QColor accentLight = {};
-+    QColor accentLighter = {};
-+    QColor accentLightest = {};
-+    QColor linkColor = {};
++    QColor foreground;
++    QColor background;
++    QColor accent;
++    QColor accentDark;
++    QColor accentDarker;
++    QColor accentDarkest;
++    QColor accentLight;
++    QColor accentLighter;
++    QColor accentLightest;
++    QColor linkColor;
 +
 +    bool colorSet = false;
 +
@@ -10734,7 +9571,7 @@ index 3704fce15e..4d656193ae 100644
      }
      const auto setting = QWinRegistryKey(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 468b028b8b..5a2e772366 100644
+index 468b028b8b..46c4ec8cee 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -24,6 +24,7 @@
@@ -10749,8 +9586,7 @@ index 468b028b8b..5a2e772366 100644
      }
  }
  
--static bool applyBlurBehindWindow(HWND hwnd)
-+[[nodiscard]] static inline bool dwmIsCompositionEnabled()
++static bool dwmIsCompositionEnabled()
 +{
 +    if (QOperatingSystemVersion::isWin8OrGreater())
 +        return true;
@@ -10758,7 +9594,7 @@ index 468b028b8b..5a2e772366 100644
 +    return SUCCEEDED(DwmIsCompositionEnabled(&enabled)) && enabled != FALSE;
 +}
 +
-+[[nodiscard]] static inline bool applyBlurBehindWindow(HWND hwnd)
+ static bool applyBlurBehindWindow(HWND hwnd)
  {
      DWM_BLURBEHIND blurBehind = {0, 0, nullptr, 0};
  
@@ -10776,7 +9612,7 @@ index 468b028b8b..5a2e772366 100644
  
      const bool result = DwmEnableBlurBehindWindow(hwnd, &blurBehind) == S_OK;
  
-@@ -516,38 +530,29 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
+@@ -516,15 +530,6 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
      setWindowOpacity(hwnd, flags, hasAlpha, isAccelerated, opacity);
  }
  
@@ -10792,23 +9628,20 @@ index 468b028b8b..5a2e772366 100644
  /*!
      Calculates the dimensions of the invisible borders within the
      window frames which only exist on Windows 10 and onwards.
- */
+@@ -532,22 +537,21 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
  
--static QMargins invisibleMargins(QPoint screenPoint)
-+[[nodiscard]] static inline QMargins invisibleMargins(const QPoint &screenPoint)
+ static QMargins invisibleMargins(QPoint screenPoint)
  {
--    POINT pt = {screenPoint.x(), screenPoint.y()};
--    if (HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL)) {
++    if (!QOperatingSystemVersion::isWin10OrGreater())
++        return QMargins();
+     POINT pt = {screenPoint.x(), screenPoint.y()};
+     if (HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL)) {
 -        UINT dpiX;
 -        UINT dpiY;
 -        if (SUCCEEDED(GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiX, &dpiY))) {
 -            const int gap = getResizeBorderThickness(dpiX);
 -            return QMargins(gap, 0, gap, gap);
 -        }
-+    if (!QOperatingSystemVersion::isWin10OrGreater())
-+        return QMargins();
-+    const POINT pt = {screenPoint.x(), screenPoint.y()};
-+    if (const HMONITOR hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST)) {
 +        const int gap = QWindowsContext::getResizeBorderThickness(hMonitor);
 +        return QMargins(gap, 0, gap, gap);
      }
@@ -10819,14 +9652,13 @@ index 468b028b8b..5a2e772366 100644
  {
 -    const UINT dpi = GetDpiForWindow(hwnd);
 -    const int gap = getResizeBorderThickness(dpi);
-+    Q_ASSERT(hwnd);
 +    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return QMargins();
 +    const int gap = QWindowsContext::getResizeBorderThickness(hwnd);
      return QMargins(gap, 0, gap, gap);
  }
  
-@@ -807,7 +812,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+@@ -807,7 +811,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
      if (topLevel) {
          if ((type == Qt::Window || dialog || tool)) {
              if (!(flags & Qt::FramelessWindowHint)) {
@@ -10834,12 +9666,9 @@ index 468b028b8b..5a2e772366 100644
                  if (flags & Qt::MSWindowsFixedSizeDialogHint) {
                      style |= WS_DLGFRAME;
                  } else {
-@@ -841,8 +845,11 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
- 
-         // make mouse events fall through this window
+@@ -843,6 +846,9 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
          // NOTE: WS_EX_TRANSPARENT flag can make mouse inputs fall through a layered window
--        if (flagsIn & Qt::WindowTransparentForInput)
-+        if (flags & Qt::WindowTransparentForInput)
+         if (flagsIn & Qt::WindowTransparentForInput)
              exStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT;
 +
 +        if (qEnvironmentVariableIntValue("QT_WINDOWS_DISABLE_BITMAP_REDIRECTION"))
@@ -10847,7 +9676,7 @@ index 468b028b8b..5a2e772366 100644
      }
  }
  
-@@ -1052,9 +1059,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
+@@ -1052,9 +1058,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -10861,7 +9690,7 @@ index 468b028b8b..5a2e772366 100644
          qErrnoWarning("%s: AdjustWindowRectExForDpi failed", __FUNCTION__);
      }
      const QMargins result(qAbs(rect.left), qAbs(rect.top),
-@@ -1094,7 +1104,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
+@@ -1094,7 +1103,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -10871,7 +9700,7 @@ index 468b028b8b..5a2e772366 100644
          || !QWindowsContext::shouldHaveNonClientDpiScaling(w)) {
          return frameOnPrimaryScreen(w, style, exStyle);
      }
-@@ -1545,7 +1556,7 @@ void QWindowsWindow::initialize()
+@@ -1545,7 +1555,7 @@ void QWindowsWindow::initialize()
              QWindowSystemInterface::handleGeometryChange<QWindowSystemInterface::SynchronousDelivery>(w, obtainedGeometry);
          }
      }
@@ -10880,7 +9709,7 @@ index 468b028b8b..5a2e772366 100644
  }
  
  QSurfaceFormat QWindowsWindow::format() const
-@@ -2011,7 +2022,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
+@@ -2011,7 +2021,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
  
  void QWindowsWindow::handleDpiChangedAfterParent(HWND hwnd)
  {
@@ -10889,7 +9718,7 @@ index 468b028b8b..5a2e772366 100644
      const qreal scale = qreal(dpi) / qreal(savedDpi());
      setSavedDpi(dpi);
  
-@@ -2317,13 +2328,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
+@@ -2317,13 +2327,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
          return false;
      PAINTSTRUCT ps;
  
@@ -10914,7 +9743,7 @@ index 468b028b8b..5a2e772366 100644
      // If the a window is obscured by another window (such as a child window)
      // we still need to send isExposed=true, for compatibility.
      // Our tests depend on it.
-@@ -2912,7 +2932,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
+@@ -2912,7 +2931,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
              mmi->ptMaxPosition.x = availablePositionDiff.x();
              mmi->ptMaxPosition.y = availablePositionDiff.y();
              if (!m_data.flags.testFlag(Qt::FramelessWindowHint)) {
@@ -10923,7 +9752,7 @@ index 468b028b8b..5a2e772366 100644
                  mmi->ptMaxSize.x += borderWidth * 2;
                  mmi->ptMaxSize.y += borderWidth * 2;
                  mmi->ptMaxTrackSize = mmi->ptMaxSize;
-@@ -2953,7 +2973,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
+@@ -2953,7 +2972,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
              return true;
          }
          if (localPos.y() < 0) {
@@ -11170,325 +9999,6 @@ index 0380ef82d8..a091a06022 100644
                  }
              }
          }
-diff --git a/src/plugins/tls/schannel/qtls_schannel.cpp b/src/plugins/tls/schannel/qtls_schannel.cpp
-index ba14e61b57..2ee5c12f5f 100644
---- a/src/plugins/tls/schannel/qtls_schannel.cpp
-+++ b/src/plugins/tls/schannel/qtls_schannel.cpp
-@@ -384,7 +384,7 @@ QString schannelErrorToString(qint32 status)
- bool supportsTls13()
- {
- #ifdef SUPPORTS_TLS13
--    static bool supported = []() {
-+    static const auto supported = []() -> bool {
-         const auto current = QOperatingSystemVersion::current();
-         // 20221 just happens to be the preview version I run on my laptop where I tested TLS 1.3.
-         const auto minimum =
-diff --git a/src/tools/androiddeployqt/main.cpp b/src/tools/androiddeployqt/main.cpp
-index 61d58704fc..29ae471197 100644
---- a/src/tools/androiddeployqt/main.cpp
-+++ b/src/tools/androiddeployqt/main.cpp
-@@ -3098,6 +3098,8 @@ bool writeDependencyFile(const Options &options)
- 
- int main(int argc, char *argv[])
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QCoreApplication a(argc, argv);
- 
-     Options options = parseOptions();
-diff --git a/src/tools/androidtestrunner/main.cpp b/src/tools/androidtestrunner/main.cpp
-index 60dfc84ab3..d009047034 100644
---- a/src/tools/androidtestrunner/main.cpp
-+++ b/src/tools/androidtestrunner/main.cpp
-@@ -483,6 +483,8 @@ struct RunnerLocker
- 
- int main(int argc, char *argv[])
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QCoreApplication a(argc, argv);
-     if (!parseOptions()) {
-         printHelp();
-diff --git a/src/tools/cmake_automoc_parser/main.cpp b/src/tools/cmake_automoc_parser/main.cpp
-index 801483cdd7..53c9c50122 100644
---- a/src/tools/cmake_automoc_parser/main.cpp
-+++ b/src/tools/cmake_automoc_parser/main.cpp
-@@ -6,6 +6,7 @@
- #include <cstdio>
- #include <cstdlib>
- #include <limits>
-+#include <clocale>
- 
- #include <qcommandlineoption.h>
- #include <qcommandlineparser.h>
-@@ -226,6 +227,7 @@ static bool writeJsonFiles(const QList<QString> &fileList, const QString &fileLi
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
- 
-     QCoreApplication app(argc, argv);
-     QCommandLineParser parser;
-diff --git a/src/tools/macdeployqt/macdeployqt/main.cpp b/src/tools/macdeployqt/macdeployqt/main.cpp
-index 8b6c476fa5..e3dcf000e8 100644
---- a/src/tools/macdeployqt/macdeployqt/main.cpp
-+++ b/src/tools/macdeployqt/macdeployqt/main.cpp
-@@ -3,11 +3,14 @@
- #include <QCoreApplication>
- #include <QDir>
- #include <QLibraryInfo>
-+#include <clocale>
- 
- #include "../shared/shared.h"
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QCoreApplication app(argc, argv);
- 
-     QString appBundlePath;
-diff --git a/src/tools/moc/main.cpp b/src/tools/moc/main.cpp
-index 71b9757ebc..337d2e7980 100644
---- a/src/tools/moc/main.cpp
-+++ b/src/tools/moc/main.cpp
-@@ -15,6 +15,7 @@
- #include <stdlib.h>
- #include <ctype.h>
- #include <errno.h>
-+#include <clocale>
- 
- #include <qcoreapplication.h>
- #include <qcommandlineoption.h>
-@@ -646,5 +647,6 @@ QT_END_NAMESPACE
- 
- int main(int _argc, char **_argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-     return QT_PREPEND_NAMESPACE(runMoc)(_argc, _argv);
- }
-diff --git a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
-index 08e3fcf066..8893c87ea0 100644
---- a/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
-+++ b/src/tools/qdbuscpp2xml/qdbuscpp2xml.cpp
-@@ -423,6 +423,8 @@ static void parseCmdLine(QStringList &arguments)
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QStringList args;
-     args.reserve(argc - 1);
-     for (int n = 1; n < argc; ++n)
-diff --git a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
-index 4f23b8604d..c80e6bc821 100644
---- a/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
-+++ b/src/tools/qdbusxml2cpp/qdbusxml2cpp.cpp
-@@ -1086,6 +1086,8 @@ static void writeAdaptor(const QString &filename, const QDBusIntrospection::Inte
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QCoreApplication app(argc, argv);
-     QCoreApplication::setApplicationName(QStringLiteral(PROGRAMNAME));
-     QCoreApplication::setApplicationVersion(QStringLiteral(PROGRAMVERSION));
-diff --git a/src/tools/qlalr/main.cpp b/src/tools/qlalr/main.cpp
-index 8d339173ec..ae5c3f0d87 100644
---- a/src/tools/qlalr/main.cpp
-+++ b/src/tools/qlalr/main.cpp
-@@ -35,6 +35,8 @@ static void help_me ()
- 
- int main (int argc, char *argv[])
- {
-+  std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-   QCoreApplication app (argc, argv);
- 
-   bool generate_dot = false;
-diff --git a/src/tools/qtpaths/qtpaths.cpp b/src/tools/qtpaths/qtpaths.cpp
-index b4e2d749aa..273806b477 100644
---- a/src/tools/qtpaths/qtpaths.cpp
-+++ b/src/tools/qtpaths/qtpaths.cpp
-@@ -10,6 +10,7 @@
- #include <algorithm>
- 
- #include <stdio.h>
-+#include <clocale>
- 
- #if QT_CONFIG(settings)
- #    include <private/qlibraryinfo_p.h>
-@@ -123,6 +124,8 @@ static QString searchStringOrError(QCommandLineParser *parser)
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QString qtconfManualPath;
-     QCoreApplication app(argc, argv);
-     app.setApplicationVersion(QTPATHS_VERSION_STR);
-diff --git a/src/tools/qvkgen/qvkgen.cpp b/src/tools/qvkgen/qvkgen.cpp
-index 924f400510..3a33c064c4 100644
---- a/src/tools/qvkgen/qvkgen.cpp
-+++ b/src/tools/qvkgen/qvkgen.cpp
-@@ -586,6 +586,8 @@ bool genVulkanFunctionsPC(const QList<VkSpecParser::Command> &commands,
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QCoreApplication app(argc, argv);
-     VkSpecParser parser;
- 
-diff --git a/src/tools/rcc/main.cpp b/src/tools/rcc/main.cpp
-index 2751bc39d6..3449e6bb09 100644
---- a/src/tools/rcc/main.cpp
-+++ b/src/tools/rcc/main.cpp
-@@ -34,9 +34,7 @@ void dumpRecursive(const QDir &dir, QTextStream &out)
-         if (entry.isDir()) {
-             dumpRecursive(entry.filePath(), out);
-         } else {
--            out << "<file>"_L1
--                << entry.filePath()
--                << "</file>\n"_L1;
-+            out << "  <file>"_L1 << entry.filePath() << "</file>\n"_L1;
-         }
-     }
- }
-@@ -64,7 +62,8 @@ int createProject(const QString &outFileName)
-     }
- 
-     QTextStream out(&file);
--    out << "<!DOCTYPE RCC><RCC version=\"1.0\">\n"
-+    out << "<!DOCTYPE RCC>\n"
-+           "<RCC version=\"1.0\">\n"
-            "<qresource>\n"_L1;
- 
-     // use "." as dir to get relative file paths
-@@ -418,6 +417,8 @@ QT_END_NAMESPACE
- 
- int main(int argc, char *argv[])
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     // rcc uses a QHash to store files in the resource system.
-     // we must force a certain hash order when testing or tst_rcc will fail, see QTBUG-25078
-     // similar requirements exist for reproducibly builds.
-diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
-index a87f15de33..26fe095ec0 100644
---- a/src/tools/rcc/rcc.cpp
-+++ b/src/tools/rcc/rcc.cpp
-@@ -957,7 +957,7 @@ void RCCResourceLibrary::writeDecimal(int value)
-     write(buf, n);
- }
- 
--static const char hexDigits[] = "0123456789abcdef";
-+static constexpr char hexDigits[] = "0123456789abcdef";
- 
- inline void RCCResourceLibrary::write2HexDigits(quint8 number)
- {
-@@ -1097,7 +1097,7 @@ bool RCCResourceLibrary::writeDataBlobs()
-     Q_ASSERT(m_errorDevice);
-     switch (m_format) {
-     case C_Code:
--        writeString("static const unsigned char qt_resource_data[] = {\n");
-+        writeString("static constexpr unsigned char qt_resource_data[] = {\n");
-         break;
-     case Python_Code:
-         writeString("qt_resource_data = b\"\\\n");
-@@ -1141,7 +1141,7 @@ bool RCCResourceLibrary::writeDataBlobs()
-     case Pass1:
-         if (offset < 8)
-             offset = 8;
--        writeString("\nstatic const unsigned char qt_resource_data[");
-+        writeString("\nstatic constexpr unsigned char qt_resource_data[");
-         writeByteArray(QByteArray::number(offset));
-         writeString("] = { 'Q', 'R', 'C', '_', 'D', 'A', 'T', 'A' };\n\n");
-         break;
-@@ -1156,7 +1156,7 @@ bool RCCResourceLibrary::writeDataNames()
-     switch (m_format) {
-     case C_Code:
-     case Pass1:
--        writeString("static const unsigned char qt_resource_name[] = {\n");
-+        writeString("static constexpr unsigned char qt_resource_name[] = {\n");
-         break;
-     case Python_Code:
-         writeString("qt_resource_name = b\"\\\n");
-@@ -1218,7 +1218,7 @@ bool RCCResourceLibrary::writeDataStructure()
-     switch (m_format) {
-     case C_Code:
-     case Pass1:
--        writeString("static const unsigned char qt_resource_struct[] = {\n");
-+        writeString("static constexpr unsigned char qt_resource_struct[] = {\n");
-         break;
-     case Python_Code:
-         writeString("qt_resource_struct = b\"\\\n");
-diff --git a/src/tools/syncqt/main.cpp b/src/tools/syncqt/main.cpp
-index b4c37ec626..175f01fe70 100644
---- a/src/tools/syncqt/main.cpp
-+++ b/src/tools/syncqt/main.cpp
-@@ -28,6 +28,7 @@
- #include <map>
- #include <set>
- #include <array>
-+#include <clocale>
- 
- enum ErrorCodes {
-     NoError = 0,
-@@ -1565,6 +1566,8 @@ bool SyncScanner::writeIfDifferent(const std::string &outputFile, const std::str
- 
- int main(int argc, char *argv[])
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     CommandLineOptions options(argc, argv);
-     if (!options.isValid())
-         return InvalidArguments;
-diff --git a/src/tools/tracegen/tracegen.cpp b/src/tools/tracegen/tracegen.cpp
-index 6a5f3286a9..688fd0b31d 100644
---- a/src/tools/tracegen/tracegen.cpp
-+++ b/src/tools/tracegen/tracegen.cpp
-@@ -8,6 +8,7 @@
- 
- #include <qstring.h>
- #include <qfile.h>
-+#include <clocale>
- 
- enum class Target
- {
-@@ -45,6 +46,8 @@ static void parseArgs(int argc, char *argv[], Target *target, QString *inFile, Q
- 
- int main(int argc, char *argv[])
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     Target target = Target::LTTNG;
-     QString inFile;
-     QString outFile;
-diff --git a/src/tools/uic/main.cpp b/src/tools/uic/main.cpp
-index c2f117ec21..6a12ab715c 100644
---- a/src/tools/uic/main.cpp
-+++ b/src/tools/uic/main.cpp
-@@ -172,5 +172,6 @@ QT_END_NAMESPACE
- 
- int main(int argc, char *argv[])
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-     return QT_PREPEND_NAMESPACE(runUic)(argc, argv);
- }
-diff --git a/src/tools/windeployqt/main.cpp b/src/tools/windeployqt/main.cpp
-index a41ef6cac1..2309368d56 100644
---- a/src/tools/windeployqt/main.cpp
-+++ b/src/tools/windeployqt/main.cpp
-@@ -1622,6 +1622,8 @@ QT_USE_NAMESPACE
- 
- int main(int argc, char **argv)
- {
-+    std::setlocale(LC_ALL, "en_US.UTF-8");
-+
-     QCoreApplication a(argc, argv);
-     QCoreApplication::setApplicationVersion(QT_VERSION_STR ""_L1);
- 
 diff --git a/src/widgets/dialogs/qwizard_win.cpp b/src/widgets/dialogs/qwizard_win.cpp
 index e95f0e3b7b..9c79b56a67 100644
 --- a/src/widgets/dialogs/qwizard_win.cpp
