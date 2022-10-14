@@ -20,7 +20,7 @@
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
  src/gui/opengl/qopengl.cpp                         |   14 +-
- src/gui/rhi/qrhid3d11.cpp                          |  322 ++--
+ src/gui/rhi/qrhid3d11.cpp                          |  320 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
  .../qnetworklistmanagerevents.cpp                  |   39 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
@@ -82,7 +82,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   15 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 84 files changed, 941 insertions(+), 7656 deletions(-)
+ 84 files changed, 940 insertions(+), 7655 deletions(-)
 
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
 index 64fc9fff01..c66f6ebc48 100644
@@ -1983,7 +1983,7 @@ index edb359f686..d52d23ebe1 100644
          default:
              break;
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index 3ef1fa394e..1b7516e986 100644
+index 3ef1fa394e..bb715f1cfa 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
 +++ b/src/gui/rhi/qrhid3d11.cpp
 @@ -9,6 +9,8 @@
@@ -1999,16 +1999,9 @@ index 3ef1fa394e..1b7516e986 100644
      return (v + byteAlign - 1) & ~(byteAlign - 1);
  }
  
--static IDXGIFactory1 *createDXGIFactory2()
 +static IDXGIFactory1 *createDXGIFactory1()
- {
-     IDXGIFactory1 *result = nullptr;
--    const HRESULT hr = CreateDXGIFactory2(0, __uuidof(IDXGIFactory2), reinterpret_cast<void **>(&result));
--    if (FAILED(hr)) {
--        qWarning("CreateDXGIFactory2() failed to create DXGI factory: %s", qPrintable(comErrorMessage(hr)));
--        result = nullptr;
--    }
--    return result;
++{
++    IDXGIFactory1 *result = nullptr;
 +    const HRESULT hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void **>(&result));
 +    if (SUCCEEDED(hr))
 +        return result;
@@ -2016,8 +2009,8 @@ index 3ef1fa394e..1b7516e986 100644
 +    return nullptr;
 +}
 +
-+static IDXGIFactory1 *createDXGIFactory2()
-+{
+ static IDXGIFactory1 *createDXGIFactory2()
+ {
 +    if (!QOperatingSystemVersion::isWin8Point1OrGreater())
 +        return nullptr;
 +    static const auto pCreateDXGIFactory2 =
@@ -2025,7 +2018,13 @@ index 3ef1fa394e..1b7516e986 100644
 +            QSystemLibrary::resolve(u"dxgi"_s, "CreateDXGIFactory2"));
 +    if (!pCreateDXGIFactory2)
 +        return nullptr;
-+    IDXGIFactory2 *result = nullptr;
+     IDXGIFactory1 *result = nullptr;
+-    const HRESULT hr = CreateDXGIFactory2(0, __uuidof(IDXGIFactory2), reinterpret_cast<void **>(&result));
+-    if (FAILED(hr)) {
+-        qWarning("CreateDXGIFactory2() failed to create DXGI factory: %s", qPrintable(comErrorMessage(hr)));
+-        result = nullptr;
+-    }
+-    return result;
 +    const HRESULT hr = pCreateDXGIFactory2(0, __uuidof(IDXGIFactory2), reinterpret_cast<void **>(&result));
 +    if (SUCCEEDED(hr))
 +        return result;
