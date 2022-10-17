@@ -105,11 +105,11 @@ index 64fc9fff01..c66f6ebc48 100644
  #endif
  
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index d6fee2980c..b80c38ee2d 100644
+index 5277333fdf..633f7e190a 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
-@@ -194,6 +194,12 @@ public:
-     static constexpr QOperatingSystemVersionBase Android13 { QOperatingSystemVersionBase::Android, 13, 0 };
+@@ -188,6 +188,12 @@ public:
+     static constexpr QOperatingSystemVersionBase Android11 { QOperatingSystemVersionBase::Android, 11, 0 };
  #endif // New (static constexpr) entries go here, only cherry-pick as far back as 6.3 (QTBUG-97808):
  
 +    static constexpr QOperatingSystemVersionBase Windows10_1507 { QOperatingSystemVersionBase::Windows, 10, 0, 10240 }; // TH1
@@ -121,37 +121,37 @@ index d6fee2980c..b80c38ee2d 100644
      static constexpr QOperatingSystemVersionBase Windows10_1809 { QOperatingSystemVersionBase::Windows, 10, 0, 17763 }; // RS5
      static constexpr QOperatingSystemVersionBase Windows10_1903 { QOperatingSystemVersionBase::Windows, 10, 0, 18362 }; // 19H1
      static constexpr QOperatingSystemVersionBase Windows10_1909 { QOperatingSystemVersionBase::Windows, 10, 0, 18363 }; // 19H2
-@@ -205,6 +211,36 @@ public:
-     static constexpr QOperatingSystemVersionBase Windows11_21H2 = Windows11;
-     static constexpr QOperatingSystemVersionBase Windows11_22H2 { QOperatingSystemVersionBase::Windows, 10, 0, 22621 };
+@@ -203,6 +209,36 @@ public:
+     static constexpr QOperatingSystemVersionBase Android12L { QOperatingSystemVersionBase::Android, 12, 0 };
+     static constexpr QOperatingSystemVersionBase Android13 { QOperatingSystemVersionBase::Android, 13, 0 };
  
 +#ifdef Q_OS_WINDOWS
 +#  define MAKE_VERSION_FUNCTION(Name, Version) \
-+    static bool is##Name##OrGreater() \
++    static bool isWin##Name##OrGreater() \
 +    { \
-+        static const bool result = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Version; \
++        static const bool result = QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows##Version; \
 +        return result; \
 +    }
-+    MAKE_VERSION_FUNCTION(Win7, Windows7)
-+    MAKE_VERSION_FUNCTION(Win8, Windows8)
-+    MAKE_VERSION_FUNCTION(Win8Point1, Windows8_1)
-+    MAKE_VERSION_FUNCTION(Win10, Windows10)
-+    MAKE_VERSION_FUNCTION(Win10TH1, Windows10_1507)
-+    MAKE_VERSION_FUNCTION(Win10TH2, Windows10_1511)
-+    MAKE_VERSION_FUNCTION(Win10RS1, Windows10_1607)
-+    MAKE_VERSION_FUNCTION(Win10RS2, Windows10_1703)
-+    MAKE_VERSION_FUNCTION(Win10RS3, Windows10_1709)
-+    MAKE_VERSION_FUNCTION(Win10RS4, Windows10_1803)
-+    MAKE_VERSION_FUNCTION(Win10RS5, Windows10_1809)
-+    MAKE_VERSION_FUNCTION(Win1019H1, Windows10_1903)
-+    MAKE_VERSION_FUNCTION(Win1019H2, Windows10_1909)
-+    MAKE_VERSION_FUNCTION(Win1020H1, Windows10_2004)
-+    MAKE_VERSION_FUNCTION(Win1020H2, Windows10_20H2)
-+    MAKE_VERSION_FUNCTION(Win1021H1, Windows10_21H1)
-+    MAKE_VERSION_FUNCTION(Win1021H2, Windows10_21H2)
-+    MAKE_VERSION_FUNCTION(Win11, Windows11)
-+    MAKE_VERSION_FUNCTION(Win1121H2, Windows11_21H2)
-+    MAKE_VERSION_FUNCTION(Win1122H2, Windows11_22H2)
++    MAKE_VERSION_FUNCTION(7, 7)
++    MAKE_VERSION_FUNCTION(8, 8)
++    MAKE_VERSION_FUNCTION(8Point1, 8_1)
++    MAKE_VERSION_FUNCTION(10, 10)
++    MAKE_VERSION_FUNCTION(10TH1, 10_1507)
++    MAKE_VERSION_FUNCTION(10TH2, 10_1511)
++    MAKE_VERSION_FUNCTION(10RS1, 10_1607)
++    MAKE_VERSION_FUNCTION(10RS2, 10_1703)
++    MAKE_VERSION_FUNCTION(10RS3, 10_1709)
++    MAKE_VERSION_FUNCTION(10RS4, 10_1803)
++    MAKE_VERSION_FUNCTION(10RS5, 10_1809)
++    MAKE_VERSION_FUNCTION(1019H1, 10_1903)
++    MAKE_VERSION_FUNCTION(1019H2, 10_1909)
++    MAKE_VERSION_FUNCTION(1020H1, 10_2004)
++    MAKE_VERSION_FUNCTION(1020H2, 10_20H2)
++    MAKE_VERSION_FUNCTION(1021H1, 10_21H1)
++    MAKE_VERSION_FUNCTION(1021H2, 10_21H2)
++    MAKE_VERSION_FUNCTION(11, 11)
++    MAKE_VERSION_FUNCTION(1121H2, 11_21H2)
++    MAKE_VERSION_FUNCTION(1122H2, 11_22H2)
 +#  undef MAKE_VERSION_FUNCTION
 +#endif // Q_OS_WINDOWS
 +
@@ -361,7 +361,7 @@ index 3a3ae443c6..ff2bcacbbb 100644
      // mingw and clang still have to use Win32 API
      unsigned long cnt = 0;
 diff --git a/src/corelib/thread/qfutex_p.h b/src/corelib/thread/qfutex_p.h
-index 9363cc02de..cdab564425 100644
+index 48f03f5ed0..fe799c68ca 100644
 --- a/src/corelib/thread/qfutex_p.h
 +++ b/src/corelib/thread/qfutex_p.h
 @@ -17,9 +17,12 @@
