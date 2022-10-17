@@ -29,5 +29,5 @@ set __vcpkg_triplets=x64-windows
 :: ICU: needed by QtCore & QtWebEngine
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
 :: FFmpeg: needed by QtMultimedia (the FFmpeg backend); temporarily removed, vcpkg bug.
-set __qt_deps=zstd openssl
+set __qt_deps=zstd openssl icu
 exit /b 0
