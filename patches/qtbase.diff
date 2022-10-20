@@ -86,7 +86,7 @@
  85 files changed, 941 insertions(+), 7656 deletions(-)
 
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 9dbf63000c..fc8cc6234b 100644
+index 21bd645639..5f11d5816c 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
 @@ -259,7 +259,7 @@ if (MSVC)
@@ -9987,20 +9987,20 @@ index 8fe8b1c6d7..07367efe01 100644
  QT_BEGIN_NAMESPACE
  
 diff --git a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-index 0380ef82d8..a091a06022 100644
+index c80dc077ee..1ba4a7403e 100644
 --- a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 +++ b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-@@ -1751,6 +1751,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
+@@ -3944,6 +3944,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
                      theme.partId = flags & State_Horizontal ? SBP_THUMBBTNHORZ : SBP_THUMBBTNVERT;
                      theme.stateId = stateId;
                      d->drawBackground(theme);
 +
 +                    if (!QOperatingSystemVersion::isWin8OrGreater()) {
-+                        const QRect gripperBounds = QWindowsXPStylePrivate::scrollBarGripperBounds(flags, widget, &theme);
++                        const QRect gripperBounds = QWindowsVistaStylePrivate::scrollBarGripperBounds(flags, widget, &theme);
 +                        // Draw gripper if there is enough space
 +                        if (!gripperBounds.isEmpty() && flags & State_Enabled) {
 +                            painter->save();
-+                            XPThemeData grippBackground = theme;
++                            QWindowsThemeData grippBackground = theme;
 +                            grippBackground.partId = flags & State_Horizontal ? SBP_LOWERTRACKHORZ : SBP_LOWERTRACKVERT;
 +                            theme.rect = gripperBounds;
 +                            painter->setClipRegion(d->region(theme));// Only change inside the region of the gripper
