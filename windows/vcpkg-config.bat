@@ -24,7 +24,7 @@
 :: Build these libraries as static libraries so that we don't have to
 :: distribute a lot of separate dlls along side with Qt.
 :: Feel free to change them if you are worried about license issues.
-set __vcpkg_triplets=x64-windows
+set __vcpkg_triplets=x64-windows-static-md
 :: ZSTD: needed by QtCore & QtNetwork
 :: ICU: needed by QtCore & QtWebEngine; temporarily removed, vcpkg bug.
 :: OpenSSL: needed by QtNetwork (the OpenSSL backend)
