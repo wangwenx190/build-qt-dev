@@ -119,7 +119,7 @@ index 64fc9fff01..c66f6ebc48 100644
  #endif
  
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index 5277333fdf..633f7e190a 100644
+index 78a525ace6..00188701db 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
 @@ -188,6 +188,12 @@ public:
@@ -135,7 +135,7 @@ index 5277333fdf..633f7e190a 100644
      static constexpr QOperatingSystemVersionBase Windows10_1809 { QOperatingSystemVersionBase::Windows, 10, 0, 17763 }; // RS5
      static constexpr QOperatingSystemVersionBase Windows10_1903 { QOperatingSystemVersionBase::Windows, 10, 0, 18362 }; // 19H1
      static constexpr QOperatingSystemVersionBase Windows10_1909 { QOperatingSystemVersionBase::Windows, 10, 0, 18363 }; // 19H2
-@@ -203,6 +209,36 @@ public:
+@@ -204,6 +210,36 @@ public:
      static constexpr QOperatingSystemVersionBase Android12L { QOperatingSystemVersionBase::Android, 12, 0 };
      static constexpr QOperatingSystemVersionBase Android13 { QOperatingSystemVersionBase::Android, 13, 0 };
  
@@ -1997,7 +1997,7 @@ index edb359f686..d52d23ebe1 100644
          default:
              break;
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index 3ef1fa394e..bb715f1cfa 100644
+index da7089edf9..9c82cc3266 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
 +++ b/src/gui/rhi/qrhid3d11.cpp
 @@ -9,6 +9,8 @@
