@@ -81,9 +81,9 @@
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   53 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
- .../styles/windowsvista/qwindowsvistastyle.cpp     |   15 +
+ .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 85 files changed, 942 insertions(+), 7656 deletions(-)
+ 85 files changed, 958 insertions(+), 7656 deletions(-)
 
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
 index 21bd645639..5f11d5816c 100644
@@ -9988,7 +9988,7 @@ index 8fe8b1c6d7..07367efe01 100644
  QT_BEGIN_NAMESPACE
  
 diff --git a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-index c80dc077ee..1ba4a7403e 100644
+index c80dc077ee..9415e9540d 100644
 --- a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 +++ b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 @@ -3944,6 +3944,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
@@ -10013,6 +10013,27 @@ index c80dc077ee..1ba4a7403e 100644
                  }
              }
          }
+@@ -4991,4 +5006,20 @@ QIcon QWindowsVistaStyle::standardIcon(StandardPixmap standardIcon,
+     return QWindowsStyle::standardIcon(standardIcon, option, widget);
+ }
+ 
++QRect QWindowsVistaStylePrivate::scrollBarGripperBounds(QStyle::State flags, const QWidget *widget, QWindowsThemeData *theme)
++{
++    const bool horizontal = flags & QStyle::State_Horizontal;
++    const qreal factor = QWindowsStylePrivate::nativeMetricScaleFactor(widget);
++    const QMargins contentsMargin =
++        (theme->margins(theme->rect, TMT_SIZINGMARGINS) * factor).toMargins();
++    theme->partId = horizontal ? SBP_GRIPPERHORZ : SBP_GRIPPERVERT;
++    const QSize size = (theme->size() * factor).toSize();
++
++    const int hSpace = theme->rect.width() - size.width();
++    const int vSpace = theme->rect.height() - size.height();
++    const bool sufficientSpace = (horizontal && hSpace > (contentsMargin.left() + contentsMargin.right()))
++        || vSpace > contentsMargin.top() + contentsMargin.bottom();
++    return sufficientSpace ? QRect(theme->rect.topLeft() + QPoint(hSpace, vSpace) / 2, size) : QRect();
++}
++
+ QT_END_NAMESPACE
 diff --git a/src/widgets/dialogs/qwizard_win.cpp b/src/widgets/dialogs/qwizard_win.cpp
 index e95f0e3b7b..9c79b56a67 100644
 --- a/src/widgets/dialogs/qwizard_win.cpp
