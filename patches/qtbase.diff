@@ -1,6 +1,6 @@
  cmake/QtInternalTargets.cmake                      |    2 +-
  src/corelib/global/qlibraryinfo.cpp                |    9 +-
- src/corelib/global/qoperatingsystemversion.h       |   36 +
+ src/corelib/global/qoperatingsystemversion.h       |   37 +
  src/corelib/global/qoperatingsystemversion_win.cpp |   17 +-
  src/corelib/global/qsysinfo.cpp                    |   32 +-
  src/corelib/kernel/qeventdispatcher_win.cpp        |   13 +-
@@ -83,7 +83,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   15 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 85 files changed, 941 insertions(+), 7656 deletions(-)
+ 85 files changed, 942 insertions(+), 7656 deletions(-)
 
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
 index 21bd645639..5f11d5816c 100644
@@ -119,7 +119,7 @@ index 64fc9fff01..c66f6ebc48 100644
  #endif
  
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index 78a525ace6..00188701db 100644
+index 78a525ace6..74e7449e6c 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
 @@ -188,6 +188,12 @@ public:
@@ -135,7 +135,7 @@ index 78a525ace6..00188701db 100644
      static constexpr QOperatingSystemVersionBase Windows10_1809 { QOperatingSystemVersionBase::Windows, 10, 0, 17763 }; // RS5
      static constexpr QOperatingSystemVersionBase Windows10_1903 { QOperatingSystemVersionBase::Windows, 10, 0, 18362 }; // 19H1
      static constexpr QOperatingSystemVersionBase Windows10_1909 { QOperatingSystemVersionBase::Windows, 10, 0, 18363 }; // 19H2
-@@ -204,6 +210,36 @@ public:
+@@ -204,6 +210,37 @@ public:
      static constexpr QOperatingSystemVersionBase Android12L { QOperatingSystemVersionBase::Android, 12, 0 };
      static constexpr QOperatingSystemVersionBase Android13 { QOperatingSystemVersionBase::Android, 13, 0 };
  
@@ -163,6 +163,7 @@ index 78a525ace6..00188701db 100644
 +    MAKE_VERSION_FUNCTION(1020H2, 10_20H2)
 +    MAKE_VERSION_FUNCTION(1021H1, 10_21H1)
 +    MAKE_VERSION_FUNCTION(1021H2, 10_21H2)
++    MAKE_VERSION_FUNCTION(1022H2, 10_22H2)
 +    MAKE_VERSION_FUNCTION(11, 11)
 +    MAKE_VERSION_FUNCTION(1121H2, 11_21H2)
 +    MAKE_VERSION_FUNCTION(1122H2, 11_22H2)
