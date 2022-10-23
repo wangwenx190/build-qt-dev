@@ -7,6 +7,7 @@
  src/corelib/kernel/qfunctions_win.cpp              |   13 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
+ src/entrypoint/qtentrypoint_win.cpp                |   16 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -69,7 +70,7 @@
  src/plugins/platforms/offscreen/qoffscreenwindow.h |   49 -
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
  src/plugins/platforms/windows/qwin10helpers.cpp    |   39 +-
- src/plugins/platforms/windows/qwindowscontext.cpp  |  166 +-
+ src/plugins/platforms/windows/qwindowscontext.cpp  |  172 +-
  src/plugins/platforms/windows/qwindowscontext.h    |   98 ++
  .../platforms/windows/qwindowsintegration.cpp      |    8 +-
  .../platforms/windows/qwindowskeymapper.cpp        |   18 +-
@@ -83,7 +84,7 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 85 files changed, 958 insertions(+), 7656 deletions(-)
+ 86 files changed, 977 insertions(+), 7659 deletions(-)
 
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
 index 21bd645639..5f11d5816c 100644
@@ -490,6 +491,51 @@ index 48f03f5ed0..fe799c68ca 100644
  namespace QtFutex = QtWindowsFutex;
  QT_END_NAMESPACE
  #else
+diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
+index 6ecb814948..2b9553caf7 100644
+--- a/src/entrypoint/qtentrypoint_win.cpp
++++ b/src/entrypoint/qtentrypoint_win.cpp
+@@ -14,7 +14,7 @@
+ */
+ 
+ #if defined(QT_NEEDS_QMAIN)
+-int qMain(int, char **);
++extern "C" int qMain(int, char **);
+ #define main qMain
+ #else
+ extern "C" int main(int, char **);
+@@ -28,7 +28,7 @@ extern "C" int main(int, char **);
+ 
+ // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
+ // when passed CP_ACP.
+-static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
++static inline char *wideToMulti(const unsigned int codePage, const wchar_t *aw)
+ {
+     const int required = WideCharToMultiByte(codePage, 0, aw, -1, nullptr, 0, nullptr, nullptr);
+     char *result = new char[required];
+@@ -36,7 +36,7 @@ static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
+     return result;
+ }
+ 
+-extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
++static inline int qtEntryPoint()
+ {
+     int argc = 0;
+     wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
+@@ -53,3 +53,13 @@ extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int
+     delete [] argv;
+     return exitCode;
+ }
++
++extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
++{
++    return qtEntryPoint();
++}
++
++extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
++{
++    return qtEntryPoint();
++}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 1dd7bb3c30..1644381ad8 100644
 --- a/src/gui/CMakeLists.txt
@@ -8795,7 +8841,7 @@ index 026e81cb0c..6131031987 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index fd3cd94a13..fcdad9977e 100644
+index fd3cd94a13..9bd44a9183 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -119,15 +119,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -8893,7 +8939,7 @@ index fd3cd94a13..fcdad9977e 100644
          && !window->property(QWindowsWindow::embeddedNativeParentHandleProperty).isValid()
  #if QT_CONFIG(opengl) // /QTBUG-62901, EnableNonClientDpiScaling has problems with GL
          && (window->surfaceType() != QSurface::OpenGLSurface
-@@ -1602,4 +1621,131 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
+@@ -1602,4 +1621,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
      return false;
  }
  
@@ -8902,9 +8948,15 @@ index fd3cd94a13..fcdad9977e 100644
 +    Q_ASSERT(hWnd);
 +    if (!hWnd)
 +        return 0;
-+    if (!QWindowsApi::instance()->pGetDpiForWindow)
-+        return 0;
-+    return QWindowsApi::instance()->pGetDpiForWindow(hWnd);
++    if (QWindowsApi::instance()->pGetDpiForWindow)
++        return QWindowsApi::instance()->pGetDpiForWindow(hWnd);
++    if (const HDC hdc = GetDC(hWnd)) {
++        const int dpiX = GetDeviceCaps(hdc, LOGPIXELSX);
++        ReleaseDC(hWnd, hdc);
++        if (dpiX > 0)
++            return dpiX;
++    }
++    return 0;
 +}
 +
 +UINT QWindowsContext::getDpiForMonitor(const HMONITOR hMonitor)
