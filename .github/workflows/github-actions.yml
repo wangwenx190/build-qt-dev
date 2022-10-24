@@ -46,6 +46,11 @@ jobs:
       run: call C:/GitHub_Actions/build-qt-dev/windows-vcpkg.bat
       shell: cmd
 
+    - name: Set up VC-LTL
+      working-directory: C:/GitHub_Actions/build-qt-dev
+      run: call C:/GitHub_Actions/build-qt-dev/windows-vcltl.bat
+      shell: cmd
+
     - name: Build the Qt Toolkit
       working-directory: C:/GitHub_Actions/build-qt-dev
       run: call C:/GitHub_Actions/build-qt-dev/windows-build.bat

@@ -128,7 +128,7 @@ if /i "%__compiler%" == "mingw" (
     set __vcpkg_triplet=%__vcpkg_triplet%-windows
 )
 set __vcpkg_triplet=%__vcpkg_triplet%-static
-if /i "%__lib_type%" == "shared" set __vcpkg_triplet=%__vcpkg_triplet%-md
+::if /i "%__lib_type%" == "shared" set __vcpkg_triplet=%__vcpkg_triplet%-md
 set __should_enable_ltcg=true
 set __ninja_multi_config=false
 :: Increase CMake's message verbosity, it can help us debug configuration errors.
