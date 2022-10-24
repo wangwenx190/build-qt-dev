@@ -1,4 +1,6 @@
+ cmake/QtBuild.cmake                                |    7 +
  cmake/QtInternalTargets.cmake                      |    2 +-
+ cmake/VC-LTL.cmake                                 |   88 +
  src/corelib/global/qlibraryinfo.cpp                |    9 +-
  src/corelib/global/qoperatingsystemversion.h       |   37 +
  src/corelib/global/qoperatingsystemversion_win.cpp |   17 +-
@@ -83,9 +85,25 @@
  .../uiautomation/qwindowsuiamainprovider.cpp       |   53 +-
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
+ .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 86 files changed, 977 insertions(+), 7659 deletions(-)
+ 89 files changed, 1073 insertions(+), 7659 deletions(-)
 
+diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
+index 2db677bef8..8fd482f62f 100644
+--- a/cmake/QtBuild.cmake
++++ b/cmake/QtBuild.cmake
+@@ -572,3 +572,10 @@ _qt_internal_generate_tool_command_wrapper()
+ if(CMAKE_VERSION VERSION_LESS "3.19.0")
+     variable_watch(CMAKE_CURRENT_LIST_DIR qt_watch_current_list_dir)
+ endif()
++
++if(MSVC)
++    include(VC-LTL)
++    if(DEFINED SupportLTL AND (${SupportLTL} STREQUAL "true"))
++        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
++    endif()
++endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
 index 21bd645639..5f11d5816c 100644
 --- a/cmake/QtInternalTargets.cmake
@@ -99,6 +117,100 @@ index 21bd645639..5f11d5816c 100644
      )
  
      target_link_options(PlatformCommonInternal INTERFACE
+diff --git a/cmake/VC-LTL.cmake b/cmake/VC-LTL.cmake
+new file mode 100644
+index 0000000000..b32073535e
+--- /dev/null
++++ b/cmake/VC-LTL.cmake
+@@ -0,0 +1,88 @@
++﻿# https://github.com/Chuyu-Team/VC-LTL5
++
++#
++#  VC-LTL自动化加载配置，建议你将此文件单独复制到你的工程再使用，该文件能自动识别当前环境是否存在VC-LTL，并且自动应用。
++#
++#  使用方法：
++#    1. 在“CMakeLists.txt” 添加 “include("VC-LTL helper for cmake.cmake")”。
++#
++#  VC-LTL默认搜索顺序
++#    1. “VC-LTL helper for cmake.cmake”所在根目录，即 ${CMAKE_CURRENT_LIST_DIR}
++#    2. 当前CMake根目录，即 ${CMAKE_CURRENT_SOURCE_DIR}/VC-LTL
++#    3. 当前项目根目录，即 ${PROJECT_SOURCE_DIR}/VC-LTL
++#    4. 当前CMake父目录，即 ${CMAKE_CURRENT_SOURCE_DIR}/../VC-LTL
++#    5. 当前项目根目录，即 ${PROJECT_SOURCE_DIR}/../VC-LTL
++#    6. 注册表HKEY_CURRENT_USER\Code\VC-LTL@Root
++#
++#  把VC-LTL放在其中一个位置即可，VC-LTL就能被自动引用。
++#
++#  如果你对默认搜索顺序不满，你可以修改此文件。你也可以直接指定${VC_LTL_Root}宏更加任性的去加载VC-LTL。
++#
++
++
++
++
++#####################################################################VC-LTL设置#####################################################################
++
++#控制TargetPlatform版本，目前可用版本为5.1.2600.0     6.0.6000.0（默认）    6.2.9200.0     10.0.10240.0    10.0.19041.0
++set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
++
++#启用干净的导入表，消除 ucrt apiset(如：api-ms-win-crt-time-l1-1-0.dll)，满足强迫症患者。
++set(CleanImport "true" CACHE STRING "" FORCE)
++
++####################################################################################################################################################
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/_msvcrt.h)
++		set(VC_LTL_Root ${CMAKE_CURRENT_LIST_DIR})
++	endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/VC-LTL/_msvcrt.h)
++		set(VC_LTL_Root ${CMAKE_CURRENT_SOURCE_DIR}/VC-LTL)
++	endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${PROJECT_SOURCE_DIR}/VC-LTL/_msvcrt.h)
++        set(VC_LTL_Root ${PROJECT_SOURCE_DIR}/VC-LTL)
++    endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../VC-LTL/_msvcrt.h)
++        set(VC_LTL_Root ${CMAKE_CURRENT_SOURCE_DIR}/../VC-LTL)
++    endif()
++endif()
++
++if(NOT VC_LTL_Root)
++	if(EXISTS ${PROJECT_SOURCE_DIR}/../VC-LTL/_msvcrt.h)
++        set(VC_LTL_Root ${PROJECT_SOURCE_DIR}/../VC-LTL)
++    endif()
++endif()
++
++if(NOT VC_LTL_Root)
++    EXECUTE_PROCESS(COMMAND reg query "HKEY_CURRENT_USER\\Code\\VC-LTL" -v "Root"
++                    OUTPUT_VARIABLE FOUND_FILE
++                    ERROR_VARIABLE ERROR_INFO
++                   )
++
++    string(REGEX MATCH "[a-zA-Z]:\\\\.+\\\\"
++           FOUND_LTL
++           ${FOUND_FILE})
++    if (NOT ${FOUND_LTL} STREQUAL "")
++        set(VC_LTL_Root ${FOUND_LTL})
++    endif()
++
++    if(NOT DEFINED VC_LTL_Root)
++        string(REGEX MATCH "\\\\\\\\.+\\\\" FOUND_LTL ${FOUND_FILE})
++        if (NOT ${FOUND_LTL} STREQUAL "")
++            set(VC_LTL_Root ${FOUND_LTL})
++        endif()
++    endif()
++endif()
++
++if(VC_LTL_Root)
++    include("${VC_LTL_Root}\\config\\config.cmake")
++endif()
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
 index 64fc9fff01..c66f6ebc48 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
@@ -9273,10 +9385,10 @@ index 044de5f3ea..4d55581596 100644
                                 TPM_LEFTALIGN | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 pos.x(), pos.y() + titleBarOffset,
 diff --git a/src/plugins/platforms/windows/qwindowspointerhandler.cpp b/src/plugins/platforms/windows/qwindowspointerhandler.cpp
-index 488d5f89b5..e422244d2a 100644
+index 89f236b8ee..0d3daff121 100644
 --- a/src/plugins/platforms/windows/qwindowspointerhandler.cpp
 +++ b/src/plugins/platforms/windows/qwindowspointerhandler.cpp
-@@ -47,10 +47,13 @@ QWindowsPointerHandler::~QWindowsPointerHandler()
+@@ -45,10 +45,13 @@ QWindowsPointerHandler::~QWindowsPointerHandler()
  
  bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, QtWindows::WindowsEventType et, MSG msg, LRESULT *result)
  {
@@ -9291,7 +9403,7 @@ index 488d5f89b5..e422244d2a 100644
          qWarning() << "GetPointerType() failed:" << qt_error_string();
          return false;
      }
-@@ -64,12 +67,12 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
+@@ -62,12 +65,12 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
      }
      case QT_PT_TOUCH: {
          quint32 pointerCount = 0;
@@ -9306,7 +9418,7 @@ index 488d5f89b5..e422244d2a 100644
              qWarning() << "GetPointerFrameTouchInfo() failed:" << qt_error_string();
              return false;
          }
-@@ -82,7 +85,7 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
+@@ -80,7 +83,7 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
          // dispatch any skipped frames if event compression is disabled by the app
          if (historyCount > 1 && !QCoreApplication::testAttribute(Qt::AA_CompressHighFrequencyEvents)) {
              touchInfo.resize(pointerCount * historyCount);
@@ -9315,7 +9427,7 @@ index 488d5f89b5..e422244d2a 100644
                                                   &historyCount,
                                                   &pointerCount,
                                                   touchInfo.data())) {
-@@ -103,7 +106,7 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
+@@ -101,7 +104,7 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
      }
      case QT_PT_PEN: {
          POINTER_PEN_INFO penInfo;
@@ -9324,7 +9436,7 @@ index 488d5f89b5..e422244d2a 100644
              qWarning() << "GetPointerPenInfo() failed:" << qt_error_string();
              return false;
          }
-@@ -115,7 +118,7 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
+@@ -113,7 +116,7 @@ bool QWindowsPointerHandler::translatePointerEvent(QWindow *window, HWND hwnd, Q
                  || !QCoreApplication::testAttribute(Qt::AA_CompressTabletEvents))) {
              QVarLengthArray<POINTER_PEN_INFO, 10> penInfoHistory(historyCount);
  
@@ -9333,7 +9445,7 @@ index 488d5f89b5..e422244d2a 100644
                  qWarning() << "GetPointerPenInfoHistory() failed:" << qt_error_string();
                  return false;
              }
-@@ -421,6 +424,9 @@ bool QWindowsPointerHandler::translateTouchEvent(QWindow *window, HWND hwnd,
+@@ -419,6 +422,9 @@ bool QWindowsPointerHandler::translateTouchEvent(QWindow *window, HWND hwnd,
  {
      Q_UNUSED(hwnd);
  
@@ -9343,7 +9455,7 @@ index 488d5f89b5..e422244d2a 100644
      auto *touchInfo = static_cast<POINTER_TOUCH_INFO *>(vTouchInfo);
  
      if (et & QtWindows::NonClientEventFlag)
-@@ -519,7 +525,7 @@ bool QWindowsPointerHandler::translateTouchEvent(QWindow *window, HWND hwnd,
+@@ -517,7 +523,7 @@ bool QWindowsPointerHandler::translateTouchEvent(QWindow *window, HWND hwnd,
          inputIds.insert(touchPoint.id);
  
          // Avoid getting repeated messages for this frame if there are multiple pointerIds
@@ -9352,7 +9464,7 @@ index 488d5f89b5..e422244d2a 100644
      }
  
      // Some devices send touches for each finger in a different message/frame, instead of consolidating
-@@ -559,13 +565,16 @@ bool QWindowsPointerHandler::translatePenEvent(QWindow *window, HWND hwnd, QtWin
+@@ -557,13 +563,16 @@ bool QWindowsPointerHandler::translatePenEvent(QWindow *window, HWND hwnd, QtWin
                                                 MSG msg, PVOID vPenInfo)
  {
  #if QT_CONFIG(tabletevent)
@@ -9461,10 +9573,10 @@ index 6f0b949b67..507f55a5ab 100644
  
  /*!
 diff --git a/src/plugins/platforms/windows/qwindowstheme.cpp b/src/plugins/platforms/windows/qwindowstheme.cpp
-index 3704fce15e..2c8202884e 100644
+index 07485cc795..152aec02d0 100644
 --- a/src/plugins/platforms/windows/qwindowstheme.cpp
 +++ b/src/plugins/platforms/windows/qwindowstheme.cpp
-@@ -44,6 +44,7 @@
+@@ -40,6 +40,7 @@
  #include <private/qsystemlibrary_p.h>
  #include <private/qwinregistry_p.h>
  #include <QtCore/private/qfunctions_win_p.h>
@@ -9472,7 +9584,7 @@ index 3704fce15e..2c8202884e 100644
  
  #include <algorithm>
  
-@@ -258,7 +259,8 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -254,7 +255,8 @@ static void populateLightSystemBasePalette(QPalette &result)
      QColor accent = getSysColor(COLOR_HIGHLIGHT);
  
  #if QT_CONFIG(cpp_winrt)
@@ -9482,7 +9594,7 @@ index 3704fce15e..2c8202884e 100644
          using namespace winrt::Windows::UI::ViewManagement;
          const auto settings = UISettings();
  
-@@ -300,41 +302,62 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -296,41 +298,62 @@ static void populateLightSystemBasePalette(QPalette &result)
  
  static void populateDarkSystemBasePalette(QPalette &result)
  {
@@ -9578,7 +9690,7 @@ index 3704fce15e..2c8202884e 100644
      const QColor buttonColor = background.lighter(200);
  
      result.setColor(QPalette::All, QPalette::WindowText, foreground);
-@@ -589,25 +612,31 @@ void QWindowsTheme::refreshPalettes()
+@@ -587,25 +610,31 @@ void QWindowsTheme::refreshPalettes()
      m_palettes[MenuPalette] = new QPalette(menuPalette(*m_palettes[SystemPalette], light));
      m_palettes[MenuBarPalette] = menuBarPalette(*m_palettes[MenuPalette], light);
      if (!light) {
@@ -9627,7 +9739,7 @@ index 3704fce15e..2c8202884e 100644
          m_palettes[RadioButtonPalette] = new QPalette(*m_palettes[CheckBoxPalette]);
      }
  }
-@@ -1096,7 +1125,7 @@ bool QWindowsTheme::useNativeMenus()
+@@ -1094,7 +1123,7 @@ bool QWindowsTheme::useNativeMenus()
  
  bool QWindowsTheme::queryDarkMode()
  {
@@ -9637,10 +9749,10 @@ index 3704fce15e..2c8202884e 100644
      }
      const auto setting = QWinRegistryKey(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 468b028b8b..46c4ec8cee 100644
+index 241579d9f9..e706f41414 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
-@@ -24,6 +24,7 @@
+@@ -22,6 +22,7 @@
  #  include "qwindowscursor.h"
  #endif
  
@@ -9648,7 +9760,7 @@ index 468b028b8b..46c4ec8cee 100644
  #include <QtGui/qguiapplication.h>
  #include <QtGui/qscreen.h>
  #include <QtGui/qwindow.h>
-@@ -443,13 +444,26 @@ static inline bool windowIsAccelerated(const QWindow *w)
+@@ -441,13 +442,26 @@ static inline bool windowIsAccelerated(const QWindow *w)
      }
  }
  
@@ -9678,7 +9790,7 @@ index 468b028b8b..46c4ec8cee 100644
  
      const bool result = DwmEnableBlurBehindWindow(hwnd, &blurBehind) == S_OK;
  
-@@ -516,15 +530,6 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
+@@ -514,15 +528,6 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
      setWindowOpacity(hwnd, flags, hasAlpha, isAccelerated, opacity);
  }
  
@@ -9694,7 +9806,7 @@ index 468b028b8b..46c4ec8cee 100644
  /*!
      Calculates the dimensions of the invisible borders within the
      window frames which only exist on Windows 10 and onwards.
-@@ -532,22 +537,21 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
+@@ -530,22 +535,21 @@ static inline void updateGLWindowSettings(const QWindow *w, HWND hwnd, Qt::Windo
  
  static QMargins invisibleMargins(QPoint screenPoint)
  {
@@ -9724,7 +9836,7 @@ index 468b028b8b..46c4ec8cee 100644
      return QMargins(gap, 0, gap, gap);
  }
  
-@@ -807,7 +811,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+@@ -805,7 +809,6 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
      if (topLevel) {
          if ((type == Qt::Window || dialog || tool)) {
              if (!(flags & Qt::FramelessWindowHint)) {
@@ -9732,7 +9844,7 @@ index 468b028b8b..46c4ec8cee 100644
                  if (flags & Qt::MSWindowsFixedSizeDialogHint) {
                      style |= WS_DLGFRAME;
                  } else {
-@@ -843,6 +846,9 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+@@ -841,6 +844,9 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
          // NOTE: WS_EX_TRANSPARENT flag can make mouse inputs fall through a layered window
          if (flagsIn & Qt::WindowTransparentForInput)
              exStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT;
@@ -9742,7 +9854,7 @@ index 468b028b8b..46c4ec8cee 100644
      }
  }
  
-@@ -1052,9 +1058,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
+@@ -1050,9 +1056,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -9756,7 +9868,7 @@ index 468b028b8b..46c4ec8cee 100644
          qErrnoWarning("%s: AdjustWindowRectExForDpi failed", __FUNCTION__);
      }
      const QMargins result(qAbs(rect.left), qAbs(rect.top),
-@@ -1094,7 +1103,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
+@@ -1092,7 +1101,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -9766,7 +9878,7 @@ index 468b028b8b..46c4ec8cee 100644
          || !QWindowsContext::shouldHaveNonClientDpiScaling(w)) {
          return frameOnPrimaryScreen(w, style, exStyle);
      }
-@@ -1545,7 +1555,7 @@ void QWindowsWindow::initialize()
+@@ -1543,7 +1553,7 @@ void QWindowsWindow::initialize()
              QWindowSystemInterface::handleGeometryChange<QWindowSystemInterface::SynchronousDelivery>(w, obtainedGeometry);
          }
      }
@@ -9775,7 +9887,7 @@ index 468b028b8b..46c4ec8cee 100644
  }
  
  QSurfaceFormat QWindowsWindow::format() const
-@@ -2011,7 +2021,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
+@@ -2009,7 +2019,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
  
  void QWindowsWindow::handleDpiChangedAfterParent(HWND hwnd)
  {
@@ -9784,7 +9896,7 @@ index 468b028b8b..46c4ec8cee 100644
      const qreal scale = qreal(dpi) / qreal(savedDpi());
      setSavedDpi(dpi);
  
-@@ -2317,13 +2327,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
+@@ -2315,13 +2325,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
          return false;
      PAINTSTRUCT ps;
  
@@ -9809,7 +9921,7 @@ index 468b028b8b..46c4ec8cee 100644
      // If the a window is obscured by another window (such as a child window)
      // we still need to send isExposed=true, for compatibility.
      // Our tests depend on it.
-@@ -2912,7 +2931,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
+@@ -2910,7 +2929,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
              mmi->ptMaxPosition.x = availablePositionDiff.x();
              mmi->ptMaxPosition.y = availablePositionDiff.y();
              if (!m_data.flags.testFlag(Qt::FramelessWindowHint)) {
@@ -9818,7 +9930,7 @@ index 468b028b8b..46c4ec8cee 100644
                  mmi->ptMaxSize.x += borderWidth * 2;
                  mmi->ptMaxSize.y += borderWidth * 2;
                  mmi->ptMaxTrackSize = mmi->ptMaxSize;
-@@ -2953,7 +2972,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
+@@ -2951,7 +2970,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
              return true;
          }
          if (localPos.y() < 0) {
@@ -10086,6 +10198,18 @@ index c80dc077ee..9415e9540d 100644
 +}
 +
  QT_END_NAMESPACE
+diff --git a/src/plugins/styles/windowsvista/qwindowsvistastyle_p_p.h b/src/plugins/styles/windowsvista/qwindowsvistastyle_p_p.h
+index 2c38ff4b3b..7705d3200e 100644
+--- a/src/plugins/styles/windowsvista/qwindowsvistastyle_p_p.h
++++ b/src/plugins/styles/windowsvista/qwindowsvistastyle_p_p.h
+@@ -120,6 +120,7 @@ public:
+     static int pixelMetricFromSystemDp(QStyle::PixelMetric pm, const QStyleOption *option = nullptr, const QWidget *widget = nullptr);
+     static int fixedPixelMetric(QStyle::PixelMetric pm);
+     static bool isLineEditBaseColorSet(const QStyleOption *option, const QWidget *widget);
++    static QRect scrollBarGripperBounds(QStyle::State flags, const QWidget *widget, QWindowsThemeData *theme);
+     static HWND winId(const QWidget *widget);
+     static bool useVista(bool update = false);
+     static QBackingStore *backingStoreForWidget(const QWidget *widget);
 diff --git a/src/widgets/dialogs/qwizard_win.cpp b/src/widgets/dialogs/qwizard_win.cpp
 index e95f0e3b7b..9c79b56a67 100644
 --- a/src/widgets/dialogs/qwizard_win.cpp
