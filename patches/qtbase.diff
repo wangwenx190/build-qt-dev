@@ -75,7 +75,8 @@
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
  src/plugins/platforms/windows/qwin10helpers.cpp    |   39 +-
  src/plugins/platforms/windows/qwindowscontext.cpp  |  187 +-
- src/plugins/platforms/windows/qwindowscontext.h    |  101 +-
+ src/plugins/platforms/windows/qwindowscontext.h    |  104 +-
+ src/plugins/platforms/windows/qwindowsdrag.cpp     |    7 +-
  .../platforms/windows/qwindowsintegration.cpp      |   29 +-
  .../platforms/windows/qwindowskeymapper.cpp        |   18 +-
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
@@ -89,7 +90,7 @@
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 91 files changed, 1140 insertions(+), 7669 deletions(-)
+ 92 files changed, 1147 insertions(+), 7672 deletions(-)
 
 diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
 index 2db677bef8..8fd482f62f 100644
@@ -9288,7 +9289,7 @@ index 80ff40acc5..492264ad13 100644
 +
  QT_END_NAMESPACE
 diff --git a/src/plugins/platforms/windows/qwindowscontext.h b/src/plugins/platforms/windows/qwindowscontext.h
-index 11cfbb06f2..67d83fed8d 100644
+index 11cfbb06f2..84b7d2b242 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.h
 +++ b/src/plugins/platforms/windows/qwindowscontext.h
 @@ -10,13 +10,18 @@
@@ -9310,7 +9311,7 @@ index 11cfbb06f2..67d83fed8d 100644
  Q_DECLARE_LOGGING_CATEGORY(lcQpaWindow)
  Q_DECLARE_LOGGING_CATEGORY(lcQpaEvents)
  Q_DECLARE_LOGGING_CATEGORY(lcQpaGl)
-@@ -44,6 +49,87 @@ class QPoint;
+@@ -44,6 +49,90 @@ class QPoint;
  class QKeyEvent;
  class QPointingDevice;
  
@@ -9328,6 +9329,7 @@ index 11cfbb06f2..67d83fed8d 100644
 +    decltype(&::GetAwarenessFromDpiAwarenessContext) pGetAwarenessFromDpiAwarenessContext = nullptr;
 +    decltype(&::GetWindowDpiAwarenessContext) pGetWindowDpiAwarenessContext = nullptr;
 +    decltype(&::GetPointerType) pGetPointerType = nullptr;
++    decltype(&::GetPointerInfo) pGetPointerInfo = nullptr;
 +    decltype(&::GetPointerFrameTouchInfo) pGetPointerFrameTouchInfo = nullptr;
 +    decltype(&::GetPointerFrameTouchInfoHistory) pGetPointerFrameTouchInfoHistory = nullptr;
 +    decltype(&::GetPointerPenInfo) pGetPointerPenInfo = nullptr;
@@ -9347,8 +9349,9 @@ index 11cfbb06f2..67d83fed8d 100644
 +    {
 +        if (!QOperatingSystemVersion::isWin8OrGreater())
 +            return false;
-+        return pGetPointerType && pGetPointerFrameTouchInfo && pGetPointerFrameTouchInfoHistory
-+            && pGetPointerPenInfo && pGetPointerPenInfoHistory && pSkipPointerFrameMessages
++        return pGetPointerType && pGetPointerInfo && pGetPointerFrameTouchInfo
++            && pGetPointerFrameTouchInfoHistory && pGetPointerPenInfo
++            && pGetPointerPenInfoHistory && pSkipPointerFrameMessages
 +            && pGetPointerDeviceRects;
 +    }
 +
@@ -9360,6 +9363,7 @@ index 11cfbb06f2..67d83fed8d 100644
 +        if (QOperatingSystemVersion::isWin8OrGreater()) {
 +            QSystemLibrary user32(u"user32"_s);
 +            pGetPointerType = reinterpret_cast<decltype(pGetPointerType)>(user32.resolve("GetPointerType"));
++            pGetPointerInfo = reinterpret_cast<decltype(pGetPointerInfo)>(user32.resolve("GetPointerInfo"));
 +            pGetPointerFrameTouchInfo = reinterpret_cast<decltype(pGetPointerFrameTouchInfo)>(user32.resolve("GetPointerFrameTouchInfo"));
 +            pGetPointerFrameTouchInfoHistory = reinterpret_cast<decltype(pGetPointerFrameTouchInfoHistory)>(user32.resolve("GetPointerFrameTouchInfoHistory"));
 +            pGetPointerPenInfo = reinterpret_cast<decltype(pGetPointerPenInfo)>(user32.resolve("GetPointerPenInfo"));
@@ -9398,7 +9402,7 @@ index 11cfbb06f2..67d83fed8d 100644
  class QWindowsContext
  {
      Q_DISABLE_COPY_MOVE(QWindowsContext)
-@@ -117,9 +203,10 @@ public:
+@@ -117,9 +206,10 @@ public:
      QSharedPointer<QWindowCreationContext> windowCreationContext() const;
  
      static void setTabletAbsoluteRange(int a);
@@ -9410,7 +9414,7 @@ index 11cfbb06f2..67d83fed8d 100644
  
      static bool isDarkMode();
  
-@@ -161,6 +248,18 @@ public:
+@@ -161,6 +251,18 @@ public:
      static bool filterNativeEvent(MSG *msg, LRESULT *result);
      static bool filterNativeEvent(QWindow *window, MSG *msg, LRESULT *result);
  
@@ -9429,6 +9433,35 @@ index 11cfbb06f2..67d83fed8d 100644
  private:
      void handleFocusEvent(QtWindows::WindowsEventType et, QWindowsWindow *w);
  #ifndef QT_NO_CONTEXTMENU
+diff --git a/src/plugins/platforms/windows/qwindowsdrag.cpp b/src/plugins/platforms/windows/qwindowsdrag.cpp
+index 93205259f8..9f5f73588c 100644
+--- a/src/plugins/platforms/windows/qwindowsdrag.cpp
++++ b/src/plugins/platforms/windows/qwindowsdrag.cpp
+@@ -664,12 +664,13 @@ static HRESULT startDoDragDrop(LPDATAOBJECT pDataObj, LPDROPSOURCE pDropSource,
+                 return ::DoDragDrop(pDataObj, pDropSource, dwOKEffects, pdwEffect);
+             }
+ 
+-            if (msg.message == WM_POINTERUPDATE) {
++            static const bool pointerApiSupported = QWindowsApi::instance()->supportsPointerApi();
++            if (msg.message == WM_POINTERUPDATE && pointerApiSupported) {
+ 
+                 const quint32 pointerId = GET_POINTERID_WPARAM(msg.wParam);
+ 
+                 POINTER_INFO pointerInfo{};
+-                if (!GetPointerInfo(pointerId, &pointerInfo))
++                if (!QWindowsApi::instance()->pGetPointerInfo(pointerId, &pointerInfo))
+                     return E_FAIL;
+ 
+                 if (pointerInfo.pointerFlags & POINTER_FLAG_PRIMARY) {
+@@ -713,7 +714,7 @@ static HRESULT startDoDragDrop(LPDATAOBJECT pDataObj, LPDROPSOURCE pDropSource,
+                 // Handle other messages.
+                 qWindowsWndProc(msg.hwnd, msg.message, msg.wParam, msg.lParam);
+ 
+-                if (msg.message == WM_POINTERLEAVE)
++                if (msg.message == WM_POINTERLEAVE && pointerApiSupported)
+                     return E_FAIL;
+             }
+         } else {
 diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
 index dfbf5609fb..17d613c125 100644
 --- a/src/plugins/platforms/windows/qwindowsintegration.cpp
