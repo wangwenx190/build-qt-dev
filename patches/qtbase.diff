@@ -1,15 +1,17 @@
  cmake/QtBuild.cmake                                |    7 +
- cmake/QtInternalTargets.cmake                      |    2 +-
+ cmake/QtInternalTargets.cmake                      |    7 +-
  cmake/VC-LTL.cmake                                 |   88 +
- src/corelib/global/qlibraryinfo.cpp                |    9 +-
+ src/corelib/global/qlibraryinfo.cpp                |   20 +-
+ src/corelib/global/qlibraryinfo.h                  |    5 +
+ src/corelib/global/qoperatingsystemversion.cpp     |    7 +
  src/corelib/global/qoperatingsystemversion.h       |   37 +
  src/corelib/global/qoperatingsystemversion_win.cpp |   17 +-
  src/corelib/global/qsysinfo.cpp                    |   32 +-
+ src/corelib/kernel/qcoreapplication.cpp            |    5 +
  src/corelib/kernel/qeventdispatcher_win.cpp        |   13 +-
  src/corelib/kernel/qfunctions_win.cpp              |   13 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
- src/entrypoint/qtentrypoint_win.cpp                |   16 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -23,7 +25,7 @@
  .../windows/apisupport/uiapropertyids_p.h          |  188 --
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
- src/gui/opengl/qopengl.cpp                         |   14 +-
+ src/gui/opengl/qopengl.cpp                         |   29 +-
  src/gui/rhi/qrhid3d11.cpp                          |  320 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
  .../qnetworklistmanagerevents.cpp                  |   39 +-
@@ -72,9 +74,9 @@
  src/plugins/platforms/offscreen/qoffscreenwindow.h |   49 -
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
  src/plugins/platforms/windows/qwin10helpers.cpp    |   39 +-
- src/plugins/platforms/windows/qwindowscontext.cpp  |  172 +-
- src/plugins/platforms/windows/qwindowscontext.h    |   98 ++
- .../platforms/windows/qwindowsintegration.cpp      |    8 +-
+ src/plugins/platforms/windows/qwindowscontext.cpp  |  187 +-
+ src/plugins/platforms/windows/qwindowscontext.h    |  101 +-
+ .../platforms/windows/qwindowsintegration.cpp      |   29 +-
  .../platforms/windows/qwindowskeymapper.cpp        |   18 +-
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
  src/plugins/platforms/windows/qwindowsscreen.cpp   |   45 +-
@@ -87,7 +89,7 @@
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 89 files changed, 1073 insertions(+), 7659 deletions(-)
+ 91 files changed, 1134 insertions(+), 7669 deletions(-)
 
 diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
 index 2db677bef8..8fd482f62f 100644
@@ -105,10 +107,22 @@ index 2db677bef8..8fd482f62f 100644
 +    endif()
 +endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index 21bd645639..5f11d5816c 100644
+index dc45b57eec..16ea715ec4 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -259,7 +259,7 @@ if (MSVC)
+@@ -249,8 +249,9 @@ if (MSVC)
+     if (MSVC_VERSION GREATER_EQUAL 1919 AND NOT CLANG) # MSVC 2019
+         target_compile_options(PlatformCommonInternal INTERFACE
+             -Zc:externConstexpr
+-            #-Zc:lambda # Buggy. TODO: Enable again when stable enough.
+-            #-Zc:preprocessor # breaks build due to bug in default Windows SDK 10.0.19041
++            -Zc:lambda
++            -Zc:preprocessor
++            -Zc:char8_t
+         )
+     endif()
+ 
+@@ -260,7 +261,7 @@ if (MSVC)
      )
  
      target_compile_options(PlatformCommonInternal INTERFACE
@@ -212,7 +226,7 @@ index 0000000000..b32073535e
 +    include("${VC_LTL_Root}\\config\\config.cmake")
 +endif()
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
-index 64fc9fff01..c66f6ebc48 100644
+index 64fc9fff01..868d862ff0 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
 +++ b/src/corelib/global/qlibraryinfo.cpp
 @@ -296,8 +296,13 @@ static QString prefixFromQtCoreLibraryHelper(const QString &qtCoreLibraryPath)
@@ -231,8 +245,60 @@ index 64fc9fff01..c66f6ebc48 100644
  }
  #endif
  
+@@ -686,6 +691,17 @@ const char *qVersion() noexcept
+     return QT_VERSION_STR;
+ }
+ 
++/*!
++    A special function to identify this custom Qt build.
++    It will always return the magic number "2546789017"
++    as the result. It's my QQ number and you can contact
++    me by sending me an e-mail to "2546789017@qq.com".
++*/
++quint64 __wangwenx190__() noexcept
++{
++    return 2546789017;
++}
++
+ #if QT_DEPRECATED_SINCE(6, 9)
+ 
+ bool qSharedBuild() noexcept
+diff --git a/src/corelib/global/qlibraryinfo.h b/src/corelib/global/qlibraryinfo.h
+index 71d9a01308..d3098daaa3 100644
+--- a/src/corelib/global/qlibraryinfo.h
++++ b/src/corelib/global/qlibraryinfo.h
+@@ -82,6 +82,11 @@ extern "C"
+ #endif
+ Q_CORE_EXPORT Q_DECL_CONST_FUNCTION const char *qVersion(void) Q_DECL_NOEXCEPT;
+ 
++#if (!defined(QT_NAMESPACE) && defined(__cplusplus))
++extern "C"
++#endif
++Q_CORE_EXPORT Q_DECL_CONST_FUNCTION quint64 __wangwenx190__(void) noexcept;
++
+ QT_END_NAMESPACE
+ 
+ #endif // QLIBRARYINFO_H
+diff --git a/src/corelib/global/qoperatingsystemversion.cpp b/src/corelib/global/qoperatingsystemversion.cpp
+index b9da31149e..38f7a3b055 100644
+--- a/src/corelib/global/qoperatingsystemversion.cpp
++++ b/src/corelib/global/qoperatingsystemversion.cpp
+@@ -393,6 +393,13 @@ const QOperatingSystemVersion QOperatingSystemVersion::Windows8_1 =
+ const QOperatingSystemVersion QOperatingSystemVersion::Windows10 =
+     QOperatingSystemVersion(QOperatingSystemVersion::Windows, 10);
+ 
++const QOperatingSystemVersionBase QOperatingSystemVersion::Windows10_1507;
++const QOperatingSystemVersionBase QOperatingSystemVersion::Windows10_1511;
++const QOperatingSystemVersionBase QOperatingSystemVersion::Windows10_1607;
++const QOperatingSystemVersionBase QOperatingSystemVersion::Windows10_1703;
++const QOperatingSystemVersionBase QOperatingSystemVersion::Windows10_1709;
++const QOperatingSystemVersionBase QOperatingSystemVersion::Windows10_1803;
++
+ /*!
+     \variable QOperatingSystemVersion::Windows10_1809
+     \brief a version corresponding to Windows 10 October 2018 Update
 diff --git a/src/corelib/global/qoperatingsystemversion.h b/src/corelib/global/qoperatingsystemversion.h
-index 78a525ace6..74e7449e6c 100644
+index 1e4eb5cc49..8523df1e19 100644
 --- a/src/corelib/global/qoperatingsystemversion.h
 +++ b/src/corelib/global/qoperatingsystemversion.h
 @@ -188,6 +188,12 @@ public:
@@ -248,9 +314,9 @@ index 78a525ace6..74e7449e6c 100644
      static constexpr QOperatingSystemVersionBase Windows10_1809 { QOperatingSystemVersionBase::Windows, 10, 0, 17763 }; // RS5
      static constexpr QOperatingSystemVersionBase Windows10_1903 { QOperatingSystemVersionBase::Windows, 10, 0, 18362 }; // 19H1
      static constexpr QOperatingSystemVersionBase Windows10_1909 { QOperatingSystemVersionBase::Windows, 10, 0, 18363 }; // 19H2
-@@ -204,6 +210,37 @@ public:
-     static constexpr QOperatingSystemVersionBase Android12L { QOperatingSystemVersionBase::Android, 12, 0 };
-     static constexpr QOperatingSystemVersionBase Android13 { QOperatingSystemVersionBase::Android, 13, 0 };
+@@ -206,6 +212,37 @@ public:
+ 
+     static constexpr QOperatingSystemVersionBase MacOSVentura { QOperatingSystemVersionBase::MacOS, 13, 0 };
  
 +#ifdef Q_OS_WINDOWS
 +#  define MAKE_VERSION_FUNCTION(Name, Version) \
@@ -383,6 +449,36 @@ index 8ddcbb0409..85bcdf6cf8 100644
  #  endif // Windows
  #elif defined(Q_OS_HAIKU)
      return "Haiku "_L1 + productVersion();
+diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
+index 7fc90733d0..c08422b78f 100644
+--- a/src/corelib/kernel/qcoreapplication.cpp
++++ b/src/corelib/kernel/qcoreapplication.cpp
+@@ -104,6 +104,8 @@ QT_BEGIN_NAMESPACE
+ 
+ using namespace Qt::StringLiterals;
+ 
++static constexpr const char kWwx190EnvVar[] = "__wangwenx190__";
++
+ #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+ extern QString qAppFileName();
+ #endif
+@@ -442,6 +444,7 @@ QCoreApplicationPrivate::QCoreApplicationPrivate(int &aargc, char **aargv)
+ 
+ QCoreApplicationPrivate::~QCoreApplicationPrivate()
+ {
++    qunsetenv(kWwx190EnvVar);
+ #ifndef QT_NO_QOBJECT
+     cleanupThreadData();
+ #endif
+@@ -745,6 +748,8 @@ void QCoreApplicationPrivate::init()
+     Q_ASSERT_X(!QCoreApplication::self, "QCoreApplication", "there should be only one application object");
+     QCoreApplication::self = q;
+ 
++    qputenv(kWwx190EnvVar, QByteArray::number(__wangwenx190__()));
++
+ #if QT_CONFIG(thread)
+ #ifdef Q_OS_WASM
+     emscripten::val hardwareConcurrency = emscripten::val::global("navigator")["hardwareConcurrency"];
 diff --git a/src/corelib/kernel/qeventdispatcher_win.cpp b/src/corelib/kernel/qeventdispatcher_win.cpp
 index 1c54c97514..3577cb5f52 100644
 --- a/src/corelib/kernel/qeventdispatcher_win.cpp
@@ -603,51 +699,6 @@ index 48f03f5ed0..fe799c68ca 100644
  namespace QtFutex = QtWindowsFutex;
  QT_END_NAMESPACE
  #else
-diff --git a/src/entrypoint/qtentrypoint_win.cpp b/src/entrypoint/qtentrypoint_win.cpp
-index 6ecb814948..2b9553caf7 100644
---- a/src/entrypoint/qtentrypoint_win.cpp
-+++ b/src/entrypoint/qtentrypoint_win.cpp
-@@ -14,7 +14,7 @@
- */
- 
- #if defined(QT_NEEDS_QMAIN)
--int qMain(int, char **);
-+extern "C" int qMain(int, char **);
- #define main qMain
- #else
- extern "C" int main(int, char **);
-@@ -28,7 +28,7 @@ extern "C" int main(int, char **);
- 
- // Convert a wchar_t to char string, equivalent to QString::toLocal8Bit()
- // when passed CP_ACP.
--static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
-+static inline char *wideToMulti(const unsigned int codePage, const wchar_t *aw)
- {
-     const int required = WideCharToMultiByte(codePage, 0, aw, -1, nullptr, 0, nullptr, nullptr);
-     char *result = new char[required];
-@@ -36,7 +36,7 @@ static inline char *wideToMulti(unsigned int codePage, const wchar_t *aw)
-     return result;
- }
- 
--extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int /* cmdShow */)
-+static inline int qtEntryPoint()
- {
-     int argc = 0;
-     wchar_t **argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
-@@ -53,3 +53,13 @@ extern "C" int APIENTRY WinMain(HINSTANCE, HINSTANCE, LPSTR /*cmdParamarg*/, int
-     delete [] argv;
-     return exitCode;
- }
-+
-+extern "C" int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
-+{
-+    return qtEntryPoint();
-+}
-+
-+extern "C" int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int)
-+{
-+    return qtEntryPoint();
-+}
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index 1dd7bb3c30..1644381ad8 100644
 --- a/src/gui/CMakeLists.txt
@@ -2130,13 +2181,23 @@ index 465bd07a07..0000000000
 -
 -#endif
 diff --git a/src/gui/opengl/qopengl.cpp b/src/gui/opengl/qopengl.cpp
-index edb359f686..d52d23ebe1 100644
+index 7c997103d5..d52d23ebe1 100644
 --- a/src/gui/opengl/qopengl.cpp
 +++ b/src/gui/opengl/qopengl.cpp
-@@ -200,8 +200,20 @@ struct OsTypeTerm
-         const auto osver = QOperatingSystemVersion::current();
- #define Q_WINVER(major, minor) (major << 8 | minor)
-         switch (Q_WINVER(osver.majorVersion(), osver.minorVersion())) {
+@@ -195,13 +195,32 @@ struct OsTypeTerm
+     static QString hostOs();
+     static QVersionNumber hostKernelVersion() { return QVersionNumber::fromString(QSysInfo::kernelVersion()); }
+     static QString hostOsRelease() {
++        QString ver;
+ #ifdef Q_OS_WIN
+-        if (QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows11)
+-            return u"11"_s;
+-        return u"10"_s;
+-#else
+-        return {};
++        const auto osver = QOperatingSystemVersion::current();
++#define Q_WINVER(major, minor) (major << 8 | minor)
++        switch (Q_WINVER(osver.majorVersion(), osver.minorVersion())) {
 +        case Q_WINVER(6, 1):
 +            ver = QStringLiteral("7");
 +            break;
@@ -2146,15 +2207,21 @@ index edb359f686..d52d23ebe1 100644
 +        case Q_WINVER(6, 3):
 +            ver = QStringLiteral("8.1");
 +            break;
-         case Q_WINVER(10, 0):
--            ver = QStringLiteral("10");
++        case Q_WINVER(10, 0):
 +            if (osver.microVersion() >= 22000)
 +                ver = QStringLiteral("11");
 +            else
 +                ver = QStringLiteral("10");
-             break;
-         default:
-             break;
++            break;
++        default:
++            break;
++        }
++#undef Q_WINVER
+ #endif
++        return ver;
+     }
+ 
+     bool isNull() const { return type.isEmpty(); }
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
 index da7089edf9..9c82cc3266 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
@@ -8953,7 +9020,7 @@ index 026e81cb0c..6131031987 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index fd3cd94a13..9bd44a9183 100644
+index 80ff40acc5..492264ad13 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -119,15 +119,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -8994,7 +9061,7 @@ index fd3cd94a13..9bd44a9183 100644
      d->m_systemInfo |= QWindowsContext::SI_SupportsPointer;
      return true;
  }
-@@ -364,16 +376,20 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
+@@ -364,29 +376,37 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
  int QWindowsContext::processDpiAwareness()
  {
      PROCESS_DPI_AWARENESS result;
@@ -9008,29 +9075,54 @@ index fd3cd94a13..9bd44a9183 100644
      return -1;
  }
  
- void QWindowsContext::setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiAwareness)
+-void QWindowsContext::setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiAwareness)
++bool QWindowsContext::setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiAwareness)
  {
-+    if (!QWindowsApi::instance()->pSetProcessDpiAwareness)
-+        return;
      qCDebug(lcQpaWindow) << __FUNCTION__ << dpiAwareness;
 -    const HRESULT hr = SetProcessDpiAwareness(static_cast<PROCESS_DPI_AWARENESS>(dpiAwareness));
++    if (!QWindowsApi::instance()->pSetProcessDpiAwareness)
++        return false;
 +    const HRESULT hr = QWindowsApi::instance()->pSetProcessDpiAwareness(static_cast<PROCESS_DPI_AWARENESS>(dpiAwareness));
      // E_ACCESSDENIED means set externally (MSVC manifest or external app loading Qt plugin).
      // Silence warning in that case unless debug is enabled.
-     if (FAILED(hr) && (hr != E_ACCESSDENIED || lcQpaWindow().isDebugEnabled())) {
-@@ -385,8 +401,10 @@ void QWindowsContext::setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiA
+     if (FAILED(hr) && hr != E_ACCESSDENIED) {
+         qCWarning(lcQpaWindow).noquote().nospace() << "SetProcessDpiAwareness("
+             << dpiAwareness << ") failed: " << QWindowsContext::comErrorString(hr)
+             << ", using " << QWindowsContext::processDpiAwareness();
++        return false;
+     }
++    return true;
+ }
  
  bool QWindowsContext::setProcessDpiV2Awareness()
  {
-+    if (!QWindowsApi::instance()->pSetProcessDpiAwarenessContext)
-+        return false;
      qCDebug(lcQpaWindow) << __FUNCTION__;
 -    const BOOL ok = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
++    if (!QWindowsApi::instance()->pSetProcessDpiAwarenessContext)
++        return false;
 +    const BOOL ok = QWindowsApi::instance()->pSetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
      if (!ok) {
-         const HRESULT errorCode = GetLastError();
-         qCWarning(lcQpaWindow).noquote().nospace() << "setProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) failed: "
-@@ -913,8 +931,8 @@ void QWindowsContext::forceNcCalcSize(HWND hwnd)
+         const DWORD dwError = GetLastError();
+         // ERROR_ACCESS_DENIED means set externally (MSVC manifest or external app loading Qt plugin).
+@@ -402,6 +422,17 @@ bool QWindowsContext::setProcessDpiV2Awareness()
+     return true;
+ }
+ 
++bool QWindowsContext::setProcessSystemDpiAware()
++{
++    qCDebug(lcQpaWindow) << __FUNCTION__;
++    if (SetProcessDPIAware() == FALSE) {
++        qCWarning(lcQpaWindow).noquote().nospace() << "SetProcessDPIAware() failed: "
++            << QWindowsContext::comErrorString(HRESULT(GetLastError()));
++        return false;
++    }
++    return true;
++}
++
+ bool QWindowsContext::isDarkMode()
+ {
+     return QWindowsContextPrivate::m_darkMode;
+@@ -917,8 +948,8 @@ void QWindowsContext::forceNcCalcSize(HWND hwnd)
  bool QWindowsContext::systemParametersInfo(unsigned action, unsigned param, void *out,
                                             unsigned dpi)
  {
@@ -9041,7 +9133,7 @@ index fd3cd94a13..9bd44a9183 100644
          : SystemParametersInfo(action, param, out, 0);
      return result == TRUE;
  }
-@@ -961,7 +979,8 @@ bool QWindowsContext::shouldHaveNonClientDpiScaling(const QWindow *window)
+@@ -965,7 +996,8 @@ bool QWindowsContext::shouldHaveNonClientDpiScaling(const QWindow *window)
      if (QWindowsContextPrivate::m_v2DpiAware)
          return true;
  
@@ -9051,7 +9143,7 @@ index fd3cd94a13..9bd44a9183 100644
          && !window->property(QWindowsWindow::embeddedNativeParentHandleProperty).isValid()
  #if QT_CONFIG(opengl) // /QTBUG-62901, EnableNonClientDpiScaling has problems with GL
          && (window->surfaceType() != QSurface::OpenGLSurface
-@@ -1602,4 +1621,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
+@@ -1606,4 +1638,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
      return false;
  }
  
@@ -9190,7 +9282,7 @@ index fd3cd94a13..9bd44a9183 100644
 +
  QT_END_NAMESPACE
 diff --git a/src/plugins/platforms/windows/qwindowscontext.h b/src/plugins/platforms/windows/qwindowscontext.h
-index 11cfbb06f2..987bd80932 100644
+index 11cfbb06f2..67d83fed8d 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.h
 +++ b/src/plugins/platforms/windows/qwindowscontext.h
 @@ -10,13 +10,18 @@
@@ -9300,7 +9392,19 @@ index 11cfbb06f2..987bd80932 100644
  class QWindowsContext
  {
      Q_DISABLE_COPY_MOVE(QWindowsContext)
-@@ -161,6 +247,18 @@ public:
+@@ -117,9 +203,10 @@ public:
+     QSharedPointer<QWindowCreationContext> windowCreationContext() const;
+ 
+     static void setTabletAbsoluteRange(int a);
+-    void setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiAwareness);
++    bool setProcessDpiAwareness(QtWindows::ProcessDpiAwareness dpiAwareness);
+     static int processDpiAwareness();
+     bool setProcessDpiV2Awareness();
++    bool setProcessSystemDpiAware();
+ 
+     static bool isDarkMode();
+ 
+@@ -161,6 +248,18 @@ public:
      static bool filterNativeEvent(MSG *msg, LRESULT *result);
      static bool filterNativeEvent(QWindow *window, MSG *msg, LRESULT *result);
  
@@ -9320,7 +9424,7 @@ index 11cfbb06f2..987bd80932 100644
      void handleFocusEvent(QtWindows::WindowsEventType et, QWindowsWindow *w);
  #ifndef QT_NO_CONTEXTMENU
 diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
-index 2faeb7456b..57546e9262 100644
+index dfbf5609fb..17d613c125 100644
 --- a/src/plugins/platforms/windows/qwindowsintegration.cpp
 +++ b/src/plugins/platforms/windows/qwindowsintegration.cpp
 @@ -208,8 +208,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
@@ -9335,7 +9439,7 @@ index 2faeb7456b..57546e9262 100644
  
      int tabletAbsoluteRange = -1;
      DarkModeHandling darkModeHandling = DarkModeHandlingFlag::DarkModeWindowFrames;
-@@ -226,8 +228,8 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -227,10 +229,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
  
      if (!dpiAwarenessSet) { // Set only once in case of repeated instantiations of QGuiApplication.
          if (!QCoreApplication::testAttribute(Qt::AA_PluginApplication)) {
@@ -9344,8 +9448,39 @@ index 2faeb7456b..57546e9262 100644
 +            // DpiAwareV2 requires using new API
 +            if (dpiAwareness == QtWindows::ProcessPerMonitorV2DpiAware && hasDpiAwarenessContext) {
                  if (m_context.setProcessDpiV2Awareness()) {
-                     qCDebug(lcQpaWindow, "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2");
+-                    qCDebug(lcQpaWindow, "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2");
++                    qCDebug(lcQpaWindow) << "DpiAwareness: DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2";
                      dpiAwarenessSet = true;
+                 } else {
+                     // fallback to old API
+@@ -239,12 +241,23 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+             }
+ 
+             if (!dpiAwarenessSet) {
+-                m_context.setProcessDpiAwareness(dpiAwareness);
+-                qCDebug(lcQpaWindow) << "DpiAwareness=" << dpiAwareness
+-                    << "effective process DPI awareness=" << QWindowsContext::processDpiAwareness();
++                if (m_context.setProcessDpiAwareness(dpiAwareness)) {
++                    qCDebug(lcQpaWindow) << "DpiAwareness=" << dpiAwareness
++                        << "effective process DPI awareness=" << QWindowsContext::processDpiAwareness();
++                    dpiAwarenessSet = true;
++                }
++            }
++
++            if (!dpiAwarenessSet) {
++                if (m_context.setProcessSystemDpiAware()) {
++                    qCDebug(lcQpaWindow) << "DpiAwareness: System Aware";
++                    dpiAwarenessSet = true;
++                }
+             }
++
++            if (!dpiAwarenessSet)
++                qCWarning(lcQpaWindow) << "Failed to set Dpi Awareness mode for current process.";
+         }
+-        dpiAwarenessSet = true;
+     }
+ 
+     m_context.initTouch(m_options);
 diff --git a/src/plugins/platforms/windows/qwindowskeymapper.cpp b/src/plugins/platforms/windows/qwindowskeymapper.cpp
 index 044de5f3ea..4d55581596 100644
 --- a/src/plugins/platforms/windows/qwindowskeymapper.cpp
@@ -9385,7 +9520,7 @@ index 044de5f3ea..4d55581596 100644
                                 TPM_LEFTALIGN | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD,
                                 pos.x(), pos.y() + titleBarOffset,
 diff --git a/src/plugins/platforms/windows/qwindowspointerhandler.cpp b/src/plugins/platforms/windows/qwindowspointerhandler.cpp
-index 89f236b8ee..0d3daff121 100644
+index 88f02347b3..75226c3810 100644
 --- a/src/plugins/platforms/windows/qwindowspointerhandler.cpp
 +++ b/src/plugins/platforms/windows/qwindowspointerhandler.cpp
 @@ -45,10 +45,13 @@ QWindowsPointerHandler::~QWindowsPointerHandler()
@@ -9573,10 +9708,10 @@ index 6f0b949b67..507f55a5ab 100644
  
  /*!
 diff --git a/src/plugins/platforms/windows/qwindowstheme.cpp b/src/plugins/platforms/windows/qwindowstheme.cpp
-index 07485cc795..152aec02d0 100644
+index b1338566e9..fd3b022534 100644
 --- a/src/plugins/platforms/windows/qwindowstheme.cpp
 +++ b/src/plugins/platforms/windows/qwindowstheme.cpp
-@@ -40,6 +40,7 @@
+@@ -39,6 +39,7 @@
  #include <private/qsystemlibrary_p.h>
  #include <private/qwinregistry_p.h>
  #include <QtCore/private/qfunctions_win_p.h>
@@ -9584,7 +9719,7 @@ index 07485cc795..152aec02d0 100644
  
  #include <algorithm>
  
-@@ -254,7 +255,8 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -242,7 +243,8 @@ static void populateLightSystemBasePalette(QPalette &result)
      QColor accent = getSysColor(COLOR_HIGHLIGHT);
  
  #if QT_CONFIG(cpp_winrt)
@@ -9594,7 +9729,7 @@ index 07485cc795..152aec02d0 100644
          using namespace winrt::Windows::UI::ViewManagement;
          const auto settings = UISettings();
  
-@@ -296,41 +298,62 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -284,41 +286,62 @@ static void populateLightSystemBasePalette(QPalette &result)
  
  static void populateDarkSystemBasePalette(QPalette &result)
  {
@@ -9690,7 +9825,7 @@ index 07485cc795..152aec02d0 100644
      const QColor buttonColor = background.lighter(200);
  
      result.setColor(QPalette::All, QPalette::WindowText, foreground);
-@@ -587,25 +610,31 @@ void QWindowsTheme::refreshPalettes()
+@@ -575,25 +598,31 @@ void QWindowsTheme::refreshPalettes()
      m_palettes[MenuPalette] = new QPalette(menuPalette(*m_palettes[SystemPalette], light));
      m_palettes[MenuBarPalette] = menuBarPalette(*m_palettes[MenuPalette], light);
      if (!light) {
@@ -9739,7 +9874,7 @@ index 07485cc795..152aec02d0 100644
          m_palettes[RadioButtonPalette] = new QPalette(*m_palettes[CheckBoxPalette]);
      }
  }
-@@ -1094,7 +1123,7 @@ bool QWindowsTheme::useNativeMenus()
+@@ -1082,7 +1111,7 @@ bool QWindowsTheme::useNativeMenus()
  
  bool QWindowsTheme::queryDarkMode()
  {
@@ -10152,10 +10287,10 @@ index 8fe8b1c6d7..07367efe01 100644
  QT_BEGIN_NAMESPACE
  
 diff --git a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-index c80dc077ee..9415e9540d 100644
+index 5533a194ac..da1022862e 100644
 --- a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 +++ b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-@@ -3944,6 +3944,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
+@@ -3955,6 +3955,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
                      theme.partId = flags & State_Horizontal ? SBP_THUMBBTNHORZ : SBP_THUMBBTNVERT;
                      theme.stateId = stateId;
                      d->drawBackground(theme);
@@ -10177,7 +10312,7 @@ index c80dc077ee..9415e9540d 100644
                  }
              }
          }
-@@ -4991,4 +5006,20 @@ QIcon QWindowsVistaStyle::standardIcon(StandardPixmap standardIcon,
+@@ -5002,4 +5017,20 @@ QIcon QWindowsVistaStyle::standardIcon(StandardPixmap standardIcon,
      return QWindowsStyle::standardIcon(standardIcon, option, widget);
  }
  
