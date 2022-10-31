@@ -7,7 +7,7 @@
  src/corelib/global/qoperatingsystemversion.h       |   37 +
  src/corelib/global/qoperatingsystemversion_win.cpp |   17 +-
  src/corelib/global/qsysinfo.cpp                    |   32 +-
- src/corelib/kernel/qcoreapplication.cpp            |    5 +
+ src/corelib/kernel/qcoreapplication.cpp            |   11 +
  src/corelib/kernel/qeventdispatcher_win.cpp        |   13 +-
  src/corelib/kernel/qfunctions_win.cpp              |   13 +-
  src/corelib/text/qlocale_win.cpp                   |   17 +-
@@ -89,7 +89,7 @@
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 91 files changed, 1134 insertions(+), 7669 deletions(-)
+ 91 files changed, 1140 insertions(+), 7669 deletions(-)
 
 diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
 index 2db677bef8..8fd482f62f 100644
@@ -450,31 +450,37 @@ index 8ddcbb0409..85bcdf6cf8 100644
  #elif defined(Q_OS_HAIKU)
      return "Haiku "_L1 + productVersion();
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 7fc90733d0..c08422b78f 100644
+index 7fc90733d0..5d7c8f0ea6 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
-@@ -104,6 +104,8 @@ QT_BEGIN_NAMESPACE
+@@ -104,6 +104,10 @@ QT_BEGIN_NAMESPACE
  
  using namespace Qt::StringLiterals;
  
++#ifndef QT_BOOTSTRAPPED
 +static constexpr const char kWwx190EnvVar[] = "__wangwenx190__";
++#endif
 +
  #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
  extern QString qAppFileName();
  #endif
-@@ -442,6 +444,7 @@ QCoreApplicationPrivate::QCoreApplicationPrivate(int &aargc, char **aargv)
+@@ -442,6 +446,9 @@ QCoreApplicationPrivate::QCoreApplicationPrivate(int &aargc, char **aargv)
  
  QCoreApplicationPrivate::~QCoreApplicationPrivate()
  {
++#ifndef QT_BOOTSTRAPPED
 +    qunsetenv(kWwx190EnvVar);
++#endif
  #ifndef QT_NO_QOBJECT
      cleanupThreadData();
  #endif
-@@ -745,6 +748,8 @@ void QCoreApplicationPrivate::init()
+@@ -745,6 +752,10 @@ void QCoreApplicationPrivate::init()
      Q_ASSERT_X(!QCoreApplication::self, "QCoreApplication", "there should be only one application object");
      QCoreApplication::self = q;
  
++#ifndef QT_BOOTSTRAPPED
 +    qputenv(kWwx190EnvVar, QByteArray::number(__wangwenx190__()));
++#endif
 +
  #if QT_CONFIG(thread)
  #ifdef Q_OS_WASM

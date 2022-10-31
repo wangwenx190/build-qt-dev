@@ -47,7 +47,8 @@ if not exist "%__install_script%" (
     echo The install script is missing
     goto fail
 )
-call "%__install_script%" < nul
+call "%__install_script%" /I
+@echo off
 goto success
 
 :success
