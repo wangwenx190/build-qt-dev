@@ -1,6 +1,7 @@
+ cmake/QtBaseGlobalTargets.cmake                    |    1 +
  cmake/QtBuild.cmake                                |    7 +
- cmake/QtInternalTargets.cmake                      |    7 +-
- cmake/VC-LTL.cmake                                 |   88 +
+ cmake/QtInternalTargets.cmake                      |    2 +-
+ cmake/VC-LTL.cmake                                 |   93 +
  src/corelib/global/qlibraryinfo.cpp                |   20 +-
  src/corelib/global/qlibraryinfo.h                  |    5 +
  src/corelib/global/qoperatingsystemversion.cpp     |    7 +
@@ -74,7 +75,7 @@
  src/plugins/platforms/offscreen/qoffscreenwindow.h |   49 -
  src/plugins/platforms/windows/CMakeLists.txt       |    2 +
  src/plugins/platforms/windows/qwin10helpers.cpp    |   39 +-
- src/plugins/platforms/windows/qwindowscontext.cpp  |  187 +-
+ src/plugins/platforms/windows/qwindowscontext.cpp  |  190 +-
  src/plugins/platforms/windows/qwindowscontext.h    |  104 +-
  src/plugins/platforms/windows/qwindowsdrag.cpp     |    7 +-
  .../platforms/windows/qwindowsintegration.cpp      |   29 +-
@@ -90,10 +91,22 @@
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 92 files changed, 1147 insertions(+), 7672 deletions(-)
+ 93 files changed, 1152 insertions(+), 7671 deletions(-)
 
+diff --git a/cmake/QtBaseGlobalTargets.cmake b/cmake/QtBaseGlobalTargets.cmake
+index ac3b63a874..ac79b3db05 100644
+--- a/cmake/QtBaseGlobalTargets.cmake
++++ b/cmake/QtBaseGlobalTargets.cmake
+@@ -286,6 +286,7 @@ qt_copy_or_install(FILES
+                    cmake/QtWasmHelpers.cmake
+                    cmake/QtWrapperScriptHelpers.cmake
+                    cmake/QtWriteArgsFile.cmake
++                   cmake/VC-LTL.cmake
+                    cmake/modulecppexports.h.in
+                    cmake/modulecppexports_p.h.in
+                    cmake/qbatchedtestrunner.in.cpp
 diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
-index 2db677bef8..8fd482f62f 100644
+index 2db677bef8..eaf2796fc1 100644
 --- a/cmake/QtBuild.cmake
 +++ b/cmake/QtBuild.cmake
 @@ -572,3 +572,10 @@ _qt_internal_generate_tool_command_wrapper()
@@ -103,27 +116,15 @@ index 2db677bef8..8fd482f62f 100644
 +
 +if(MSVC)
 +    include(VC-LTL)
-+    if(DEFINED SupportLTL AND (${SupportLTL} STREQUAL "true"))
++    if(DEFINED SupportLTL AND (SupportLTL STREQUAL "true"))
 +        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
 +    endif()
 +endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index dc45b57eec..16ea715ec4 100644
+index dc45b57eec..b1ffc730fe 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -249,8 +249,9 @@ if (MSVC)
-     if (MSVC_VERSION GREATER_EQUAL 1919 AND NOT CLANG) # MSVC 2019
-         target_compile_options(PlatformCommonInternal INTERFACE
-             -Zc:externConstexpr
--            #-Zc:lambda # Buggy. TODO: Enable again when stable enough.
--            #-Zc:preprocessor # breaks build due to bug in default Windows SDK 10.0.19041
-+            -Zc:lambda
-+            -Zc:preprocessor
-+            -Zc:char8_t
-         )
-     endif()
- 
-@@ -260,7 +261,7 @@ if (MSVC)
+@@ -260,7 +260,7 @@ if (MSVC)
      )
  
      target_compile_options(PlatformCommonInternal INTERFACE
@@ -134,10 +135,10 @@ index dc45b57eec..16ea715ec4 100644
      target_link_options(PlatformCommonInternal INTERFACE
 diff --git a/cmake/VC-LTL.cmake b/cmake/VC-LTL.cmake
 new file mode 100644
-index 0000000000..b32073535e
+index 0000000000..20f3e687b8
 --- /dev/null
 +++ b/cmake/VC-LTL.cmake
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,93 @@
 +﻿# https://github.com/Chuyu-Team/VC-LTL5
 +
 +#
@@ -159,8 +160,13 @@ index 0000000000..b32073535e
 +#  如果你对默认搜索顺序不满，你可以修改此文件。你也可以直接指定${VC_LTL_Root}宏更加任性的去加载VC-LTL。
 +#
 +
-+
-+
++if(NOT MSVC)
++    return()
++endif()
++if(__VC_LTL_CMAKE_INCLUDED)
++    return()
++endif()
++set(__VC_LTL_CMAKE_INCLUDED 1)
 +
 +#####################################################################VC-LTL设置#####################################################################
 +
@@ -557,7 +563,7 @@ index ed0e25467c..64108cce84 100644
              return true;
          case APPMODEL_ERROR_NO_PACKAGE:
 diff --git a/src/corelib/text/qlocale_win.cpp b/src/corelib/text/qlocale_win.cpp
-index 3a3ae443c6..ff2bcacbbb 100644
+index 821369ff89..9162bd5c4b 100644
 --- a/src/corelib/text/qlocale_win.cpp
 +++ b/src/corelib/text/qlocale_win.cpp
 @@ -15,6 +15,7 @@
@@ -568,7 +574,7 @@ index 3a3ae443c6..ff2bcacbbb 100644
  #   include <qt_windows.h>
  #   include <time.h>
  #endif
-@@ -662,13 +663,15 @@ QVariant QSystemLocalePrivate::uiLanguages()
+@@ -663,13 +664,15 @@ QVariant QSystemLocalePrivate::uiLanguages()
  {
      QStringList result;
  #if QT_CONFIG(cpp_winrt)
@@ -2673,7 +2679,7 @@ index 96c7818ee9..f204d7b427 100644
      bool forceFlipDiscard = false;
      bool deviceLost = false;
 diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
-index 8d4411c10b..5d03fc6e25 100644
+index db789df244..8d04a8b8e7 100644
 --- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 +++ b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 @@ -3,6 +3,8 @@
@@ -2684,8 +2690,8 @@ index 8d4411c10b..5d03fc6e25 100644
 +
  #if QT_CONFIG(cpp_winrt)
  #include <winrt/base.h>
- // Workaround for Windows SDK bug.
-@@ -100,15 +102,17 @@ bool QNetworkListManagerEvents::start()
+ #include <QtCore/private/qfactorycacheregistration_p.h>
+@@ -101,15 +103,17 @@ bool QNetworkListManagerEvents::start()
          emit connectivityChanged(connectivity);
  
  #if QT_CONFIG(cpp_winrt)
@@ -2712,7 +2718,7 @@ index 8d4411c10b..5d03fc6e25 100644
  #endif
  
      return true;
-@@ -126,10 +130,12 @@ bool QNetworkListManagerEvents::stop()
+@@ -127,10 +131,12 @@ bool QNetworkListManagerEvents::stop()
      cookie = 0;
  
  #if QT_CONFIG(cpp_winrt)
@@ -2729,7 +2735,7 @@ index 8d4411c10b..5d03fc6e25 100644
  #endif
      return true;
  }
-@@ -180,6 +186,9 @@ using namespace winrt::Windows::Networking::Connectivity;
+@@ -181,6 +187,9 @@ using namespace winrt::Windows::Networking::Connectivity;
  [[nodiscard]]
  QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile &profile)
  {
@@ -2739,7 +2745,7 @@ index 8d4411c10b..5d03fc6e25 100644
      if (profile.IsWwanConnectionProfile())
          return QNetworkInformation::TransportMedium::Cellular;
      if (profile.IsWlanConnectionProfile())
-@@ -208,6 +217,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
+@@ -209,6 +218,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  [[nodiscard]] bool getMetered(const ConnectionProfile &profile)
  {
@@ -2748,7 +2754,7 @@ index 8d4411c10b..5d03fc6e25 100644
      ConnectionCost cost = profile.GetConnectionCost();
      NetworkCostType type = cost.NetworkCostType();
      return type == NetworkCostType::Fixed || type == NetworkCostType::Variable;
-@@ -216,6 +227,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
+@@ -217,6 +228,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  void QNetworkListManagerEvents::emitWinRTUpdates()
  {
@@ -9027,10 +9033,10 @@ index 026e81cb0c..6131031987 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index 80ff40acc5..492264ad13 100644
+index eeb1e08e0c..bbb4a3131a 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
-@@ -119,15 +119,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
+@@ -120,15 +120,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
  
  static inline int windowDpiAwareness(HWND hwnd)
  {
@@ -9055,7 +9061,17 @@ index 80ff40acc5..492264ad13 100644
          if (!result) {
              const DWORD errorCode = GetLastError();
              qErrnoWarning(int(errorCode), "EnableNonClientDpiScaling() failed for HWND %p (%lu)",
-@@ -294,6 +300,12 @@ bool QWindowsContext::initPointer(unsigned integrationOptions)
+@@ -224,7 +230,8 @@ QWindowsContext::~QWindowsContext()
+     unregisterWindowClasses();
+     if (d->m_oleInitializeResult == S_OK || d->m_oleInitializeResult == S_FALSE) {
+ #ifdef QT_USE_FACTORY_CACHE_REGISTRATION
+-        detail::QWinRTFactoryCacheRegistration::clearAllCaches();
++        if (QOperatingSystemVersion::isWin10OrGreater())
++            detail::QWinRTFactoryCacheRegistration::clearAllCaches();
+ #endif
+         OleUninitialize();
+     }
+@@ -299,6 +306,12 @@ bool QWindowsContext::initPointer(unsigned integrationOptions)
      if (integrationOptions & QWindowsIntegration::DontUseWMPointer)
          return false;
  
@@ -9068,7 +9084,7 @@ index 80ff40acc5..492264ad13 100644
      d->m_systemInfo |= QWindowsContext::SI_SupportsPointer;
      return true;
  }
-@@ -364,29 +376,37 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
+@@ -369,29 +382,37 @@ void QWindowsContext::setDetectAltGrModifier(bool a)
  int QWindowsContext::processDpiAwareness()
  {
      PROCESS_DPI_AWARENESS result;
@@ -9111,7 +9127,7 @@ index 80ff40acc5..492264ad13 100644
      if (!ok) {
          const DWORD dwError = GetLastError();
          // ERROR_ACCESS_DENIED means set externally (MSVC manifest or external app loading Qt plugin).
-@@ -402,6 +422,17 @@ bool QWindowsContext::setProcessDpiV2Awareness()
+@@ -407,6 +428,17 @@ bool QWindowsContext::setProcessDpiV2Awareness()
      return true;
  }
  
@@ -9129,7 +9145,7 @@ index 80ff40acc5..492264ad13 100644
  bool QWindowsContext::isDarkMode()
  {
      return QWindowsContextPrivate::m_darkMode;
-@@ -917,8 +948,8 @@ void QWindowsContext::forceNcCalcSize(HWND hwnd)
+@@ -922,8 +954,8 @@ void QWindowsContext::forceNcCalcSize(HWND hwnd)
  bool QWindowsContext::systemParametersInfo(unsigned action, unsigned param, void *out,
                                             unsigned dpi)
  {
@@ -9140,7 +9156,7 @@ index 80ff40acc5..492264ad13 100644
          : SystemParametersInfo(action, param, out, 0);
      return result == TRUE;
  }
-@@ -965,7 +996,8 @@ bool QWindowsContext::shouldHaveNonClientDpiScaling(const QWindow *window)
+@@ -970,7 +1002,8 @@ bool QWindowsContext::shouldHaveNonClientDpiScaling(const QWindow *window)
      if (QWindowsContextPrivate::m_v2DpiAware)
          return true;
  
@@ -9150,7 +9166,7 @@ index 80ff40acc5..492264ad13 100644
          && !window->property(QWindowsWindow::embeddedNativeParentHandleProperty).isValid()
  #if QT_CONFIG(opengl) // /QTBUG-62901, EnableNonClientDpiScaling has problems with GL
          && (window->surfaceType() != QSurface::OpenGLSurface
-@@ -1606,4 +1638,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
+@@ -1611,4 +1644,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
      return false;
  }
  
