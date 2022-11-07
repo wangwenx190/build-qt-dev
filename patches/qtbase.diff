@@ -27,8 +27,9 @@
  .../windows/apisupport/uiaserverinterfaces_p.h     |  367 ----
  src/gui/accessible/windows/apisupport/uiatypes_p.h |  157 --
  src/gui/opengl/qopengl.cpp                         |   29 +-
- src/gui/rhi/qrhid3d11.cpp                          |  320 ++--
+ src/gui/rhi/qrhid3d11.cpp                          |  295 ++--
  src/gui/rhi/qrhid3d11_p_p.h                        |    1 +
+ src/gui/text/windows/qwindowsfontdatabasebase.cpp  |    9 +-
  .../qnetworklistmanagerevents.cpp                  |   39 +-
  src/plugins/platforms/CMakeLists.txt               |    9 -
  src/plugins/platforms/direct2d/CMakeLists.txt      |  224 ---
@@ -91,7 +92,7 @@
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 93 files changed, 1152 insertions(+), 7671 deletions(-)
+ 94 files changed, 1146 insertions(+), 7661 deletions(-)
 
 diff --git a/cmake/QtBaseGlobalTargets.cmake b/cmake/QtBaseGlobalTargets.cmake
 index ac3b63a874..ac79b3db05 100644
@@ -457,10 +458,10 @@ index 8ddcbb0409..85bcdf6cf8 100644
  #elif defined(Q_OS_HAIKU)
      return "Haiku "_L1 + productVersion();
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 7fc90733d0..5d7c8f0ea6 100644
+index 04c7474803..b236707d15 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
-@@ -104,6 +104,10 @@ QT_BEGIN_NAMESPACE
+@@ -108,6 +108,10 @@ QT_BEGIN_NAMESPACE
  
  using namespace Qt::StringLiterals;
  
@@ -471,7 +472,7 @@ index 7fc90733d0..5d7c8f0ea6 100644
  #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
  extern QString qAppFileName();
  #endif
-@@ -442,6 +446,9 @@ QCoreApplicationPrivate::QCoreApplicationPrivate(int &aargc, char **aargv)
+@@ -446,6 +450,9 @@ QCoreApplicationPrivate::QCoreApplicationPrivate(int &aargc, char **aargv)
  
  QCoreApplicationPrivate::~QCoreApplicationPrivate()
  {
@@ -481,7 +482,7 @@ index 7fc90733d0..5d7c8f0ea6 100644
  #ifndef QT_NO_QOBJECT
      cleanupThreadData();
  #endif
-@@ -745,6 +752,10 @@ void QCoreApplicationPrivate::init()
+@@ -749,6 +756,10 @@ void QCoreApplicationPrivate::init()
      Q_ASSERT_X(!QCoreApplication::self, "QCoreApplication", "there should be only one application object");
      QCoreApplication::self = q;
  
@@ -713,10 +714,10 @@ index 48f03f5ed0..fe799c68ca 100644
  QT_END_NAMESPACE
  #else
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
-index 1dd7bb3c30..1644381ad8 100644
+index 85c14f39ab..0ba969f2dd 100644
 --- a/src/gui/CMakeLists.txt
 +++ b/src/gui/CMakeLists.txt
-@@ -432,7 +432,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
+@@ -433,7 +433,6 @@ qt_internal_extend_target(Gui CONDITION WIN32
          d3d11
          dxgi
          dxguid
@@ -724,7 +725,7 @@ index 1dd7bb3c30..1644381ad8 100644
  )
  
  #### Keys ignored in scope 7:.:.:gui.pro:WIN32:
-@@ -508,21 +507,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
+@@ -509,21 +508,6 @@ qt_internal_extend_target(Gui CONDITION APPLE AND QT_FEATURE_accessibility
          ${FWFoundation}
  )
  
@@ -2236,7 +2237,7 @@ index 7c997103d5..d52d23ebe1 100644
  
      bool isNull() const { return type.isEmpty(); }
 diff --git a/src/gui/rhi/qrhid3d11.cpp b/src/gui/rhi/qrhid3d11.cpp
-index da7089edf9..9c82cc3266 100644
+index 5fed1dedd5..399bd0543b 100644
 --- a/src/gui/rhi/qrhid3d11.cpp
 +++ b/src/gui/rhi/qrhid3d11.cpp
 @@ -9,6 +9,8 @@
@@ -2286,7 +2287,7 @@ index da7089edf9..9c82cc3266 100644
  }
  
  bool QRhiD3D11::create(QRhi::Flags flags)
-@@ -158,32 +176,40 @@ bool QRhiD3D11::create(QRhi::Flags flags)
+@@ -158,31 +176,36 @@ bool QRhiD3D11::create(QRhi::Flags flags)
          devFlags |= D3D11_CREATE_DEVICE_DEBUG;
  
      dxgiFactory = createDXGIFactory2();
@@ -2310,7 +2311,6 @@ index da7089edf9..9c82cc3266 100644
 -        if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
 -            supportsAllowTearing = allowTearing;
 -        factory5->Release();
-+    forceFlipDiscard = false;
 +    if (supportsFlipSwapchain) {
 +        // For a FLIP_* swapchain Present(0, 0) is not necessarily
 +        // sufficient to get non-blocking behavior, try using ALLOW_TEARING
@@ -2322,12 +2322,10 @@ index da7089edf9..9c82cc3266 100644
 +                supportsAllowTearing = allowTearing;
 +            factory5->Release();
 +        }
-+        // if we default to FLIP_SEQUENTIAL, have a way to request FLIP_DISCARD
-+        forceFlipDiscard = qEnvironmentVariableIntValue("QT_D3D_FLIP_DISCARD");
      }
  
--    // if we default to FLIP_SEQUENTIAL, have a way to request FLIP_DISCARD
--    forceFlipDiscard = qEnvironmentVariableIntValue("QT_D3D_FLIP_DISCARD");
+-    if (qEnvironmentVariableIntValue("QT_D3D_FLIP_DISCARD"))
+-        qWarning("The default swap effect is FLIP_DISCARD, QT_D3D_FLIP_DISCARD is now ignored");
 -
 -    if (qEnvironmentVariableIntValue("QT_D3D_NO_FLIP"))
 -        qWarning("Non-FLIP swapchains are no longer supported, QT_D3D_NO_FLIP is now ignored");
@@ -2337,14 +2335,13 @@ index da7089edf9..9c82cc3266 100644
 +            supportsFlipSwapchain ? "true" : "false",
              supportsAllowTearing ? "true" : "false");
  
-     qCDebug(QRHI_LOG_INFO, "Default swap effect: %s",
--            forceFlipDiscard ? "FLIP_DISCARD" : "FLIP_SEQUENTIAL");
-+            supportsFlipSwapchain ? (forceFlipDiscard ? "FLIP_DISCARD" : "FLIP_SEQUENTIAL")
-+                                  : "DISCARD");
+-    qCDebug(QRHI_LOG_INFO, "Default swap effect: FLIP_DISCARD");
++    qCDebug(QRHI_LOG_INFO, "Default swap effect: %s",
++            supportsFlipSwapchain ? "FLIP_DISCARD" : "DISCARD");
  
      if (!importedDeviceAndContext) {
          IDXGIAdapter1 *adapter;
-@@ -4755,12 +4781,21 @@ static const DXGI_FORMAT DEFAULT_SRGB_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+@@ -4754,12 +4777,21 @@ static const DXGI_FORMAT DEFAULT_SRGB_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
  
  bool QRhiD3D11::ensureDirectCompositionDevice()
  {
@@ -2367,7 +2364,7 @@ index da7089edf9..9c82cc3266 100644
      if (FAILED(hr)) {
          qWarning("Failed to Direct Composition device: %s", qPrintable(comErrorMessage(hr)));
          return false;
-@@ -4792,12 +4827,18 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4791,12 +4823,18 @@ bool QD3D11SwapChain::createOrResize()
      HRESULT hr;
  
      QRHI_RES_RHI(QRhiD3D11);
@@ -2386,7 +2383,7 @@ index da7089edf9..9c82cc3266 100644
                      qWarning("Failed to create Direct Compsition target for the window: %s",
                               qPrintable(comErrorMessage(hr)));
                  }
-@@ -4805,10 +4846,15 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4804,10 +4842,15 @@ bool QD3D11SwapChain::createOrResize()
              if (dcompTarget && !dcompVisual) {
                  hr = rhiD->dcompDevice->CreateVisual(&dcompVisual);
                  if (FAILED(hr)) {
@@ -2402,7 +2399,7 @@ index da7089edf9..9c82cc3266 100644
          }
          // simple consistency check
          if (window->requestedFormat().alphaBufferSize() <= 0)
-@@ -4823,7 +4869,7 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4822,7 +4865,7 @@ bool QD3D11SwapChain::createOrResize()
      // ALLOW_TEARING, and ALLOW_TEARING is not compatible with it at all so the
      // flag must not be set then. Whereas for flip we should use it, if
      // supported, to get better results for 'unthrottled' presentation.
@@ -2411,7 +2408,7 @@ index da7089edf9..9c82cc3266 100644
          swapChainFlags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
  
      if (!swapChain) {
-@@ -4831,122 +4877,144 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4830,109 +4873,131 @@ bool QD3D11SwapChain::createOrResize()
          colorFormat = DEFAULT_FORMAT;
          srgbAdjustedColorFormat = m_flags.testFlag(sRGB) ? DEFAULT_SRGB_FORMAT : DEFAULT_FORMAT;
  
@@ -2483,32 +2480,26 @@ index da7089edf9..9c82cc3266 100644
 -        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 -        desc.BufferCount = BUFFER_COUNT;
 -        desc.Flags = swapChainFlags;
+-        desc.Scaling = DXGI_SCALING_NONE;
+-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 -
--        // Normally we'd want FLIP_DISCARD, but that comes with the default
--        // SCALING_STRETCH, as SCALING_NONE is documented to be only
--        // available for FLIP_SEQUENTIAL. The problem with stretch is that
--        // Qt Quick and similar apps typically running in resizable windows
--        // will not like how that looks in practice: the content will
--        // appear to be "jumping" around during a window resize. So choose
--        // sequential/none by default.
--        if (rhiD->forceFlipDiscard) {
+-        if (dcompVisual) {
+-            // With DirectComposition setting AlphaMode to STRAIGHT fails the
+-            // swapchain creation, whereas the result seems to be identical
+-            // with any of the other values, including IGNORE. (?)
+-            desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+-
+-            // DirectComposition has its own limitations, cannot use
+-            // SCALING_NONE. So with semi-transparency requested we are forced
+-            // to SCALING_STRETCH.
 -            desc.Scaling = DXGI_SCALING_STRETCH;
--            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
--        } else {
--            desc.Scaling = DXGI_SCALING_NONE;
--            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 -        }
 +            // We use a FLIP model swapchain which implies a buffer count of 2
 +            // (as opposed to the old DISCARD with back buffer count == 1).
 +            // This makes no difference for the rest of the stuff except that
 +            // automatic MSAA is unsupported and needs to be implemented via a
 +            // custom multisample render target and an explicit resolve.
- 
--        if (dcompVisual) {
--            // With DirectComposition setting AlphaMode to STRAIGHT fails the
--            // swapchain creation, whereas the result seems to be identical
--            // with any of the other values, including IGNORE. (?)
--            desc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
++
 +            DXGI_SWAP_CHAIN_DESC1 desc = {};
 +            desc.Width = UINT(pixelSize.width());
 +            desc.Height = UINT(pixelSize.height());
@@ -2517,27 +2508,11 @@ index da7089edf9..9c82cc3266 100644
 +            desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 +            desc.BufferCount = BUFFER_COUNT;
 +            desc.Flags = swapChainFlags;
-+
-+            // Normally we'd want FLIP_DISCARD, but that comes with the default
-+            // SCALING_STRETCH, as SCALING_NONE is documented to be only
-+            // available for FLIP_SEQUENTIAL. The problem with stretch is that
-+            // Qt Quick and similar apps typically running in resizable windows
-+            // will not like how that looks in practice: the content will
-+            // appear to be "jumping" around during a window resize. So choose
-+            // sequential/none by default.
-+            if (rhiD->forceFlipDiscard) {
-+                desc.Scaling = DXGI_SCALING_STRETCH;
-+                desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-+            } else {
-+                desc.Scaling = DXGI_SCALING_NONE;
-+                desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-+            }
++            desc.Scaling = DXGI_SCALING_NONE;
++            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
  
--            // DirectComposition has its own limitations, cannot use
--            // SCALING_NONE. So with semi-transparency requested we are forced
--            // to SCALING_STRETCH.
--            desc.Scaling = DXGI_SCALING_STRETCH;
--        }
+-        IDXGIFactory2 *fac = static_cast<IDXGIFactory2 *>(rhiD->dxgiFactory);
+-        IDXGISwapChain1 *sc1;
 +            if (dcompVisual) {
 +                // With DirectComposition setting AlphaMode to STRAIGHT fails the
 +                // swapchain creation, whereas the result seems to be identical
@@ -2549,9 +2524,7 @@ index da7089edf9..9c82cc3266 100644
 +                // to SCALING_STRETCH.
 +                desc.Scaling = DXGI_SCALING_STRETCH;
 +            }
- 
--        IDXGIFactory2 *fac = static_cast<IDXGIFactory2 *>(rhiD->dxgiFactory);
--        IDXGISwapChain1 *sc1;
++
 +            IDXGIFactory2 *fac = static_cast<IDXGIFactory2 *>(rhiD->dxgiFactory);
 +            IDXGISwapChain1 *sc1;
  
@@ -2655,7 +2628,7 @@ index da7089edf9..9c82cc3266 100644
          }
          if (FAILED(hr)) {
              qWarning("Failed to create D3D11 swapchain: %s", qPrintable(comErrorMessage(hr)));
-@@ -4955,8 +5023,8 @@ bool QD3D11SwapChain::createOrResize()
+@@ -4941,8 +5006,8 @@ bool QD3D11SwapChain::createOrResize()
          rhiD->dxgiFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_WINDOW_CHANGES);
      } else {
          releaseBuffers();
@@ -2667,7 +2640,7 @@ index da7089edf9..9c82cc3266 100644
          if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) {
              qWarning("Device loss detected in ResizeBuffers()");
 diff --git a/src/gui/rhi/qrhid3d11_p_p.h b/src/gui/rhi/qrhid3d11_p_p.h
-index 96c7818ee9..f204d7b427 100644
+index 857ab2a2aa..2a9275adcb 100644
 --- a/src/gui/rhi/qrhid3d11_p_p.h
 +++ b/src/gui/rhi/qrhid3d11_p_p.h
 @@ -736,6 +736,7 @@ public:
@@ -2676,10 +2649,37 @@ index 96c7818ee9..f204d7b427 100644
      IDCompositionDevice *dcompDevice = nullptr;
 +    bool supportsFlipSwapchain = false;
      bool supportsAllowTearing = false;
-     bool forceFlipDiscard = false;
      bool deviceLost = false;
+     QRhiD3D11NativeHandles nativeHandlesStruct;
+diff --git a/src/gui/text/windows/qwindowsfontdatabasebase.cpp b/src/gui/text/windows/qwindowsfontdatabasebase.cpp
+index f45678c65c..346952186e 100644
+--- a/src/gui/text/windows/qwindowsfontdatabasebase.cpp
++++ b/src/gui/text/windows/qwindowsfontdatabasebase.cpp
+@@ -6,6 +6,7 @@
+ 
+ #include <QtCore/QThreadStorage>
+ #include <QtCore/QtEndian>
++#include <QtCore/private/qsystemlibrary_p.h>
+ 
+ #if QT_CONFIG(directwrite)
+ #  if QT_CONFIG(directwrite3)
+@@ -685,7 +686,13 @@ QFont QWindowsFontDatabaseBase::systemDefaultFont()
+     // Qt 6: Obtain default GUI font (typically "Segoe UI, 9pt", see QTBUG-58610)
+     NONCLIENTMETRICS ncm = {};
+     ncm.cbSize = sizeof(ncm);
+-    SystemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0, defaultVerticalDPI());
++    static const auto pSystemParametersInfoForDpi =
++        reinterpret_cast<decltype(&::SystemParametersInfoForDpi)>(
++            QSystemLibrary::resolve(u"user32"_s, "SystemParametersInfoForDpi"));
++    if (pSystemParametersInfoForDpi)
++        pSystemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0, defaultVerticalDPI());
++    else
++        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0);
+     const QFont systemFont = QWindowsFontDatabase::LOGFONT_to_QFont(ncm.lfMessageFont);
+     qCDebug(lcQpaFonts) << __FUNCTION__ << systemFont;
+     return systemFont;
 diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
-index db789df244..8d04a8b8e7 100644
+index b101a17f9b..f2acf6a2e9 100644
 --- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 +++ b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 @@ -3,6 +3,8 @@
@@ -2745,16 +2745,16 @@ index db789df244..8d04a8b8e7 100644
      if (profile.IsWwanConnectionProfile())
          return QNetworkInformation::TransportMedium::Cellular;
      if (profile.IsWlanConnectionProfile())
-@@ -209,6 +218,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
+@@ -214,6 +223,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  [[nodiscard]] bool getMetered(const ConnectionProfile &profile)
  {
 +    if (!QOperatingSystemVersion::isWin10OrGreater())
 +        return false;
-     ConnectionCost cost = profile.GetConnectionCost();
-     NetworkCostType type = cost.NetworkCostType();
-     return type == NetworkCostType::Fixed || type == NetworkCostType::Variable;
-@@ -217,6 +228,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
+     ConnectionCost cost(nullptr);
+     try {
+         cost = profile.GetConnectionCost();
+@@ -229,6 +240,8 @@ QNetworkInformation::TransportMedium getTransportMedium(const ConnectionProfile
  
  void QNetworkListManagerEvents::emitWinRTUpdates()
  {
@@ -2792,7 +2792,7 @@ index dfbec51877..34107a6741 100644
  endif()
 diff --git a/src/plugins/platforms/direct2d/CMakeLists.txt b/src/plugins/platforms/direct2d/CMakeLists.txt
 deleted file mode 100644
-index b1e4d2b7d3..0000000000
+index d0ab0d1efd..0000000000
 --- a/src/plugins/platforms/direct2d/CMakeLists.txt
 +++ /dev/null
 @@ -1,224 +0,0 @@
@@ -2822,7 +2822,7 @@ index b1e4d2b7d3..0000000000
 -        ../windows/qwindowsinternalmimedata.cpp ../windows/qwindowsinternalmimedata.h
 -        ../windows/qwindowskeymapper.cpp ../windows/qwindowskeymapper.h
 -        ../windows/qwindowsmenu.cpp ../windows/qwindowsmenu.h
--        ../windows/qwindowsmime.cpp ../windows/qwindowsmime.h
+-        ../windows/qwindowsmimeregistry.cpp ../windows/qwindowsmimeregistry.h
 -        ../windows/qwindowsmousehandler.cpp ../windows/qwindowsmousehandler.h
 -        ../windows/qwindowsnativeinterface.cpp ../windows/qwindowsnativeinterface.h
 -        ../windows/qwindowsole.cpp ../windows/qwindowsole.h
@@ -8948,7 +8948,7 @@ index d525f2c657..0000000000
 -
 -#endif
 diff --git a/src/plugins/platforms/windows/CMakeLists.txt b/src/plugins/platforms/windows/CMakeLists.txt
-index 7d6c2bb6a7..eb3b6e6527 100644
+index 7884fc164e..00ec76fa8f 100644
 --- a/src/plugins/platforms/windows/CMakeLists.txt
 +++ b/src/plugins/platforms/windows/CMakeLists.txt
 @@ -198,6 +198,8 @@ qt_internal_extend_target(QWindowsIntegrationPlugin CONDITION QT_FEATURE_accessi
@@ -9033,7 +9033,7 @@ index 026e81cb0c..6131031987 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index eeb1e08e0c..bbb4a3131a 100644
+index 0242b4096c..a61f9826ca 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -120,15 +120,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -9305,7 +9305,7 @@ index eeb1e08e0c..bbb4a3131a 100644
 +
  QT_END_NAMESPACE
 diff --git a/src/plugins/platforms/windows/qwindowscontext.h b/src/plugins/platforms/windows/qwindowscontext.h
-index 11cfbb06f2..84b7d2b242 100644
+index d7c9a7f3a5..cdb6dc0d08 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.h
 +++ b/src/plugins/platforms/windows/qwindowscontext.h
 @@ -10,13 +10,18 @@
@@ -9673,7 +9673,7 @@ index 88f02347b3..75226c3810 100644
  
      const auto systemId = (qint64)penInfo->pointerInfo.sourceDevice;
 diff --git a/src/plugins/platforms/windows/qwindowsscreen.cpp b/src/plugins/platforms/windows/qwindowsscreen.cpp
-index 6f0b949b67..507f55a5ab 100644
+index f15a7a870d..3f141adb23 100644
 --- a/src/plugins/platforms/windows/qwindowsscreen.cpp
 +++ b/src/plugins/platforms/windows/qwindowsscreen.cpp
 @@ -26,20 +26,6 @@ QT_BEGIN_NAMESPACE
@@ -9708,7 +9708,7 @@ index 6f0b949b67..507f55a5ab 100644
              data->depth = GetDeviceCaps(hdc, BITSPIXEL);
              data->format = data->depth == 16 ? QImage::Format_RGB16 : QImage::Format_RGB32;
              data->physicalSizeMM = QSizeF(GetDeviceCaps(hdc, HORZSIZE), GetDeviceCaps(hdc, VERTSIZE));
-@@ -427,7 +413,8 @@ QRect QWindowsScreen::virtualGeometry(const QPlatformScreen *screen) // cf QScre
+@@ -424,7 +410,8 @@ QRect QWindowsScreen::virtualGeometry(const QPlatformScreen *screen) // cf QScre
  
  bool QWindowsScreen::setOrientationPreference(Qt::ScreenOrientation o)
  {
@@ -9718,7 +9718,7 @@ index 6f0b949b67..507f55a5ab 100644
      ORIENTATION_PREFERENCE orientationPreference = ORIENTATION_PREFERENCE_NONE;
      switch (o) {
      case Qt::PrimaryOrientation:
-@@ -445,33 +432,29 @@ bool QWindowsScreen::setOrientationPreference(Qt::ScreenOrientation o)
+@@ -442,33 +429,29 @@ bool QWindowsScreen::setOrientationPreference(Qt::ScreenOrientation o)
          orientationPreference = ORIENTATION_PREFERENCE_LANDSCAPE_FLIPPED;
          break;
      }
