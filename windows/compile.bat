@@ -185,12 +185,10 @@ if /i "%__should_enable_ltcg%" == "false" (
     :: - Enabling LTCG for static builds will make the generated binary files way too large
     ::   and it will also break the binary compatibility between different compilers and
     ::   and compiler versions.
-    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
 ) else (
     :: For shared release builds it's totally OK to enable LTCG.
-    :: TEST: Temporarily disabled.
-    ::set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON
-    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON
 )
 if /i "%__ninja_multi_config%" == "false" (
     :: Use "--target <TARGET>" to choose target explicitly.
