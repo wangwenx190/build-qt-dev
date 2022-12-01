@@ -3,6 +3,7 @@
  cmake/QtCompilerOptimization.cmake                 |   10 +-
  cmake/QtInternalTargets.cmake                      |   19 +-
  cmake/VC-LTL.cmake                                 |   93 +
+ src/corelib/CMakeLists.txt                         |    2 +
  src/corelib/global/qlibraryinfo.cpp                |   20 +-
  src/corelib/global/qlibraryinfo.h                  |    5 +
  src/corelib/global/qoperatingsystemversion.cpp     |    7 +
@@ -12,8 +13,13 @@
  src/corelib/kernel/qcoreapplication.cpp            |   11 +
  src/corelib/kernel/qeventdispatcher_win.cpp        |   13 +-
  src/corelib/kernel/qfunctions_win.cpp              |   13 +-
- src/corelib/text/qlocale_win.cpp                   |   17 +-
+ src/corelib/text/qlocale_win.cpp                   |   23 +-
  src/corelib/thread/qfutex_p.h                      |   76 +-
+ src/corelib/thread/qlocking_p.h                    |    7 +-
+ src/corelib/thread/qmutex.cpp                      |    2 +
+ src/corelib/thread/qmutex_p.h                      |    9 +-
+ src/corelib/thread/qmutex_win.cpp                  |   30 +
+ src/corelib/thread/qwaitcondition_p.h              |    7 +-
  src/gui/CMakeLists.txt                             |   16 -
  .../windows/apisupport/qwindowsuiawrapper.cpp      |   89 -
  .../windows/apisupport/qwindowsuiawrapper_p.h      |   67 -
@@ -92,8 +98,10 @@
  .../windows/uiautomation/qwindowsuiautils.h        |    2 +-
  .../styles/windowsvista/qwindowsvistastyle.cpp     |   31 +
  .../styles/windowsvista/qwindowsvistastyle_p_p.h   |    1 +
+ src/tools/rcc/main.cpp                             |    7 +-
+ src/tools/rcc/rcc.cpp                              |    8 +-
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 95 files changed, 1179 insertions(+), 7681 deletions(-)
+ 103 files changed, 1237 insertions(+), 7701 deletions(-)
 
 diff --git a/cmake/QtBaseGlobalTargets.cmake b/cmake/QtBaseGlobalTargets.cmake
 index ac3b63a874..ac79b3db05 100644
@@ -108,17 +116,17 @@ index ac3b63a874..ac79b3db05 100644
                     cmake/modulecppexports_p.h.in
                     cmake/qbatchedtestrunner.in.cpp
 diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
-index 2db677bef8..eaf2796fc1 100644
+index c63079464f..54453cea72 100644
 --- a/cmake/QtBuild.cmake
 +++ b/cmake/QtBuild.cmake
-@@ -572,3 +572,10 @@ _qt_internal_generate_tool_command_wrapper()
+@@ -569,3 +569,10 @@ _qt_internal_generate_tool_command_wrapper()
  if(CMAKE_VERSION VERSION_LESS "3.19.0")
      variable_watch(CMAKE_CURRENT_LIST_DIR qt_watch_current_list_dir)
  endif()
 +
 +if(MSVC)
 +    include(VC-LTL)
-+    if(DEFINED SupportLTL AND (SupportLTL STREQUAL "true"))
++    if("x${SupportLTL}" STREQUAL "xtrue")
 +        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE STRING "" FORCE)
 +    endif()
 +endif()
@@ -289,6 +297,26 @@ index 0000000000..20f3e687b8
 +if(VC_LTL_Root)
 +    include("${VC_LTL_Root}\\config\\config.cmake")
 +endif()
+diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
+index 7bb3782313..02faa75dfa 100644
+--- a/src/corelib/CMakeLists.txt
++++ b/src/corelib/CMakeLists.txt
+@@ -538,6 +538,7 @@ qt_internal_extend_target(Core CONDITION QT_FEATURE_animation
+ # from the wrong DLL at runtime and crash!
+ qt_internal_extend_target(Core CONDITION QT_FEATURE_thread AND WIN32
+     SOURCES
++        thread/qmutex_win.cpp
+         thread/qwaitcondition_win.cpp
+     LIBRARIES
+         synchronization
+@@ -1304,6 +1305,7 @@ qt_internal_extend_target(Core CONDITION WASM
+ set_source_files_properties(
+     thread/qmutex_mac.cpp
+     thread/qmutex_unix.cpp
++    thread/qmutex_win.cpp
+     PROPERTIES HEADER_FILE_ONLY ON)  # special case: These files are included by qmutex.cpp!
+ 
+ 
 diff --git a/src/corelib/global/qlibraryinfo.cpp b/src/corelib/global/qlibraryinfo.cpp
 index 64fc9fff01..868d862ff0 100644
 --- a/src/corelib/global/qlibraryinfo.cpp
@@ -620,7 +648,7 @@ index ed0e25467c..64108cce84 100644
              return true;
          case APPMODEL_ERROR_NO_PACKAGE:
 diff --git a/src/corelib/text/qlocale_win.cpp b/src/corelib/text/qlocale_win.cpp
-index 598de83b0e..943a1d28d8 100644
+index 67fac95304..0486aa84b4 100644
 --- a/src/corelib/text/qlocale_win.cpp
 +++ b/src/corelib/text/qlocale_win.cpp
 @@ -15,6 +15,7 @@
@@ -631,26 +659,33 @@ index 598de83b0e..943a1d28d8 100644
  #   include <qt_windows.h>
  #   include <time.h>
  #endif
-@@ -663,13 +664,15 @@ QVariant QSystemLocalePrivate::uiLanguages()
+@@ -663,17 +664,19 @@ QVariant QSystemLocalePrivate::uiLanguages()
  {
      QStringList result;
  #if QT_CONFIG(cpp_winrt)
 -    using namespace winrt;
 -    using namespace Windows::System::UserProfile;
--    auto languages = GlobalizationPreferences::Languages();
--    for (const auto &lang : languages)
--        result << QString::fromStdString(winrt::to_string(lang));
--    if (!result.isEmpty())
--        return result; // else just fall back to WIN32 API implementation
+-    QT_TRY {
+-        auto languages = GlobalizationPreferences::Languages();
+-        for (const auto &lang : languages)
+-            result << QString::fromStdString(winrt::to_string(lang));
+-    } QT_CATCH(...) {
+-        // pass, just fall back to WIN32 API implementation
 +    if (QOperatingSystemVersion::isWin10OrGreater()) {
 +        using namespace winrt;
 +        using namespace Windows::System::UserProfile;
-+        const auto languages = GlobalizationPreferences::Languages();
-+        for (auto &&lang : languages)
-+            result << QString::fromStdString(winrt::to_string(lang));
++        QT_TRY {
++            const auto languages = GlobalizationPreferences::Languages();
++            for (auto &&lang : languages)
++                result << QString::fromStdString(winrt::to_string(lang));
++        } QT_CATCH(...) {
++            // pass, just fall back to WIN32 API implementation
++        }
 +        if (!result.isEmpty())
-+            return result;
-+    }
++            return result; // else just fall back to WIN32 API implementation
+     }
+-    if (!result.isEmpty())
+-        return result; // else just fall back to WIN32 API implementation
  #endif // QT_CONFIG(cpp_winrt)
      // mingw and clang still have to use Win32 API
      unsigned long cnt = 0;
@@ -769,6 +804,118 @@ index 48f03f5ed0..fe799c68ca 100644
  namespace QtFutex = QtWindowsFutex;
  QT_END_NAMESPACE
  #else
+diff --git a/src/corelib/thread/qlocking_p.h b/src/corelib/thread/qlocking_p.h
+index 9fa7e70da9..0c205fff66 100644
+--- a/src/corelib/thread/qlocking_p.h
++++ b/src/corelib/thread/qlocking_p.h
+@@ -8,9 +8,10 @@
+ //  W A R N I N G
+ //  -------------
+ //
+-// This file is not part of the Qt API. It exists for the convenience of
+-// qmutex.cpp and qmutex_unix.cpp. This header file may change from version to
+-// version without notice, or even be removed.
++// This file is not part of the Qt API.  It exists for the convenience
++// of qmutex.cpp, qmutex_unix.cpp, and qmutex_win.cpp.  This header
++// file may change from version to version without notice, or even be
++// removed.
+ //
+ // We mean it.
+ //
+diff --git a/src/corelib/thread/qmutex.cpp b/src/corelib/thread/qmutex.cpp
+index 7b4aac9532..ae1a3a7313 100644
+--- a/src/corelib/thread/qmutex.cpp
++++ b/src/corelib/thread/qmutex.cpp
+@@ -869,6 +869,8 @@ QT_END_NAMESPACE
+ // nothing
+ #elif defined(Q_OS_MAC)
+ #  include "qmutex_mac.cpp"
++#elif defined(Q_OS_WIN)
++#  include "qmutex_win.cpp"
+ #else
+ #  include "qmutex_unix.cpp"
+ #endif
+diff --git a/src/corelib/thread/qmutex_p.h b/src/corelib/thread/qmutex_p.h
+index e5932d0a66..9985a068c5 100644
+--- a/src/corelib/thread/qmutex_p.h
++++ b/src/corelib/thread/qmutex_p.h
+@@ -10,9 +10,10 @@
+ //  W A R N I N G
+ //  -------------
+ //
+-// This file is not part of the Qt API. It exists for the convenience of
+-// qmutex.cpp and qmutex_unix.cpp. This header file may change from version to
+-// version without notice, or even be removed.
++// This file is not part of the Qt API.  It exists for the convenience
++// of qmutex.cpp, qmutex_unix.cpp, and qmutex_win.cpp.  This header
++// file may change from version to version without notice, or even be
++// removed.
+ //
+ // We mean it.
+ //
+@@ -89,6 +90,8 @@ public:
+     bool wakeup;
+     pthread_mutex_t mutex;
+     pthread_cond_t cond;
++#elif defined(Q_OS_WIN)
++    Qt::HANDLE event;
+ #endif
+ };
+ 
+diff --git a/src/corelib/thread/qmutex_win.cpp b/src/corelib/thread/qmutex_win.cpp
+new file mode 100644
+index 0000000000..8c7741c113
+--- /dev/null
++++ b/src/corelib/thread/qmutex_win.cpp
+@@ -0,0 +1,30 @@
++// Copyright (C) 2016 The Qt Company Ltd.
++// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
++
++#include "qmutex.h"
++#include <qatomic.h>
++#include "qmutex_p.h"
++#include <qt_windows.h>
++
++QT_BEGIN_NAMESPACE
++
++QMutexPrivate::QMutexPrivate()
++{
++    event = CreateEvent(0, FALSE, FALSE, 0);
++
++    if (!event)
++        qWarning("QMutexPrivate::QMutexPrivate: Cannot create event");
++}
++
++QMutexPrivate::~QMutexPrivate()
++{ CloseHandle(event); }
++
++bool QMutexPrivate::wait(int timeout)
++{
++    return (WaitForSingleObjectEx(event, timeout < 0 ? INFINITE : timeout, FALSE) == WAIT_OBJECT_0);
++}
++
++void QMutexPrivate::wakeUp() noexcept
++{ SetEvent(event); }
++
++QT_END_NAMESPACE
+diff --git a/src/corelib/thread/qwaitcondition_p.h b/src/corelib/thread/qwaitcondition_p.h
+index 0893e9dd35..e82f832817 100644
+--- a/src/corelib/thread/qwaitcondition_p.h
++++ b/src/corelib/thread/qwaitcondition_p.h
+@@ -7,9 +7,10 @@
+ //  W A R N I N G
+ //  -------------
+ //
+-// This file is not part of the Qt API. It exists for the convenience of
+-// qmutex.cpp and qmutex_unix.cpp. This header file may change from version to
+-// version without notice, or even be removed.
++// This file is not part of the Qt API.  It exists for the convenience
++// of qmutex.cpp, qmutex_unix.cpp, and qmutex_win.cpp.  This header
++// file may change from version to version without notice, or even be
++// removed.
+ //
+ // We mean it.
+ //
 diff --git a/src/gui/CMakeLists.txt b/src/gui/CMakeLists.txt
 index b72e65dd28..7d924ea763 100644
 --- a/src/gui/CMakeLists.txt
@@ -9840,7 +9987,7 @@ index f15a7a870d..3f141adb23 100644
  
  /*!
 diff --git a/src/plugins/platforms/windows/qwindowstheme.cpp b/src/plugins/platforms/windows/qwindowstheme.cpp
-index debbfd19a2..299256cb80 100644
+index 8e931b1ed8..ef5b031233 100644
 --- a/src/plugins/platforms/windows/qwindowstheme.cpp
 +++ b/src/plugins/platforms/windows/qwindowstheme.cpp
 @@ -39,6 +39,7 @@
@@ -9851,7 +9998,7 @@ index debbfd19a2..299256cb80 100644
  
  #include <algorithm>
  
-@@ -242,7 +243,8 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -243,7 +244,8 @@ static void populateLightSystemBasePalette(QPalette &result)
      QColor accent = getSysColor(COLOR_HIGHLIGHT);
  
  #if QT_CONFIG(cpp_winrt)
@@ -9861,7 +10008,7 @@ index debbfd19a2..299256cb80 100644
          using namespace winrt::Windows::UI::ViewManagement;
          const auto settings = UISettings();
  
-@@ -284,41 +286,62 @@ static void populateLightSystemBasePalette(QPalette &result)
+@@ -285,41 +287,62 @@ static void populateLightSystemBasePalette(QPalette &result)
  
  static void populateDarkSystemBasePalette(QPalette &result)
  {
@@ -9957,7 +10104,7 @@ index debbfd19a2..299256cb80 100644
      const QColor buttonColor = background.lighter(200);
  
      result.setColor(QPalette::All, QPalette::WindowText, foreground);
-@@ -575,25 +598,31 @@ void QWindowsTheme::refreshPalettes()
+@@ -576,25 +599,31 @@ void QWindowsTheme::refreshPalettes()
      m_palettes[MenuPalette] = new QPalette(menuPalette(*m_palettes[SystemPalette], light));
      m_palettes[MenuBarPalette] = menuBarPalette(*m_palettes[MenuPalette], light);
      if (!light) {
@@ -10006,7 +10153,7 @@ index debbfd19a2..299256cb80 100644
          m_palettes[RadioButtonPalette] = new QPalette(*m_palettes[CheckBoxPalette]);
      }
  }
-@@ -651,7 +680,10 @@ void QWindowsTheme::refreshFonts()
+@@ -652,7 +681,10 @@ void QWindowsTheme::refreshFonts()
      fixedFont.setStyleHint(QFont::TypeWriter);
  
      LOGFONT lfIconTitleFont;
@@ -10018,7 +10165,7 @@ index debbfd19a2..299256cb80 100644
      const QFont iconTitleFont = QWindowsFontDatabase::LOGFONT_to_QFont(lfIconTitleFont, dpi);
  
      m_fonts[SystemFont] = new QFont(QWindowsFontDatabase::systemDefaultFont());
-@@ -1084,7 +1116,7 @@ bool QWindowsTheme::useNativeMenus()
+@@ -1085,7 +1117,7 @@ bool QWindowsTheme::useNativeMenus()
  
  bool QWindowsTheme::queryDarkMode()
  {
@@ -10028,7 +10175,7 @@ index debbfd19a2..299256cb80 100644
      }
      const auto setting = QWinRegistryKey(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index 99800cbc4c..2f87c70546 100644
+index aa3422c5b5..7ad5af49ec 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -22,6 +22,7 @@
@@ -10133,7 +10280,7 @@ index 99800cbc4c..2f87c70546 100644
      }
  }
  
-@@ -1051,9 +1057,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
+@@ -1049,9 +1055,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -10147,7 +10294,7 @@ index 99800cbc4c..2f87c70546 100644
          qErrnoWarning("%s: AdjustWindowRectExForDpi failed", __FUNCTION__);
      }
      const QMargins result(qAbs(rect.left), qAbs(rect.top),
-@@ -1093,7 +1102,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
+@@ -1091,7 +1100,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -10157,7 +10304,7 @@ index 99800cbc4c..2f87c70546 100644
          || !QWindowsContext::shouldHaveNonClientDpiScaling(w)) {
          return frameOnPrimaryScreen(w, style, exStyle);
      }
-@@ -1544,7 +1554,7 @@ void QWindowsWindow::initialize()
+@@ -1542,7 +1552,7 @@ void QWindowsWindow::initialize()
              QWindowSystemInterface::handleGeometryChange<QWindowSystemInterface::SynchronousDelivery>(w, obtainedGeometry);
          }
      }
@@ -10166,7 +10313,7 @@ index 99800cbc4c..2f87c70546 100644
  }
  
  QSurfaceFormat QWindowsWindow::format() const
-@@ -2010,7 +2020,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
+@@ -2008,7 +2018,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
  
  void QWindowsWindow::handleDpiChangedAfterParent(HWND hwnd)
  {
@@ -10175,7 +10322,7 @@ index 99800cbc4c..2f87c70546 100644
      const qreal scale = qreal(dpi) / qreal(savedDpi());
      setSavedDpi(dpi);
  
-@@ -2329,13 +2339,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
+@@ -2327,13 +2337,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
          return false;
      PAINTSTRUCT ps;
  
@@ -10200,7 +10347,7 @@ index 99800cbc4c..2f87c70546 100644
      // If the a window is obscured by another window (such as a child window)
      // we still need to send isExposed=true, for compatibility.
      // Our tests depend on it.
-@@ -2924,7 +2943,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
+@@ -2925,7 +2944,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
              mmi->ptMaxPosition.x = availablePositionDiff.x();
              mmi->ptMaxPosition.y = availablePositionDiff.y();
              if (!m_data.flags.testFlag(Qt::FramelessWindowHint)) {
@@ -10209,7 +10356,7 @@ index 99800cbc4c..2f87c70546 100644
                  mmi->ptMaxSize.x += borderWidth * 2;
                  mmi->ptMaxSize.y += borderWidth * 2;
                  mmi->ptMaxTrackSize = mmi->ptMaxSize;
-@@ -2965,7 +2984,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
+@@ -2966,7 +2985,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
              return true;
          }
          if (localPos.y() < 0) {
@@ -10431,10 +10578,10 @@ index 8fe8b1c6d7..07367efe01 100644
  QT_BEGIN_NAMESPACE
  
 diff --git a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-index 5533a194ac..da1022862e 100644
+index 283a5bdaa9..6eb55bad40 100644
 --- a/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
 +++ b/src/plugins/styles/windowsvista/qwindowsvistastyle.cpp
-@@ -3955,6 +3955,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
+@@ -3959,6 +3959,21 @@ void QWindowsVistaStyle::drawComplexControl(ComplexControl control, const QStyle
                      theme.partId = flags & State_Horizontal ? SBP_THUMBBTNHORZ : SBP_THUMBBTNVERT;
                      theme.stateId = stateId;
                      d->drawBackground(theme);
@@ -10456,7 +10603,7 @@ index 5533a194ac..da1022862e 100644
                  }
              }
          }
-@@ -5002,4 +5017,20 @@ QIcon QWindowsVistaStyle::standardIcon(StandardPixmap standardIcon,
+@@ -5006,4 +5021,20 @@ QIcon QWindowsVistaStyle::standardIcon(StandardPixmap standardIcon,
      return QWindowsStyle::standardIcon(standardIcon, option, widget);
  }
  
@@ -10489,6 +10636,71 @@ index 2c38ff4b3b..7705d3200e 100644
      static HWND winId(const QWidget *widget);
      static bool useVista(bool update = false);
      static QBackingStore *backingStoreForWidget(const QWidget *widget);
+diff --git a/src/tools/rcc/main.cpp b/src/tools/rcc/main.cpp
+index 2751bc39d6..8e44999f52 100644
+--- a/src/tools/rcc/main.cpp
++++ b/src/tools/rcc/main.cpp
+@@ -34,9 +34,7 @@ void dumpRecursive(const QDir &dir, QTextStream &out)
+         if (entry.isDir()) {
+             dumpRecursive(entry.filePath(), out);
+         } else {
+-            out << "<file>"_L1
+-                << entry.filePath()
+-                << "</file>\n"_L1;
++            out << "  <file>"_L1 << entry.filePath() << "</file>\n"_L1;
+         }
+     }
+ }
+@@ -64,7 +62,8 @@ int createProject(const QString &outFileName)
+     }
+ 
+     QTextStream out(&file);
+-    out << "<!DOCTYPE RCC><RCC version=\"1.0\">\n"
++    out << "<!DOCTYPE RCC>\n"
++           "<RCC version=\"1.0\">\n"
+            "<qresource>\n"_L1;
+ 
+     // use "." as dir to get relative file paths
+diff --git a/src/tools/rcc/rcc.cpp b/src/tools/rcc/rcc.cpp
+index a87f15de33..51933952a5 100644
+--- a/src/tools/rcc/rcc.cpp
++++ b/src/tools/rcc/rcc.cpp
+@@ -1097,7 +1097,7 @@ bool RCCResourceLibrary::writeDataBlobs()
+     Q_ASSERT(m_errorDevice);
+     switch (m_format) {
+     case C_Code:
+-        writeString("static const unsigned char qt_resource_data[] = {\n");
++        writeString("static constexpr const unsigned char qt_resource_data[] = {\n");
+         break;
+     case Python_Code:
+         writeString("qt_resource_data = b\"\\\n");
+@@ -1141,7 +1141,7 @@ bool RCCResourceLibrary::writeDataBlobs()
+     case Pass1:
+         if (offset < 8)
+             offset = 8;
+-        writeString("\nstatic const unsigned char qt_resource_data[");
++        writeString("\nstatic constexpr const unsigned char qt_resource_data[");
+         writeByteArray(QByteArray::number(offset));
+         writeString("] = { 'Q', 'R', 'C', '_', 'D', 'A', 'T', 'A' };\n\n");
+         break;
+@@ -1156,7 +1156,7 @@ bool RCCResourceLibrary::writeDataNames()
+     switch (m_format) {
+     case C_Code:
+     case Pass1:
+-        writeString("static const unsigned char qt_resource_name[] = {\n");
++        writeString("static constexpr const unsigned char qt_resource_name[] = {\n");
+         break;
+     case Python_Code:
+         writeString("qt_resource_name = b\"\\\n");
+@@ -1218,7 +1218,7 @@ bool RCCResourceLibrary::writeDataStructure()
+     switch (m_format) {
+     case C_Code:
+     case Pass1:
+-        writeString("static const unsigned char qt_resource_struct[] = {\n");
++        writeString("static constexpr const unsigned char qt_resource_struct[] = {\n");
+         break;
+     case Python_Code:
+         writeString("qt_resource_struct = b\"\\\n");
 diff --git a/src/widgets/dialogs/qwizard_win.cpp b/src/widgets/dialogs/qwizard_win.cpp
 index e95f0e3b7b..9c79b56a67 100644
 --- a/src/widgets/dialogs/qwizard_win.cpp
