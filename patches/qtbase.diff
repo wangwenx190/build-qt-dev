@@ -1,8 +1,8 @@
  cmake/QtBaseGlobalTargets.cmake                    |    1 +
  cmake/QtBuild.cmake                                |    7 +
- cmake/QtCompilerOptimization.cmake                 |   10 +-
- cmake/QtInternalTargets.cmake                      |   19 +-
- cmake/VC-LTL.cmake                                 |   93 +
+ cmake/QtCompilerOptimization.cmake                 |   15 +-
+ cmake/QtInternalTargets.cmake                      |    6 +-
+ cmake/VC-LTL.cmake                                 |   94 +
  src/corelib/CMakeLists.txt                         |    2 +
  src/corelib/global/qlibraryinfo.cpp                |   20 +-
  src/corelib/global/qlibraryinfo.h                  |    5 +
@@ -91,7 +91,7 @@
  .../platforms/windows/qwindowspointerhandler.cpp   |   25 +-
  src/plugins/platforms/windows/qwindowsscreen.cpp   |   45 +-
  src/plugins/platforms/windows/qwindowstheme.cpp    |  138 +-
- src/plugins/platforms/windows/qwindowswindow.cpp   |   77 +-
+ src/plugins/platforms/windows/qwindowswindow.cpp   |   76 +-
  .../uiautomation/qwindowsuiaaccessibility.cpp      |    9 +-
  .../windows/uiautomation/qwindowsuiabaseprovider.h |    4 +-
  .../uiautomation/qwindowsuiamainprovider.cpp       |   53 +-
@@ -101,7 +101,7 @@
  src/tools/rcc/main.cpp                             |    7 +-
  src/tools/rcc/rcc.cpp                              |    8 +-
  src/widgets/dialogs/qwizard_win.cpp                |    9 +-
- 103 files changed, 1237 insertions(+), 7701 deletions(-)
+ 103 files changed, 1231 insertions(+), 7699 deletions(-)
 
 diff --git a/cmake/QtBaseGlobalTargets.cmake b/cmake/QtBaseGlobalTargets.cmake
 index ac3b63a874..ac79b3db05 100644
@@ -131,10 +131,10 @@ index c63079464f..54453cea72 100644
 +    endif()
 +endif()
 diff --git a/cmake/QtCompilerOptimization.cmake b/cmake/QtCompilerOptimization.cmake
-index b5b49ab78a..6bba357603 100644
+index b5b49ab78a..2a756b229b 100644
 --- a/cmake/QtCompilerOptimization.cmake
 +++ b/cmake/QtCompilerOptimization.cmake
-@@ -92,10 +92,10 @@ endif()
+@@ -92,10 +92,15 @@ endif()
  
  # Windows MSVC
  if(MSVC)
@@ -142,14 +142,19 @@ index b5b49ab78a..6bba357603 100644
 -    set(QT_CFLAGS_OPTIMIZE_DEBUG "-Od")
 -    set(QT_CFLAGS_OPTIMIZE_SIZE "-O1")
 -    set(QT_CFLAGS_OPTIMIZE_VALID_VALUES "/O2" "/O1" "/Od" "/Ob0" "/Ob1" "/Ob2" "/O0" "-O0")
-+    set(QT_CFLAGS_OPTIMIZE "-O2 -Ob3 -Oi -Oy -Ot")
++    set(QT_CFLAGS_OPTIMIZE "-O2 -Oi -Oy -Ot")
++    if(MSVC_VERSION GREATER_EQUAL 1920) # Visual Studio 2019 version 16.0
++        string(APPEND QT_CFLAGS_OPTIMIZE " -Ob3 ")
++    else()
++        string(APPEND QT_CFLAGS_OPTIMIZE " -Ob2 ")
++    endif()
 +    set(QT_CFLAGS_OPTIMIZE_DEBUG "-Od -Ob0")
 +    set(QT_CFLAGS_OPTIMIZE_SIZE "-O1 -Ob2 -Oi- -Os")
 +    set(QT_CFLAGS_OPTIMIZE_VALID_VALUES "/O2" "/O1" "/Od" "/Ob0" "/Ob1" "/Ob2" "/Ob3" "/O0" "-O0")
  
      if(CLANG)
          set(QT_CFLAGS_OPTIMIZE_FULL "/clang:-O3")
-@@ -124,5 +124,5 @@ endif()
+@@ -124,5 +129,5 @@ endif()
  # Emscripten Clang
  if(WASM)
      set(QT_CFLAGS_OPTIMIZE_DEBUG "-O2 -g") # -Og is not supported
@@ -157,32 +162,10 @@ index b5b49ab78a..6bba357603 100644
 +    set(QT_CFLAGS_SSE2 "-O2 -msimd128 -msse -msse2")
  endif()
 diff --git a/cmake/QtInternalTargets.cmake b/cmake/QtInternalTargets.cmake
-index dc45b57eec..999423147f 100644
+index dc45b57eec..c5015e98ef 100644
 --- a/cmake/QtInternalTargets.cmake
 +++ b/cmake/QtInternalTargets.cmake
-@@ -249,23 +249,32 @@ if (MSVC)
-     if (MSVC_VERSION GREATER_EQUAL 1919 AND NOT CLANG) # MSVC 2019
-         target_compile_options(PlatformCommonInternal INTERFACE
-             -Zc:externConstexpr
--            #-Zc:lambda # Buggy. TODO: Enable again when stable enough.
--            #-Zc:preprocessor # breaks build due to bug in default Windows SDK 10.0.19041
-+            -Zc:lambda
-+            -Zc:preprocessor
-+            -Zc:char8_t
-+        )
-+    endif()
-+    if (MSVC_VERSION GREATER_EQUAL 1929 AND NOT CLANG) # MSVC 2022
-+        target_compile_options(PlatformCommonInternal INTERFACE
-+            -Zc:__STDC__
-+            -Zc:enumTypes
-+            -Zc:trigraphs
-         )
-     endif()
- 
-     target_compile_options(PlatformCommonInternal INTERFACE
-         -Zc:wchar_t
-         -bigobj
-+        -await:strict
+@@ -260,12 +260,12 @@ if (MSVC)
      )
  
      target_compile_options(PlatformCommonInternal INTERFACE
@@ -200,10 +183,10 @@ index dc45b57eec..999423147f 100644
  
 diff --git a/cmake/VC-LTL.cmake b/cmake/VC-LTL.cmake
 new file mode 100644
-index 0000000000..20f3e687b8
+index 0000000000..2bab2f21d6
 --- /dev/null
 +++ b/cmake/VC-LTL.cmake
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,94 @@
 +﻿# https://github.com/Chuyu-Team/VC-LTL5
 +
 +#
@@ -225,21 +208,22 @@ index 0000000000..20f3e687b8
 +#  如果你对默认搜索顺序不满，你可以修改此文件。你也可以直接指定${VC_LTL_Root}宏更加任性的去加载VC-LTL。
 +#
 +
-+if(NOT MSVC)
++if(NOT MSVC OR DEFINED __VC_LTL_CMAKE_INCLUDE_GUARD)
 +    return()
 +endif()
-+if(__VC_LTL_CMAKE_INCLUDED)
-+    return()
-+endif()
-+set(__VC_LTL_CMAKE_INCLUDED 1)
++set(__VC_LTL_CMAKE_INCLUDE_GUARD 1)
 +
 +#####################################################################VC-LTL设置#####################################################################
 +
 +#控制TargetPlatform版本，目前可用版本为5.1.2600.0     6.0.6000.0（默认）    6.2.9200.0     10.0.10240.0    10.0.19041.0
-+set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
++if(NOT DEFINED WindowsTargetPlatformMinVersion)
++    set(WindowsTargetPlatformMinVersion "10.0.19041.0" CACHE STRING "" FORCE)
++endif()
 +
 +#启用干净的导入表，消除 ucrt apiset(如：api-ms-win-crt-time-l1-1-0.dll)，满足强迫症患者。
-+set(CleanImport "true" CACHE STRING "" FORCE)
++if(NOT DEFINED CleanImport)
++    set(CleanImport "true" CACHE STRING "" FORCE)
++endif()
 +
 +####################################################################################################################################################
 +
@@ -298,7 +282,7 @@ index 0000000000..20f3e687b8
 +    include("${VC_LTL_Root}\\config\\config.cmake")
 +endif()
 diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
-index 7bb3782313..02faa75dfa 100644
+index c8f2f9003a..141bf8bd96 100644
 --- a/src/corelib/CMakeLists.txt
 +++ b/src/corelib/CMakeLists.txt
 @@ -538,6 +538,7 @@ qt_internal_extend_target(Core CONDITION QT_FEATURE_animation
@@ -309,7 +293,7 @@ index 7bb3782313..02faa75dfa 100644
          thread/qwaitcondition_win.cpp
      LIBRARIES
          synchronization
-@@ -1304,6 +1305,7 @@ qt_internal_extend_target(Core CONDITION WASM
+@@ -1311,6 +1312,7 @@ qt_internal_extend_target(Core CONDITION WASM
  set_source_files_properties(
      thread/qmutex_mac.cpp
      thread/qmutex_unix.cpp
@@ -542,7 +526,7 @@ index 8ddcbb0409..85bcdf6cf8 100644
  #elif defined(Q_OS_HAIKU)
      return "Haiku "_L1 + productVersion();
 diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
-index 04c7474803..b236707d15 100644
+index d9a42413e4..2bc9ec726d 100644
 --- a/src/corelib/kernel/qcoreapplication.cpp
 +++ b/src/corelib/kernel/qcoreapplication.cpp
 @@ -108,6 +108,10 @@ QT_BEGIN_NAMESPACE
@@ -566,7 +550,7 @@ index 04c7474803..b236707d15 100644
  #ifndef QT_NO_QOBJECT
      cleanupThreadData();
  #endif
-@@ -749,6 +756,10 @@ void QCoreApplicationPrivate::init()
+@@ -784,6 +791,10 @@ void QCoreApplicationPrivate::init()
      Q_ASSERT_X(!QCoreApplication::self, "QCoreApplication", "there should be only one application object");
      QCoreApplication::self = q;
  
@@ -2888,7 +2872,7 @@ index f45678c65c..346952186e 100644
      qCDebug(lcQpaFonts) << __FUNCTION__ << systemFont;
      return systemFont;
 diff --git a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
-index 73691f0971..bc3459db3f 100644
+index f46dfb88ee..6c1da890b9 100644
 --- a/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 +++ b/src/plugins/networkinformation/networklistmanager/qnetworklistmanagerevents.cpp
 @@ -5,6 +5,7 @@
@@ -9257,7 +9241,7 @@ index 026e81cb0c..6131031987 100644
      if (FAILED(hr))
          return false;
 diff --git a/src/plugins/platforms/windows/qwindowscontext.cpp b/src/plugins/platforms/windows/qwindowscontext.cpp
-index e11bb5e335..e14c928069 100644
+index 3e2cb79def..b2739c2037 100644
 --- a/src/plugins/platforms/windows/qwindowscontext.cpp
 +++ b/src/plugins/platforms/windows/qwindowscontext.cpp
 @@ -120,15 +120,21 @@ static inline bool sessionManagerInteractionBlocked() { return false; }
@@ -9390,7 +9374,7 @@ index e11bb5e335..e14c928069 100644
          && !window->property(QWindowsWindow::embeddedNativeParentHandleProperty).isValid()
  #if QT_CONFIG(opengl) // /QTBUG-62901, EnableNonClientDpiScaling has problems with GL
          && (window->surfaceType() != QSurface::OpenGLSurface
-@@ -1521,4 +1554,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
+@@ -1527,4 +1560,137 @@ bool QWindowsContext::filterNativeEvent(QWindow *window, MSG *msg, LRESULT *resu
      return false;
  }
  
@@ -9703,10 +9687,10 @@ index 93205259f8..9f5f73588c 100644
              }
          } else {
 diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
-index dfbf5609fb..17d613c125 100644
+index 7fd3f4fcc1..ff340a3393 100644
 --- a/src/plugins/platforms/windows/qwindowsintegration.cpp
 +++ b/src/plugins/platforms/windows/qwindowsintegration.cpp
-@@ -208,8 +208,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -220,8 +220,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
      initOpenGlBlacklistResources();
  
      static bool dpiAwarenessSet = false;
@@ -9718,7 +9702,7 @@ index dfbf5609fb..17d613c125 100644
  
      int tabletAbsoluteRange = -1;
      DarkModeHandling darkModeHandling = DarkModeHandlingFlag::DarkModeWindowFrames;
-@@ -227,10 +229,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -239,10 +241,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
  
      if (!dpiAwarenessSet) { // Set only once in case of repeated instantiations of QGuiApplication.
          if (!QCoreApplication::testAttribute(Qt::AA_PluginApplication)) {
@@ -9732,7 +9716,7 @@ index dfbf5609fb..17d613c125 100644
                      dpiAwarenessSet = true;
                  } else {
                      // fallback to old API
-@@ -239,12 +241,23 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -251,12 +253,23 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
              }
  
              if (!dpiAwarenessSet) {
@@ -10175,7 +10159,7 @@ index 8e931b1ed8..ef5b031233 100644
      }
      const auto setting = QWinRegistryKey(HKEY_CURRENT_USER, LR"(Software\Microsoft\Windows\CurrentVersion\Themes\Personalize)")
 diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
-index aa3422c5b5..7ad5af49ec 100644
+index b2e41dca24..39fe6d7503 100644
 --- a/src/plugins/platforms/windows/qwindowswindow.cpp
 +++ b/src/plugins/platforms/windows/qwindowswindow.cpp
 @@ -22,6 +22,7 @@
@@ -10270,17 +10254,16 @@ index aa3422c5b5..7ad5af49ec 100644
                  if (flags & Qt::MSWindowsFixedSizeDialogHint) {
                      style |= WS_DLGFRAME;
                  } else {
-@@ -842,6 +845,9 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
-         // NOTE: WS_EX_TRANSPARENT flag can make mouse inputs fall through a layered window
-         if (flagsIn & Qt::WindowTransparentForInput)
-             exStyle |= WS_EX_LAYERED | WS_EX_TRANSPARENT;
-+
-+        if (qEnvironmentVariableIntValue("QT_WINDOWS_DISABLE_BITMAP_REDIRECTION"))
-+            exStyle |= WS_EX_NOREDIRECTIONBITMAP;
-     }
- }
- 
-@@ -1049,9 +1055,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
+@@ -834,6 +837,8 @@ void WindowCreationData::fromWindow(const QWindow *w, const Qt::WindowFlags flag
+             if ((flags & Qt::WindowContextHelpButtonHint) && !showMinimizeButton
+                 && !showMaximizeButton)
+                 exStyle |= WS_EX_CONTEXTHELP;
++            if (qEnvironmentVariableIntValue("QT_WINDOWS_DISABLE_BITMAP_REDIRECTION"))
++                exStyle |= WS_EX_NOREDIRECTIONBITMAP;
+         } else {
+              exStyle |= WS_EX_TOOLWINDOW;
+         }
+@@ -1049,9 +1054,12 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, DWORD style, DWORD exStyl
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -10294,7 +10277,7 @@ index aa3422c5b5..7ad5af49ec 100644
          qErrnoWarning("%s: AdjustWindowRectExForDpi failed", __FUNCTION__);
      }
      const QMargins result(qAbs(rect.left), qAbs(rect.top),
-@@ -1091,7 +1100,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
+@@ -1091,7 +1099,8 @@ QMargins QWindowsGeometryHint::frame(const QWindow *w, const QRect &geometry,
  {
      if (!w->isTopLevel() || w->flags().testFlag(Qt::FramelessWindowHint))
          return {};
@@ -10304,7 +10287,7 @@ index aa3422c5b5..7ad5af49ec 100644
          || !QWindowsContext::shouldHaveNonClientDpiScaling(w)) {
          return frameOnPrimaryScreen(w, style, exStyle);
      }
-@@ -1542,7 +1552,7 @@ void QWindowsWindow::initialize()
+@@ -1542,7 +1551,7 @@ void QWindowsWindow::initialize()
              QWindowSystemInterface::handleGeometryChange<QWindowSystemInterface::SynchronousDelivery>(w, obtainedGeometry);
          }
      }
@@ -10313,7 +10296,7 @@ index aa3422c5b5..7ad5af49ec 100644
  }
  
  QSurfaceFormat QWindowsWindow::format() const
-@@ -2008,7 +2018,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
+@@ -2008,7 +2017,7 @@ void QWindowsWindow::handleDpiChanged(HWND hwnd, WPARAM wParam, LPARAM lParam)
  
  void QWindowsWindow::handleDpiChangedAfterParent(HWND hwnd)
  {
@@ -10322,7 +10305,7 @@ index aa3422c5b5..7ad5af49ec 100644
      const qreal scale = qreal(dpi) / qreal(savedDpi());
      setSavedDpi(dpi);
  
-@@ -2327,13 +2337,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
+@@ -2328,13 +2337,22 @@ bool QWindowsWindow::handleWmPaint(HWND hwnd, UINT message,
          return false;
      PAINTSTRUCT ps;
  
@@ -10347,7 +10330,7 @@ index aa3422c5b5..7ad5af49ec 100644
      // If the a window is obscured by another window (such as a child window)
      // we still need to send isExposed=true, for compatibility.
      // Our tests depend on it.
-@@ -2925,7 +2944,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
+@@ -2926,7 +2944,7 @@ void QWindowsWindow::getSizeHints(MINMAXINFO *mmi) const
              mmi->ptMaxPosition.x = availablePositionDiff.x();
              mmi->ptMaxPosition.y = availablePositionDiff.y();
              if (!m_data.flags.testFlag(Qt::FramelessWindowHint)) {
@@ -10356,7 +10339,7 @@ index aa3422c5b5..7ad5af49ec 100644
                  mmi->ptMaxSize.x += borderWidth * 2;
                  mmi->ptMaxSize.y += borderWidth * 2;
                  mmi->ptMaxTrackSize = mmi->ptMaxSize;
-@@ -2966,7 +2985,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
+@@ -2967,7 +2985,7 @@ bool QWindowsWindow::handleNonClientHitTest(const QPoint &globalPos, LRESULT *re
              return true;
          }
          if (localPos.y() < 0) {
