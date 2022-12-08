@@ -116,10 +116,10 @@ index ac3b63a874..ac79b3db05 100644
                     cmake/modulecppexports_p.h.in
                     cmake/qbatchedtestrunner.in.cpp
 diff --git a/cmake/QtBuild.cmake b/cmake/QtBuild.cmake
-index c63079464f..54453cea72 100644
+index cc169a5ab9..545f0f1f0f 100644
 --- a/cmake/QtBuild.cmake
 +++ b/cmake/QtBuild.cmake
-@@ -569,3 +569,10 @@ _qt_internal_generate_tool_command_wrapper()
+@@ -573,3 +573,10 @@ _qt_internal_generate_tool_command_wrapper()
  if(CMAKE_VERSION VERSION_LESS "3.19.0")
      variable_watch(CMAKE_CURRENT_LIST_DIR qt_watch_current_list_dir)
  endif()
@@ -282,7 +282,7 @@ index 0000000000..2bab2f21d6
 +    include("${VC_LTL_Root}\\config\\config.cmake")
 +endif()
 diff --git a/src/corelib/CMakeLists.txt b/src/corelib/CMakeLists.txt
-index c8f2f9003a..141bf8bd96 100644
+index 1d758a7482..a7631e6889 100644
 --- a/src/corelib/CMakeLists.txt
 +++ b/src/corelib/CMakeLists.txt
 @@ -538,6 +538,7 @@ qt_internal_extend_target(Core CONDITION QT_FEATURE_animation
@@ -9687,10 +9687,10 @@ index 93205259f8..9f5f73588c 100644
              }
          } else {
 diff --git a/src/plugins/platforms/windows/qwindowsintegration.cpp b/src/plugins/platforms/windows/qwindowsintegration.cpp
-index 7fd3f4fcc1..ff340a3393 100644
+index 75d383a268..17fb3fa40f 100644
 --- a/src/plugins/platforms/windows/qwindowsintegration.cpp
 +++ b/src/plugins/platforms/windows/qwindowsintegration.cpp
-@@ -220,8 +220,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -230,8 +230,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
      initOpenGlBlacklistResources();
  
      static bool dpiAwarenessSet = false;
@@ -9702,7 +9702,7 @@ index 7fd3f4fcc1..ff340a3393 100644
  
      int tabletAbsoluteRange = -1;
      DarkModeHandling darkModeHandling = DarkModeHandlingFlag::DarkModeWindowFrames;
-@@ -239,10 +241,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -249,10 +251,10 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
  
      if (!dpiAwarenessSet) { // Set only once in case of repeated instantiations of QGuiApplication.
          if (!QCoreApplication::testAttribute(Qt::AA_PluginApplication)) {
@@ -9716,7 +9716,7 @@ index 7fd3f4fcc1..ff340a3393 100644
                      dpiAwarenessSet = true;
                  } else {
                      // fallback to old API
-@@ -251,12 +253,23 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
+@@ -261,12 +263,23 @@ void QWindowsIntegrationPrivate::parseOptions(QWindowsIntegration *q, const QStr
              }
  
              if (!dpiAwarenessSet) {
