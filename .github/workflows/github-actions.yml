@@ -27,12 +27,12 @@ jobs:
         path: |
           C:/Program Files/LLVM
           ./llvm
-        key: llvm-15.0.1
+        key: llvm-15.0.6
 
     - name: Install LLVM SDK
       uses: KyleMayes/install-llvm-action@v1
       with:
-        version: "15.0.1"
+        version: "15.0.6"
         cached: ${{ steps.cache-llvm.outputs.cache-hit }}
 
     - name: Install Vulkan SDK
