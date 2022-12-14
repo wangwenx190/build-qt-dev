@@ -20,26 +20,15 @@ jobs:
       run: call C:/GitHub_Actions/build-qt-dev/windows-git.bat
       shell: cmd
 
-    - name: Cache LLVM SDK
-      id: cache-llvm
-      uses: actions/cache@v3
-      with:
-        path: |
-          C:/Program Files/LLVM
-          ./llvm
-        key: llvm-15.0.6
-
     - name: Install LLVM SDK
       uses: KyleMayes/install-llvm-action@v1
       with:
-        version: "15.0.6"
-        cached: ${{ steps.cache-llvm.outputs.cache-hit }}
+        version: "15.0.6" # Current latest version.
 
     - name: Install Vulkan SDK
       uses: humbletim/install-vulkan-sdk@v1
       with:
         version: latest
-        cache: true
 
     - name: Set up VCPKG
       working-directory: C:/GitHub_Actions/build-qt-dev
