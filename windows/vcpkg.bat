@@ -39,7 +39,7 @@ set __git_fetch_params=fetch --depth=1 --no-tags --verbose
 set __git_reset_params=reset --hard origin/%__git_clone_branch%
 set __git_clean_params=clean -fdx
 set __git_pull_params=pull --verbose
-set __git_apply_params=apply --ignore-whitespace --verbose
+set __git_am_params=am --3way --ignore-whitespace
 if /i "%GITHUB_ACTIONS%" == "true" (
     :: Update local VCPKG ports to the latest upstream version.
     cd /d "%__vcpkg_dir%"
@@ -53,8 +53,8 @@ if /i "%GITHUB_ACTIONS%" == "true" (
 )
 cd /d "%__vcpkg_dir%"
 :: Apply our custom modification to VCPKG.
-git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg.diff"
-git %__git_apply_params% "%__repo_root_dir%\patches\vcpkg-ffmpeg.diff"
+git %__git_am_params% "%__repo_root_dir%\patches\vcpkg.patch"
+git %__git_am_params% "%__repo_root_dir%\patches\vcpkg-ffmpeg.patch"
 :: Always try to get the latest VCPKG tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"
