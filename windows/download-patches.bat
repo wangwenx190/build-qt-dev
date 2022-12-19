@@ -20,7 +20,11 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@call "%~dp0download-patches.bat"
-@call "%~dp0vcpkg.bat"
-@call "%~dp0build.bat"
-@call "%~dp0pack.bat"
+@echo off
+setlocal
+cd /d "%~dp0.."
+if exist patches rd /s /q patches
+git clone --depth 1 --branch main --single-branch --no-tags --progress --verbose https://github.com/wangwenx190/patches.git
+endlocal
+cd /d "%~dp0"
+exit /b 0

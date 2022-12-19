@@ -20,7 +20,4 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@call "%~dp0download-patches.bat"
-@call "%~dp0vcpkg.bat"
-@call "%~dp0build.bat"
-@call "%~dp0pack.bat"
+@call "%~dp0windows\download-patches.bat"
