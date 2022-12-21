@@ -37,5 +37,10 @@ git config --global color.ui auto
 git config --global core.pager "less -FRSX"
 :: Let git automatically apply the appropriate line endings for the current platform.
 git config --global core.autocrlf true
+if /i "%GITHUB_ACTIONS%" == "true" (
+    :: Required by some of our git operations.
+    git config --global user.email "ci@github-actions.com"
+    git config --global user.name "GitHub Actions"
+)
 @echo off
 exit /b 0
