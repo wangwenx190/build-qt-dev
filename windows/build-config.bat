@@ -26,9 +26,8 @@
 :: qtbase should always be the first one to build.
 :: We need the QtTools module for its linguist tools,
 :: they are necessary for applications that support i18n.
-:: Temporarily removed qtmultimedia: can't build FFmpeg in vcpkg.
 :: Temporarily removed qtwebengine: doesn't work well with VC-LTL.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtquick3d,qtquickeffectmaker,qthttpserver,qtactiveqt,qttranslations
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtmultimedia,qtquick3d,qtquickeffectmaker,qthttpserver,qtactiveqt,qttranslations
 :: Supported values: clang-cl, mingw and msvc
 set __compiler=msvc
 :: Supported values: x64, x86 and arm64

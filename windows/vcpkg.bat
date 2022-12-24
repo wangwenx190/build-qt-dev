@@ -53,8 +53,8 @@ if /i "%GITHUB_ACTIONS%" == "true" (
 )
 cd /d "%__vcpkg_dir%"
 :: Apply our custom modification to VCPKG.
-git %__git_am_params% "%__repo_root_dir%\patches\vcpkg.patch"
-git %__git_am_params% "%__repo_root_dir%\patches\vcpkg-ffmpeg.patch"
+::git %__git_am_params% "%__repo_root_dir%\patches\vcpkg.patch"
+::git %__git_am_params% "%__repo_root_dir%\patches\vcpkg-ffmpeg.patch"
 :: Always try to get the latest VCPKG tool.
 call "%__vcpkg_dir%\bootstrap-vcpkg.bat"
 cd /d "%__vcpkg_dir%"
