@@ -20,20 +20,4 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@echo off
-:: Modify this line to suit your own personal needs.
-:: Be careful about the dependencies of each repository.
-:: qtbase should always be the first one to build.
-:: We need the QtTools module for its linguist tools,
-:: they are necessary for applications that support i18n.
-:: Temporarily removed qtwebengine: doesn't work well with VC-LTL.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtquickeffectmaker,qttranslations
-:: Supported values: clang-cl, mingw and msvc
-set __compiler=msvc
-:: Supported values: x64, x86 and arm64
-set __arch=x64
-:: Supported values: shared and static
-set __lib_type=shared
-:: Supported values: debug, minsizerel, release, relwithdebinfo and debugandrelease
-set __build_type=debugandrelease
-exit /b 0
+@call "%~dp0windows\setup-yy-thunks.bat"

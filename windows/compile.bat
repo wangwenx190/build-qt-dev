@@ -164,7 +164,7 @@ if /i "%__lib_type%" == "static" (
 )
 if /i "%__build_type%" == "debug" (
     set __should_enable_ltcg=false
-    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Debug -DFEATURE_separate_debug_info=ON -GNinja
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Debug -GNinja
 ) else if /i "%__build_type%" == "minsizerel" (
     :: We still set the configuration type to "Release", Qt's own scripts will
     :: modify the compiler flags to match the MinSizeRel mode.
@@ -172,12 +172,12 @@ if /i "%__build_type%" == "debug" (
 ) else if /i "%__build_type%" == "release" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=Release -GNinja
 ) else if /i "%__build_type%" == "relwithdebinfo" (
-    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=RelWithDebInfo -DFEATURE_separate_debug_info=ON -GNinja
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_BUILD_TYPE=RelWithDebInfo -GNinja
 ) else (
     set __ninja_multi_config=true
     :: The first one among the configuration types will be the main configuration,
     :: so we put "Release" in the front to get optimized host tools.
-    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_CONFIGURATION_TYPES=Release;Debug -DFEATURE_separate_debug_info=ON -G"Ninja Multi-Config"
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_CONFIGURATION_TYPES=Release;Debug -G"Ninja Multi-Config"
 )
 if /i "%__should_enable_ltcg%" == "false" (
     :: Disable LTCG for debug and static builds
@@ -220,9 +220,10 @@ if /i "%__compiler%" == "msvc" (
 )
 :: The "relocatable" feature will be disabled for static builds automatically, so here
 :: we explicitly enable it unconditionally.
+:: TODO: -DQT_DISABLE_DEPRECATED_UP_TO=0x070000
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_intelcet=yes -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_mimetype_database_compression=zstd -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend
