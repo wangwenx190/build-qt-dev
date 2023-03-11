@@ -220,10 +220,9 @@ if /i "%__compiler%" == "msvc" (
 )
 :: The "relocatable" feature will be disabled for static builds automatically, so here
 :: we explicitly enable it unconditionally.
-:: TODO: -DQT_DISABLE_DEPRECATED_UP_TO=0x070000
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_mimetype_database_compression=zstd -DINPUT_intelcet=yes -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DQT_DISABLE_DEPRECATED_UP_TO=0x070000 -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_mimetype_database_compression=zstd -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend
@@ -345,11 +344,12 @@ cmake %__cmake_build_params%
 if %errorlevel% neq 0 goto fail
 %__install_cmdline%
 if %errorlevel% neq 0 goto fail
-:: Copy 3rd party binary files and import libraries from VCPKG.
+:: Copy 3rd party dependencies from VCPKG.
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.dll" "%__module_install_dir%\bin"
 ::copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.pdb" "%__module_install_dir%\bin"
 copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.lib" "%__module_install_dir%\lib"
 ::copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.pdb" "%__module_install_dir%\lib"
+xcopy "%__vcpkg_dir%\installed\%__vcpkg_triplet%\share" "%__module_install_dir%\lib\cmake" /s /i /f /r /y
 cd /d "%__repo_root_dir%"
 :: Cleanup. GitHub Actions's machine complains about no enough disk space.
 rd /s /q "%__module_source_dir%"
