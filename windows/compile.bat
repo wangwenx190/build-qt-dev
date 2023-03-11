@@ -345,10 +345,9 @@ if %errorlevel% neq 0 goto fail
 %__install_cmdline%
 if %errorlevel% neq 0 goto fail
 :: Copy 3rd party dependencies from VCPKG.
-copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.dll" "%__module_install_dir%\bin"
-::copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin\*.pdb" "%__module_install_dir%\bin"
-copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.lib" "%__module_install_dir%\lib"
-::copy /y "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib\*.pdb" "%__module_install_dir%\lib"
+xcopy "%__vcpkg_dir%\installed\%__vcpkg_triplet%\bin" "%__module_install_dir%\bin" /s /i /f /r /y
+xcopy "%__vcpkg_dir%\installed\%__vcpkg_triplet%\lib" "%__module_install_dir%\lib" /s /i /f /r /y
+xcopy "%__vcpkg_dir%\installed\%__vcpkg_triplet%\include" "%__module_install_dir%\include" /s /i /f /r /y
 xcopy "%__vcpkg_dir%\installed\%__vcpkg_triplet%\share" "%__module_install_dir%\lib\cmake" /s /i /f /r /y
 cd /d "%__repo_root_dir%"
 :: Cleanup. GitHub Actions's machine complains about no enough disk space.
