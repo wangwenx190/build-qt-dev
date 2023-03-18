@@ -36,7 +36,7 @@ powershell -Command "Get-ExecutionPolicy" | findstr "Restricted" >nul && set __p
 if /i "%__ps_allowed%" == "false" powershell -Command "Set-ExecutionPolicy RemoteSigned"
 if exist "%__download_dir%" rd /s /q "%__download_dir%"
 md "%__download_dir%"
-powershell -Command "Start-BitsTransfer -Source 'https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.7-Beta3/YY-Thunks-1.0.7-Beta3-Binary.zip' -Destination 'C:\__wwx190_downloads\YY-Thunks.7z'"
+powershell -Command "Start-BitsTransfer -Source 'https://github.com/Chuyu-Team/YY-Thunks/releases/download/v1.0.7-Beta4/YY-Thunks-1.0.7-Beta4-Binary.zip' -Destination 'C:\__wwx190_downloads\YY-Thunks.7z'"
 if not exist "%__download_file%" (
     echo Failed to download YY-Thunks
     goto fail

@@ -80,9 +80,11 @@ if /i "%__module%" == "" (
 )
 title Building %__module% ...
 set __is_building_qtbase=false
+set __is_building_qtdeclarative=false
 set __is_building_qtmultimedia=false
 set __is_building_qtwebengine=false
 if /i "%__module%" == "qtbase" set __is_building_qtbase=true
+if /i "%__module%" == "qtdeclarative" set __is_building_qtdeclarative=true
 if /i "%__module%" == "qtmultimedia" set __is_building_qtmultimedia=true
 if /i "%__module%" == "qtwebengine" set __is_building_qtwebengine=true
 :: Or use the official read-only repo: https://code.qt.io/qt/%__module%.git
