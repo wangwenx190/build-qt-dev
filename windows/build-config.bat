@@ -27,7 +27,7 @@
 :: We need the QtTools module for its linguist tools,
 :: they are necessary for applications that support i18n.
 :: Temporarily removed qtwebengine: doesn't work well with VC-LTL.
-set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtquickeffectmaker,qttranslations
+set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtquicktimeline,qtquick3d,qtquickeffectmaker,qttranslations
 :: Supported values: clang-cl, mingw and msvc
 set __compiler=msvc
 :: Supported values: x64, x86 and arm64
