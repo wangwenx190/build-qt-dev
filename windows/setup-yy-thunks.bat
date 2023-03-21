@@ -25,7 +25,7 @@ setlocal
 title Preparing YY-Thunks ...
 set __repo_root_dir=%~dp0..
 set __download_dir=%homedrive%\__wwx190_downloads
-set __download_file=%__download_dir%\YY-Thunks.7z
+set __download_file=%__download_dir%\YY-Thunks.zip
 set __target_dir=%__repo_root_dir%\YY-Thunks
 set __test_dir=%windir%\System32\__wwx190_test_admin
 set __ps_allowed=true
