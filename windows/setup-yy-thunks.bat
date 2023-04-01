@@ -42,7 +42,9 @@ if not exist "%__download_file%" (
     goto fail
 )
 7z x "%__download_file%" -o"%__target_dir%" -aoa
+copy /y "%~dp0yy-thunks-install.bat" "%__target_dir%\Install.bat"
 setx YYTHUNKS_INSTALL_DIR %__target_dir%
+call "%__target_dir%\Install.bat" /I
 @echo off
 goto success
 

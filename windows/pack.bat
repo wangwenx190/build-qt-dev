@@ -24,6 +24,10 @@
 setlocal
 set __repo_root_dir=%~dp0..
 set __repo_install_dir=%__repo_root_dir%\build\windows
+set __vcpkg_dir=%__repo_root_dir%\vcpkg
+:: For GitHub Actions, it will always be "C:\vcpkg", normally.
+if /i "%GITHUB_ACTIONS%" == "true" set __vcpkg_dir=%VCPKG_INSTALLATION_ROOT%
+set __vcpkg_package_file=%__repo_install_dir%\vcpkg.7z
 :: Add 7-Zip executable's folder path to the PATH env var.
 set PATH=%ProgramFiles%\7-Zip;%PATH%
 :: This parameter combination means the ultra compression in most situtaions.
@@ -33,7 +37,7 @@ set __7zip_compress_params=-mx -myx -ms=on -mqs=on -mmt=on -m0=LZMA2:d=128m:fb=2
 if not exist "%__repo_install_dir%" goto fail
 where 7z
 if %errorlevel% neq 0 goto fail
-title Packaging Qt ...
+title Packaging Qt & VCPKG ...
 cd /d "%__repo_install_dir%"
 for /f %%i in ('dir /b') do (
     :: Remove the previous archive first, to avoid weird issues.
@@ -49,6 +53,10 @@ for /f %%i in ('dir /b') do (
     :: Cleanup. Give us some more free disk space.
     rd /s /q "%__repo_install_dir%\%%i"
 )
+if exist "%__vcpkg_package_file%" del /f "%__vcpkg_package_file%"
+cd /d "%__vcpkg_dir%\.."
+7z a "%__vcpkg_package_file%" vcpkg\ %__7zip_compress_params%
+if %errorlevel% neq 0 goto fail
 goto success
 
 :success

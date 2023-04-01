@@ -23,7 +23,7 @@ jobs:
     - name: Install LLVM SDK
       uses: KyleMayes/install-llvm-action@v1
       with:
-        version: "15.0.6" # TODO: use 16.0.0
+        version: "16.0.0"
 
     - name: Install Vulkan SDK
       uses: humbletim/install-vulkan-sdk@v1
