@@ -224,7 +224,7 @@ if /i "%__compiler%" == "msvc" (
 :: we explicitly enable it unconditionally.
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DQT_DISABLE_DEPRECATED_UP_TO=0x070000 -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_mimetype_database_compression=zstd -DINPUT_intelcet=yes -DINPUT_spectre=yes
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_system_zlib=OFF -DINPUT_mimetype_database_compression=zstd -DINPUT_intelcet=yes -DINPUT_spectre=yes
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend
