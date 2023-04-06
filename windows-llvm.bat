@@ -20,15 +20,4 @@
 :: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 :: SOFTWARE.
 
-@echo off
-:: Build these libraries as static libraries so that we don't have to
-:: distribute a lot of separate dlls along side with Qt.
-:: Feel free to change them if you are worried about license issues.
-set __vcpkg_triplets=x64-windows-static
-:: ZSTD: needed by QtCore & QtNetwork
-:: ICU: needed by QtCore & QtWebEngine
-:: OpenSSL: needed by QtNetwork (the OpenSSL backend)
-:: LCMS: needed by QtGui
-:: FFmpeg: needed by QtMultimedia (the FFmpeg backend)
-set __qt_deps=zstd lcms openssl icu
-exit /b 0
+@call "%~dp0windows\setup-llvm.bat"

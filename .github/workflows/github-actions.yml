@@ -20,10 +20,10 @@ jobs:
       run: call C:/GitHub_Actions/build-qt-dev/windows-git.bat
       shell: cmd
 
-    - name: Install LLVM SDK
-      uses: KyleMayes/install-llvm-action@v1
-      with:
-        version: "16.0.0"
+    - name: Set up LLVM
+      working-directory: C:/GitHub_Actions/build-qt-dev
+      run: call C:/GitHub_Actions/build-qt-dev/windows-llvm.bat
+      shell: cmd
 
     - name: Install Vulkan SDK
       uses: humbletim/install-vulkan-sdk@v1

@@ -22,12 +22,11 @@
 
 @echo off
 setlocal
-title Preparing VC-LTL ...
+title Preparing LLVM ...
 set __repo_root_dir=%~dp0..
 set __download_dir=%homedrive%\__wwx190_downloads
-set __download_file=%__download_dir%\VC-LTL.7z
-set __target_dir=%__repo_root_dir%\VC-LTL
-set __install_script=%__target_dir%\Install.cmd
+set __download_file=%__download_dir%\LLVM.exe
+set __target_dir=%__repo_root_dir%\LLVM
 set __test_dir=%windir%\System32\__wwx190_test_admin
 set __ps_allowed=true
 rd /s /q "%__test_dir%" >nul 2>nul
@@ -37,18 +36,15 @@ powershell -Command "Get-ExecutionPolicy" | findstr "Restricted" >nul && set __p
 if /i "%__ps_allowed%" == "false" powershell -Command "Set-ExecutionPolicy RemoteSigned"
 if exist "%__download_dir%" rd /s /q "%__download_dir%"
 md "%__download_dir%"
-powershell -Command "Start-BitsTransfer -Source 'https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.6-Beta5/VC-LTL-5.0.6-Beta5-Binary.7z' -Destination 'C:\__wwx190_downloads\VC-LTL.7z'"
+powershell -Command "Start-BitsTransfer -Source 'https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.1/LLVM-16.0.1-win64.exe' -Destination 'C:\__wwx190_downloads\LLVM.exe'"
 if not exist "%__download_file%" (
-    echo Failed to download VC-LTL
+    echo Failed to download LLVM
     goto fail
 )
 7z x "%__download_file%" -o"%__target_dir%" -aoa
-if not exist "%__install_script%" (
-    echo The install script is missing
-    goto fail
-)
-setx VCLTL_INSTALL_DIR %__target_dir%
-call "%__install_script%" /I
+copy /y "%~dp0llvm-install.bat" "%__target_dir%\Install.bat"
+setx LLVM_INSTALL_DIR %__target_dir%
+call "%__target_dir%\Install.bat" /I
 @echo off
 goto success
 
