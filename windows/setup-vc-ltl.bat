@@ -37,7 +37,7 @@ powershell -Command "Get-ExecutionPolicy" | findstr "Restricted" >nul && set __p
 if /i "%__ps_allowed%" == "false" powershell -Command "Set-ExecutionPolicy RemoteSigned"
 if exist "%__download_dir%" rd /s /q "%__download_dir%"
 md "%__download_dir%"
-powershell -Command "Start-BitsTransfer -Source 'https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.6-Beta4/VC-LTL-5.0.6-Beta4-Binary.7z' -Destination 'C:\__wwx190_downloads\VC-LTL.7z'"
+powershell -Command "Start-BitsTransfer -Source 'https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.6-Beta5/VC-LTL-5.0.6-Beta5-Binary.7z' -Destination 'C:\__wwx190_downloads\VC-LTL.7z'"
 if not exist "%__download_file%" (
     echo Failed to download VC-LTL
     goto fail
