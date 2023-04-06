@@ -42,6 +42,8 @@ if not exist "%__download_file%" (
     goto fail
 )
 7z x "%__download_file%" -o"%__target_dir%" -aoa
+del /f "%__target_dir%\Uninstall.exe"
+rd /s /q "%__target_dir%\$PLUGINSDIR"
 copy /y "%~dp0llvm-install.bat" "%__target_dir%\Install.bat"
 setx LLVM_INSTALL_DIR %__target_dir%
 call "%__target_dir%\Install.bat" /I
