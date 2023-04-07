@@ -67,6 +67,7 @@ vcpkg upgrade --no-dry-run
 rd /s /q "%__vcpkg_dir%\downloads"
 rd /s /q "%__vcpkg_dir%\packages"
 rd /s /q "%__vcpkg_dir%\buildtrees"
+if /i "%GITHUB_ACTIONS%" == "true" rd /s /q "%__vcpkg_dir%\.git"
 goto success
 
 :success
