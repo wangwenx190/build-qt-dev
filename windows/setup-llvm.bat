@@ -36,7 +36,7 @@ powershell -Command "Get-ExecutionPolicy" | findstr "Restricted" >nul && set __p
 if /i "%__ps_allowed%" == "false" powershell -Command "Set-ExecutionPolicy RemoteSigned"
 if exist "%__download_dir%" rd /s /q "%__download_dir%"
 md "%__download_dir%"
-powershell -Command "Start-BitsTransfer -Source 'https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.1/LLVM-16.0.1-win64.exe' -Destination 'C:\__wwx190_downloads\LLVM.exe'"
+powershell -Command "Start-BitsTransfer -Source 'https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.2/LLVM-16.0.2-win64.exe' -Destination 'C:\__wwx190_downloads\LLVM.exe'"
 if not exist "%__download_file%" (
     echo Failed to download LLVM
     goto fail
