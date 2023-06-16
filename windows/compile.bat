@@ -256,6 +256,7 @@ set __vswhere_path=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere
 set __vs_install_dir=
 set __vs_dev_cmd=
 set PATH=%__contrib_bin_dir%;%PATH%
+if defined LLVM_INSTALL_DIR set PATH=%LLVM_INSTALL_DIR%\bin;%PATH%
 if /i "%__compiler%" == "mingw" (
     where g++
     if %errorlevel% equ 0 (

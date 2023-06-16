@@ -30,8 +30,6 @@ if /i "%GITHUB_ACTIONS%" == "true" (
     git config --system core.longpaths true
     :: Install html5lib for Python. The QtPDF module needs it.
     pip install html5lib
-    :: Some of our repos need this variable to be set.
-    setx LLVM_INSTALL_DIR ^%ProgramFiles^%\LLVM
 )
 call "%~dp0build-config.bat"
 set __build_script_path=%~dp0compile.bat
