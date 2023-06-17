@@ -155,7 +155,7 @@ if /i "%__compiler%" == "clangcl" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_C_COMPILER=cl.exe -DCMAKE_CXX_COMPILER=cl.exe
 )
 if /i "%__lib_type%" == "static" (
-    set __should_enable_ltcg=false
+    ::set __should_enable_ltcg=false
     set __static_lib_flags=-DBUILD_SHARED_LIBS=OFF
     :: "FEATURE_static_runtime" is a QtBase only option.
     :: Other modules will inherit the corresponding parameters from QtBase.
@@ -190,8 +190,8 @@ if /i "%__should_enable_ltcg%" == "false" (
     set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
 ) else (
     :: For shared release builds it's totally OK to enable LTCG.
-    ::set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON
-    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+    ::set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO=OFF -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF
+    set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON
 )
 if /i "%__ninja_multi_config%" == "false" (
     :: Use "--target <TARGET>" to choose target explicitly.

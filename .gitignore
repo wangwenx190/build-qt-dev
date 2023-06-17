@@ -54,5 +54,7 @@ compile_commands.json
 # This repo
 build/
 .vs/
+.vscode/
 Thumbs.db
 vcpkg/
+patches/
