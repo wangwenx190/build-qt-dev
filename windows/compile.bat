@@ -137,7 +137,8 @@ set __ninja_multi_config=false
 :: But suppress the developer warnings from CMake, it's not useful for us.
 :: We must set "VCPKG_TARGET_TRIPLET" otherwise VCPKG will always use the default triplet "x64-windows".
 :: Enable VCPKG by setting the "CMAKE_TOOLCHAIN_FILE" variable. We use VCPKG to provide the 3rd party dependencies.
-set __cmake_extra_params=-Wno-dev -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
+:: -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
+set __cmake_extra_params=-Wno-dev -DCMAKE_MESSAGE_LOG_LEVEL=STATUS
 :: Set the "CMAKE_PREFIX_PATH" variable so that modules other than QtBase can still find the host Qt SDK we just built.
 if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%__repo_install_dir%"
 set __install_cmdline=
@@ -228,7 +229,8 @@ if /i "%__compiler%" == "msvc" (
 :: Control Flow Guard: -DINPUT_cfguard=yes
 :: All the above CMake switches are only available for the QtBase module, passing them to other
 :: modules will have no effect and will also cause some CMake warnings.
-if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_cxx20=ON -DFEATURE_system_zlib=OFF -DFEATURE_sql_db2=OFF -DFEATURE_sql_ibase=OFF -DFEATURE_sql_mysql=OFF -DFEATURE_sql_oci=OFF -DFEATURE_sql_odbc=OFF -DFEATURE_sql_psql=OFF -DFEATURE_sql_mimer=OFF -DINPUT_mimetype_database_compression=zstd -DINPUT_openssl=linked
+:: -DINPUT_mimetype_database_compression=zstd -DINPUT_openssl=linked
+if /i "%__is_building_qtbase%" == "true" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%" -DFEATURE_relocatable=ON -DFEATURE_cxx20=ON -DFEATURE_system_zlib=OFF -DFEATURE_sql_db2=OFF -DFEATURE_sql_ibase=OFF -DFEATURE_sql_mysql=OFF -DFEATURE_sql_oci=OFF -DFEATURE_sql_odbc=OFF -DFEATURE_sql_psql=OFF -DFEATURE_sql_mimer=OFF
 :: Currently the FFmpeg backend is not built by default. QtMultimedia will still use WMF as the
 :: default backend on Windows. There's plan to switch to the cross-platform FFmpeg backend on all
 :: supported platforms, but it's not happening yet, so here we explicitly enable the FFmpeg backend

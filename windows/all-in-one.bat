@@ -21,6 +21,6 @@
 :: SOFTWARE.
 
 @call "%~dp0download-patches.bat"
-@call "%~dp0vcpkg.bat"
+::@call "%~dp0vcpkg.bat"
 @call "%~dp0build.bat"
 @call "%~dp0pack.bat"

@@ -53,9 +53,9 @@ for /f %%i in ('dir /b') do (
     :: Cleanup. Give us some more free disk space.
     rd /s /q "%__repo_install_dir%\%%i"
 )
-if exist "%__vcpkg_package_file%" del /f "%__vcpkg_package_file%"
-cd /d "%__vcpkg_dir%\.."
-7z a "%__vcpkg_package_file%" vcpkg\ %__7zip_compress_params%
+::if exist "%__vcpkg_package_file%" del /f "%__vcpkg_package_file%"
+::cd /d "%__vcpkg_dir%\.."
+::7z a "%__vcpkg_package_file%" vcpkg\ %__7zip_compress_params%
 if %errorlevel% neq 0 goto fail
 goto success
 
