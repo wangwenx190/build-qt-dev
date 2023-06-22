@@ -137,8 +137,7 @@ set __ninja_multi_config=false
 :: But suppress the developer warnings from CMake, it's not useful for us.
 :: We must set "VCPKG_TARGET_TRIPLET" otherwise VCPKG will always use the default triplet "x64-windows".
 :: Enable VCPKG by setting the "CMAKE_TOOLCHAIN_FILE" variable. We use VCPKG to provide the 3rd party dependencies.
-:: -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
-set __cmake_extra_params=-Wno-dev -DCMAKE_MESSAGE_LOG_LEVEL=STATUS
+set __cmake_extra_params=-Wno-dev -DCMAKE_MESSAGE_LOG_LEVEL=STATUS -DVCPKG_TARGET_TRIPLET=%__vcpkg_triplet% -DCMAKE_TOOLCHAIN_FILE="%__vcpkg_toolchain_file%"
 :: Set the "CMAKE_PREFIX_PATH" variable so that modules other than QtBase can still find the host Qt SDK we just built.
 if /i "%__is_building_qtbase%" == "false" set __cmake_extra_params=%__cmake_extra_params% -DCMAKE_PREFIX_PATH="%__contrib_bin_dir%;%__repo_install_dir%"
 set __install_cmdline=

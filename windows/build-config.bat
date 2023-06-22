@@ -29,7 +29,7 @@
 :: Temporarily removed qtwebengine: doesn't work well with VC-LTL.
 set __qt_modules=qtbase,qtshadertools,qtimageformats,qtlanguageserver,qtsvg,qttools,qtdeclarative,qt5compat,qtquicktimeline,qtquick3d,qtquickeffectmaker,qttranslations
 :: Supported values: clang-cl, mingw and msvc
-set __compiler=clang-cl
+set __compiler=msvc
 :: Supported values: x64, x86 and arm64
 set __arch=x64
 :: Supported values: shared and static
